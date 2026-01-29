@@ -1,0 +1,30 @@
+{
+  "name": "sqoolify-frontend",
+  "version": "1.0.0",
+  "description": "Sqoolify Frontend - Vike Photon + React + Tailwind",
+  "type": "module",
+  "scripts": {
+    "dev": "vike dev",
+    "build": "vike build",
+    "prod": "vike build && node ./dist/server/index.mjs"
+  },
+  "dependencies": {
+    "@photonjs/express": "^0.1.13",
+    "express": "^5.2.1",
+    "react": "^19.2.4",
+    "react-dom": "^19.2.4",
+    "sonner": "^2.0.7",
+    "vike": "^0.4.252",
+    "vike-photon": "^0.1.24",
+    "vike-react": "^0.6.19"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.1.18",
+    "@types/express": "^5.0.6",
+    "@types/react": "^19.2.10",
+    "@types/react-dom": "^19.2.3",
+    "tailwindcss": "^4.1.18",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1"
+  }
+}

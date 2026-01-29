@@ -1,0 +1,145 @@
+import { useState, useEffect, useCallback } from 'react';
+import { navigate } from 'vike/client/router';
+import { parentService } from '../../../lib/api-services';
+import { Parent } from '../../../lib/types';
+import DataTable, { type Column } from '../../../components/ui/DataTable';
+import Pagination from '../../../components/ui/Pagination';
+import SearchBar from '../../../components/ui/SearchBar';
+import Button from '../../../components/ui/Button';
+import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+
+export default function ParentsPage() {
+  const [parents, setParents] = useState<Parent[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
+
+  const fetchParents = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await parentService.getAll({ page, limit: 10, search: search || undefined });
+      setParents(res.data || []);
+      setTotalPages(res.pagination?.totalPages || 1);
+      setTotal(res.pagination?.total || 0);
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch parents');
+      setParents([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [page, search]);
+
+  useEffect(() => {
+    fetchParents();
+  }, [fetchParents]);
+
+  const handleDelete = async (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!confirm('Are you sure you want to delete this parent?')) return;
+    try {
+      await parentService.delete(id);
+      fetchParents();
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete parent');
+    }
+  };
+
+  const columns: Column<Parent>[] = [
+    {
+      key: 'name',
+      header: 'Name',
+      render: (item) => item.user ? `${item.user.firstName} ${item.user.lastName}` : '-',
+    },
+    {
+      key: 'email',
+      header: 'Email',
+      render: (item) => item.user?.email || '-',
+    },
+    {
+      key: 'phone',
+      header: 'Phone',
+      render: (item) => item.user?.phone || '-',
+    },
+    {
+      key: 'occupation',
+      header: 'Occupation',
+      render: (item) => item.occupation || '-',
+    },
+    {
+      key: 'relationship',
+      header: 'Relationship',
+      render: (item) => <span className="capitalize">{item.relationship || '-'}</span>,
+    },
+    {
+      key: 'children',
+      header: 'Children',
+      render: (item) => {
+        const count = item.children?.length || 0;
+        return (
+          <span className={`px-2 py-1 text-xs rounded-full ${count > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}`}>
+            {count} {count === 1 ? 'child' : 'children'}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (item) => (
+        <button
+          onClick={(e) => handleDelete(item._id, e)}
+          className="text-red-600 hover:text-red-800 text-sm"
+        >
+          Delete
+        </button>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <Breadcrumbs items={[{ label: 'Parents' }]} />
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Parents</h1>
+          <p className="text-sm text-gray-500 mt-1">{total} total parents</p>
+        </div>
+        <Button onClick={() => navigate('/parents/add')}>+ Add Parent</Button>
+      </div>
+
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          {error}
+          <button onClick={fetchParents} className="ml-2 underline">
+            Retry
+          </button>
+        </div>
+      )}
+
+      <div className="mb-4 max-w-sm">
+        <SearchBar
+          value={search}
+          onChange={(val) => {
+            setSearch(val);
+            setPage(1);
+          }}
+          placeholder="Search parents..."
+        />
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={parents}
+        loading={loading}
+        emptyMessage="No parents found"
+        onRowClick={(item) => navigate(`/parents/${item._id}`)}
+      />
+
+      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+    </div>
+  );
+}

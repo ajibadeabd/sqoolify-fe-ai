@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../lib/api'
+import { parentService } from '../../../lib/api-services'
 import Card from '../../../components/ui/Card'
 import Avatar from '../../../components/ui/Avatar'
 import Badge from '../../../components/ui/Badge'
@@ -13,9 +13,8 @@ export default function MyChildrenPage() {
   useEffect(() => {
     const fetchChildren = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const res = await api.get<any>('/parents/my-children', { token })
-        setChildren(res.result || res || [])
+        const res = await parentService.getMyChildren()
+        setChildren(res.data || [])
       } catch {
         setChildren([])
       } finally {

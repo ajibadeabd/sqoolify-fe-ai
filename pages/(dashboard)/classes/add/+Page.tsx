@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { classService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -23,12 +23,11 @@ export default function AddClassPage() {
     setLoading(true)
 
     try {
-      const token = localStorage.getItem('accessToken') || ''
-      await api.post('/classes', {
+      await classService.create({
         name: form.name,
         section: form.section || undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
-      }, { token })
+      })
 
       await navigate('/classes')
     } catch (err: any) {

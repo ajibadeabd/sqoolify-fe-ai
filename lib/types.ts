@@ -60,6 +60,7 @@ export interface User {
   isActive: boolean;
   isVerify: boolean;
   schools: { schoolId: string; roles: string[] }[];
+  permissions: string[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -278,6 +279,7 @@ export interface Subject {
 export interface CreateSubjectData {
   name: string;
   code: string;
+  isCore?: boolean;
   classId?: string;
   teacherId?: string;
 }
@@ -297,7 +299,7 @@ export interface Session {
 }
 
 export interface Term {
-  name: 'First' | 'Second' | 'Third';
+  name: string;
   startDate: string;
   endDate: string;
 }
@@ -331,7 +333,7 @@ export interface CreateExamData {
   classId: string;
   subjectId: string;
   sessionId: string;
-  term: 'First' | 'Second' | 'Third';
+  term: string;
   maxScore: number;
   date?: string;
 }
@@ -452,6 +454,7 @@ export interface CreateNoticeData {
   content: string;
   visibility?: string[];
   notificationType?: string;
+  isPinned?: boolean;
   expiresAt?: string;
 }
 
@@ -666,16 +669,39 @@ export interface AppConfig {
 }
 
 // Dashboard
-export interface DashboardStats {
+export interface AdminDashboardStats {
+  role: 'admin';
   totalStudents: number;
   totalTeachers: number;
   totalParents: number;
   totalClasses: number;
   activeExams: number;
-  attendanceRate?: number;
-  totalRevenue?: number;
-  outstandingFees?: number;
+  totalRevenue: number;
+  outstandingFees: number;
+  attendanceRate: number;
 }
+
+export interface TeacherDashboardStats {
+  role: 'teacher';
+  myClasses: number;
+  studentsCount: number;
+  upcomingExams: number;
+}
+
+export interface StudentDashboardStats {
+  role: 'student';
+  myAttendanceRate: number;
+  upcomingExams: number;
+  pendingFees: number;
+}
+
+export interface ParentDashboardStats {
+  role: 'parent';
+  children: number;
+  totalPendingFees: number;
+}
+
+export type DashboardStats = AdminDashboardStats | TeacherDashboardStats | StudentDashboardStats | ParentDashboardStats;
 
 // File Upload
 export interface UploadResponse {

@@ -3,6 +3,7 @@ import { attendanceService, classService, studentService, sessionService } from 
 import { Attendance, SchoolClass, Student, Session } from '../../../lib/types';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import { useAppConfig } from '../../../lib/use-app-config';
 
 type AttendanceStatus = 'present' | 'absent' | 'late' | 'excused';
 
@@ -14,6 +15,7 @@ interface AttendanceRecord {
 }
 
 export default function AttendancePage() {
+  const { termsPerSession } = useAppConfig();
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -257,9 +259,9 @@ export default function AttendancePage() {
               onChange={(e) => setSelectedTerm(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
-              <option value="1">Term 1</option>
-              <option value="2">Term 2</option>
-              <option value="3">Term 3</option>
+              {Array.from({ length: termsPerSession }, (_, i) => (
+                <option key={i + 1} value={i + 1}>Term {i + 1}</option>
+              ))}
             </select>
           </div>
           <div className="flex items-end">

@@ -6,10 +6,12 @@ import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
-import Badge from '../../../components/ui/Badge';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
 
 export default function NoticesPage() {
+  const { can } = usePermission();
   const [notices, setNotices] = useState<Notice[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -142,20 +144,12 @@ export default function NoticesPage() {
       key: 'actions',
       header: '',
       render: (item) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => handleTogglePin(item._id, e)}
-            className={`text-sm ${item.isPinned ? 'text-blue-600 hover:text-blue-800' : 'text-gray-500 hover:text-gray-700'}`}
-          >
-            {item.isPinned ? 'Unpin' : 'Pin'}
-          </button>
-          <button
-            onClick={(e) => handleDelete(item._id, e)}
-            className="text-red-600 hover:text-red-800 text-sm"
-          >
-            Delete
-          </button>
-        </div>
+        <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}`) } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}/edit`) }, hidden: !can('write_notices') },
+          { label: item.isPinned ? 'Unpin' : 'Pin', onClick: (e) => handleTogglePin(item._id, e), hidden: !can('write_notices') },
+          { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_notices') },
+        ]} />
       ),
     },
   ];

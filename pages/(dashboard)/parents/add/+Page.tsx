@@ -1,19 +1,18 @@
 import { useState, useEffect, useMemo } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { api } from '../../../../lib/api'
+import { authService, studentService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
-import type { Student, ApiResponse } from '../../../../lib/types'
+import type { Student } from '../../../../lib/types'
 
 export default function AddParentPage() {
   const [form, setForm] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    password: '',
     phone: '',
     occupation: '',
     relationship: '',
@@ -28,7 +27,7 @@ export default function AddParentPage() {
   useEffect(() => {
     const fetchStudents = async () => {
       try {
-        const res = await api.get<ApiResponse<Student[]>>('/students?limit=1000')
+        const res = await studentService.getAll({ limit: 1000 })
         setStudents(res.data || [])
       } catch (err) {
         console.error('Failed to fetch students:', err)
@@ -69,11 +68,10 @@ export default function AddParentPage() {
     setLoading(true)
 
     try {
-      await api.post('/auth/register-parent', {
+      await authService.registerParent({
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
-        password: form.password,
         phone: form.phone || undefined,
         occupation: form.occupation || undefined,
         relationship: form.relationship || undefined,
@@ -104,10 +102,14 @@ export default function AddParentPage() {
             <Input label="Last Name" value={form.lastName} onChange={(e) => update('lastName', (e.target as HTMLInputElement).value)} required />
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Email" type="email" value={form.email} onChange={(e) => update('email', (e.target as HTMLInputElement).value)} required />
-            <Input label="Password" type="password" value={form.password} onChange={(e) => update('password', (e.target as HTMLInputElement).value)} required />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) => update('email', (e.target as HTMLInputElement).value)}
+            required
+            helperText="Password will be auto-generated and sent via email"
+          />
 
           <Input label="Phone" value={form.phone} onChange={(e) => update('phone', (e.target as HTMLInputElement).value)} />
 

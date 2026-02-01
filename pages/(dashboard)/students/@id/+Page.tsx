@@ -1,15 +1,17 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { studentService } from '../../../../lib/api-services'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
 import Avatar from '../../../../components/ui/Avatar'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog'
+import { usePermission } from '../../../../lib/use-permission'
 
 export default function StudentDetailPage() {
+  const { can } = usePermission()
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
   const [student, setStudent] = useState<any>(null)
@@ -20,7 +22,7 @@ export default function StudentDetailPage() {
   useEffect(() => {
     const fetchStudent = async () => {
       try {
-        const res = await api.get<any>(`/students/${id}`)
+        const res = await studentService.getById(id)
         setStudent(res.data)
       } catch {
         setStudent(null)
@@ -34,7 +36,7 @@ export default function StudentDetailPage() {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await api.delete(`/students/${id}`)
+      await studentService.delete(id)
       await navigate('/students')
     } catch {
       setDeleting(false)
@@ -72,7 +74,12 @@ export default function StudentDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Student Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/students')}>Back</Button>
-          <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
+          {can('write_students') && (
+            <Button variant="primary" onClick={() => navigate(`/students/${id}/edit`)}>Edit</Button>
+          )}
+          {can('delete_students') && (
+            <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
+          )}
         </div>
       </div>
 

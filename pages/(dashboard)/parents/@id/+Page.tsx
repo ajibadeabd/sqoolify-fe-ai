@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { parentService } from '../../../../lib/api-services'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
 import Avatar from '../../../../components/ui/Avatar'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog'
+import { usePermission } from '../../../../lib/use-permission'
 
 export default function ParentDetailPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
+  const { can } = usePermission()
   const [parent, setParent] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -20,7 +22,7 @@ export default function ParentDetailPage() {
   useEffect(() => {
     const fetchParent = async () => {
       try {
-        const res = await api.get<any>(`/parents/${id}`)
+        const res = await parentService.getById(id)
         setParent(res.data)
       } catch {
         setParent(null)
@@ -34,7 +36,7 @@ export default function ParentDetailPage() {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await api.delete(`/parents/${id}`)
+      await parentService.delete(id)
       await navigate('/parents')
     } catch {
       setDeleting(false)
@@ -62,7 +64,8 @@ export default function ParentDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Parent Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/parents')}>Back</Button>
-          <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
+          {can('write_users') && <Button variant="primary" onClick={() => navigate(`/parents/${id}/edit`)}>Edit</Button>}
+          {can('delete_users') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
 

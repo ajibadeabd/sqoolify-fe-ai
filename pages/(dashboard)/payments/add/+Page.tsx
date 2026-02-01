@@ -7,6 +7,7 @@ import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import type { Student, Session } from '../../../../lib/types'
+import { useAppConfig } from '../../../../lib/use-app-config'
 
 const PAYMENT_TYPES = [
   { value: 'full', label: 'Full Payment', icon: '💰', description: 'Complete payment for the term' },
@@ -33,6 +34,7 @@ const PAYMENT_CATEGORIES = [
 ]
 
 export default function AddPaymentPage() {
+  const { formatCurrency, termsPerSession, currencySymbol } = useAppConfig()
   const [form, setForm] = useState({
     studentId: '',
     amount: 0,
@@ -81,14 +83,6 @@ export default function AddPaymentPage() {
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
     const random = Math.random().toString(36).substring(2, 8).toUpperCase()
     setForm(prev => ({ ...prev, reference: `${prefix}-${date}-${random}` }))
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -209,7 +203,7 @@ export default function AddPaymentPage() {
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Amount *</label>
                       <div className="relative">
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">₦</span>
+                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 font-medium">{currencySymbol}</span>
                         <input
                           type="number"
                           value={form.amount || ''}
@@ -303,9 +297,9 @@ export default function AddPaymentPage() {
                         onChange={(e) => update('term', parseInt(e.target.value))}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       >
-                        <option value={1}>Term 1</option>
-                        <option value={2}>Term 2</option>
-                        <option value={3}>Term 3</option>
+                        {Array.from({ length: termsPerSession }, (_, i) => (
+                          <option key={i + 1} value={i + 1}>Term {i + 1}</option>
+                        ))}
                       </select>
                     </div>
                   </div>

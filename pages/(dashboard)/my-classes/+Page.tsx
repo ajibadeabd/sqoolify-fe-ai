@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../lib/api'
+import { teacherService } from '../../../lib/api-services'
 import DataTable, { type Column } from '../../../components/ui/DataTable'
 import Pagination from '../../../components/ui/Pagination'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -16,9 +16,8 @@ export default function MyClassesPage() {
   const fetchClasses = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('accessToken') || ''
-      const res = await api.get<any>(`/teachers/my-classes?page=${page}&limit=10&search=${search}`, { token })
-      setClasses(res.result || [])
+      const res = await teacherService.getMyClasses({ page, limit: 10, search })
+      setClasses(res.data || [])
       setTotalPages(res.pagination?.totalPages || 1)
     } catch {
       setClasses([])

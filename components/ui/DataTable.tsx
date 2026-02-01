@@ -23,7 +23,7 @@ export default function DataTable<T extends Record<string, any>>({
 }: DataTableProps<T>) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl border border-gray-200">
         <div className="animate-pulse">
           <div className="h-12 bg-gray-100 border-b" />
           {[...Array(5)].map((_, i) => (
@@ -47,9 +47,8 @@ export default function DataTable<T extends Record<string, any>>({
   }
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full">
+    <div className="bg-white rounded-xl border border-gray-200">
+      <table className="w-full">
           <thead>
             <tr className="bg-gray-50 border-b border-gray-200">
               {columns.map((col) => (
@@ -77,8 +76,7 @@ export default function DataTable<T extends Record<string, any>>({
               </tr>
             ))}
           </tbody>
-        </table>
-      </div>
+      </table>
     </div>
   )
 }

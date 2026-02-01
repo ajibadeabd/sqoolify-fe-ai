@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../../../lib/api'
+import { examService, studentService } from '../../../lib/api-services'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Select from '../../../components/ui/Select'
@@ -18,9 +18,8 @@ export default function EnterScoresPage() {
   useEffect(() => {
     const fetchExams = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const res = await api.get<any>('/teachers/my-exams?limit=100', { token })
-        setExams(res.result || [])
+        const res = await examService.getMyExams({ limit: 100 })
+        setExams(res.data || [])
       } catch {
         setExams([])
       } finally {
@@ -39,17 +38,20 @@ export default function EnterScoresPage() {
     const fetchStudents = async () => {
       setLoadingStudents(true)
       try {
-        const token = localStorage.getItem('accessToken') || ''
         const exam = exams.find((e) => e._id === selectedExam)
         if (exam?.class?._id) {
-          const studentsRes = await api.get<any>(`/students?class=${exam.class._id}&limit=100`, { token })
-          setStudents(studentsRes.result || [])
+          const studentsRes = await studentService.getAll({
+            // @ts-ignore - class filter not in type but works
+            class: exam.class._id,
+            limit: 100
+          })
+          setStudents(studentsRes.data || [])
         }
 
-        const scoresRes = await api.get<any>(`/exams/${selectedExam}/scores`, { token })
+        const scoresRes = await examService.getScores(selectedExam)
         const existingScores: Record<string, string> = {}
-        if (scoresRes.result) {
-          scoresRes.result.forEach((s: any) => {
+        if (scoresRes.data) {
+          scoresRes.data.forEach((s: any) => {
             existingScores[s.student?._id || s.student] = String(s.score)
           })
         }
@@ -61,7 +63,7 @@ export default function EnterScoresPage() {
       }
     }
     fetchStudents()
-  }, [selectedExam])
+  }, [selectedExam, exams])
 
   const handleScoreChange = (studentId: string, value: string) => {
     setScores({ ...scores, [studentId]: value })
@@ -71,7 +73,6 @@ export default function EnterScoresPage() {
     setSaving(true)
     setMessage('')
     try {
-      const token = localStorage.getItem('accessToken') || ''
       const scoreEntries = Object.entries(scores)
         .filter(([, value]) => value !== '')
         .map(([studentId, score]) => ({
@@ -79,7 +80,7 @@ export default function EnterScoresPage() {
           score: Number(score),
         }))
 
-      await api.post(`/exams/${selectedExam}/scores`, { scores: scoreEntries }, { token })
+      await examService.submitScores(selectedExam, scoreEntries)
       setMessage('Scores saved successfully!')
     } catch (err: any) {
       setMessage(err.message || 'Failed to save scores')

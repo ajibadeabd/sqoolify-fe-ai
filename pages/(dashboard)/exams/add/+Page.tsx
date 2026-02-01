@@ -7,6 +7,8 @@ import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import type { SchoolClass, Subject, Session } from '../../../../lib/types'
+import { useAppConfig } from '../../../../lib/use-app-config'
+import { getTermOptions } from '../../../../lib/term-utils'
 
 const EXAM_TYPES = [
   { value: 'CA1', label: 'CA 1', description: 'First Continuous Assessment', icon: '📝' },
@@ -14,19 +16,16 @@ const EXAM_TYPES = [
   { value: 'Exam', label: 'Examination', description: 'End of Term Examination', icon: '📄' },
 ]
 
-const TERMS = [
-  { value: 'First', label: 'First Term', color: 'bg-blue-100 text-blue-700 border-blue-200' },
-  { value: 'Second', label: 'Second Term', color: 'bg-green-100 text-green-700 border-green-200' },
-  { value: 'Third', label: 'Third Term', color: 'bg-purple-100 text-purple-700 border-purple-200' },
-]
-
 export default function AddExamPage() {
+  const { termsPerSession } = useAppConfig()
+  const termOptions = getTermOptions(termsPerSession)
+
   const [form, setForm] = useState({
     name: '',
     type: 'CA1',
-    class: '',
-    subject: '',
-    session: '',
+    classId: '',
+    subjectId: '',
+    sessionId: '',
     term: 'First',
     maxScore: 100,
     date: '',
@@ -52,7 +51,7 @@ export default function AddExamPage() {
         // Auto-select current session
         const currentSession = sessionsRes.data?.find((s: Session) => s.isCurrent)
         if (currentSession) {
-          setForm(prev => ({ ...prev, session: currentSession._id }))
+          setForm(prev => ({ ...prev, sessionId: currentSession._id }))
         }
       } catch (err) {
         console.error('Failed to fetch data:', err)
@@ -68,8 +67,7 @@ export default function AddExamPage() {
 
   // Auto-generate exam name based on selections
   const generateExamName = () => {
-    const selectedClass = classes.find(c => c._id === form.class)
-    const selectedSubject = subjects.find(s => s._id === form.subject)
+    const selectedSubject = subjects.find(s => s._id === form.subjectId)
     const selectedType = EXAM_TYPES.find(t => t.value === form.type)
 
     if (selectedSubject && selectedType) {
@@ -79,15 +77,15 @@ export default function AddExamPage() {
   }
 
   useEffect(() => {
-    if (form.subject && form.type && !form.name) {
+    if (form.subjectId && form.type && !form.name) {
       generateExamName()
     }
-  }, [form.subject, form.type])
+  }, [form.subjectId, form.type])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!form.class || !form.subject || !form.session) {
+    if (!form.classId || !form.subjectId || !form.sessionId) {
       toast.error('Please fill in all required fields')
       return
     }
@@ -103,10 +101,10 @@ export default function AddExamPage() {
       await examService.create({
         name: form.name,
         type: form.type as any,
-        class: form.class,
-        subject: form.subject,
-        session: form.session,
-        term: form.term as any,
+        classId: form.classId,
+        subjectId: form.subjectId,
+        sessionId: form.sessionId,
+        term: form.term,
         maxScore: form.maxScore,
         date: form.date || undefined,
       })
@@ -120,9 +118,9 @@ export default function AddExamPage() {
     }
   }
 
-  const selectedClass = classes.find(c => c._id === form.class)
-  const selectedSubject = subjects.find(s => s._id === form.subject)
-  const selectedSession = sessions.find(s => s._id === form.session)
+  const selectedClass = classes.find(c => c._id === form.classId)
+  const selectedSubject = subjects.find(s => s._id === form.subjectId)
+  const selectedSession = sessions.find(s => s._id === form.sessionId)
 
   return (
     <div>
@@ -171,15 +169,15 @@ export default function AddExamPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-3">Term *</label>
-                  <div className="flex gap-3">
-                    {TERMS.map((term) => (
+                  <div className="flex gap-3 flex-wrap">
+                    {termOptions.map((term) => (
                       <button
                         key={term.value}
                         type="button"
                         onClick={() => update('term', term.value)}
                         className={`px-5 py-2.5 rounded-lg border-2 font-medium transition-all ${
                           form.term === term.value
-                            ? `${term.color} border-current`
+                            ? `${term.color.bg} ${term.color.text} ${term.color.border} border-current`
                             : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                         }`}
                       >
@@ -205,8 +203,8 @@ export default function AddExamPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Class *</label>
                         <select
-                          value={form.class}
-                          onChange={(e) => update('class', e.target.value)}
+                          value={form.classId}
+                          onChange={(e) => update('classId', e.target.value)}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           required
                         >
@@ -222,8 +220,8 @@ export default function AddExamPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Subject *</label>
                         <select
-                          value={form.subject}
-                          onChange={(e) => update('subject', e.target.value)}
+                          value={form.subjectId}
+                          onChange={(e) => update('subjectId', e.target.value)}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           required
                         >
@@ -241,8 +239,8 @@ export default function AddExamPage() {
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Academic Session *</label>
                         <select
-                          value={form.session}
-                          onChange={(e) => update('session', e.target.value)}
+                          value={form.sessionId}
+                          onChange={(e) => update('sessionId', e.target.value)}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           required
                         >
@@ -321,7 +319,10 @@ export default function AddExamPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-500">Term</span>
                       <span className={`px-2 py-0.5 rounded-full text-xs ${
-                        TERMS.find(t => t.value === form.term)?.color || 'bg-gray-100'
+                        (() => {
+                          const t = termOptions.find(t => t.value === form.term)
+                          return t ? `${t.color.bg} ${t.color.text}` : 'bg-gray-100'
+                        })()
                       }`}>
                         {form.term} Term
                       </span>

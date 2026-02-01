@@ -7,8 +7,11 @@ import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
 
 export default function TeachersPage() {
+  const { can } = usePermission();
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,12 +93,11 @@ export default function TeachersPage() {
       key: 'actions',
       header: '',
       render: (item) => (
-        <button
-          onClick={(e) => handleDelete(item._id, e)}
-          className="text-red-600 hover:text-red-800 text-sm"
-        >
-          Delete
-        </button>
+        <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/teachers/${item._id}`) } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/teachers/${item._id}/edit`) }, hidden: !can('write_users') },
+          { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_teachers') },
+        ]} />
       ),
     },
   ];
@@ -108,7 +110,7 @@ export default function TeachersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Teachers</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total teachers</p>
         </div>
-        <Button onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>
+        {can('write_teachers') && <Button onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>}
       </div>
 
       {error && (

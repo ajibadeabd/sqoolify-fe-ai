@@ -7,8 +7,11 @@ import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
 
 export default function SubjectsPage() {
+  const { can } = usePermission();
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -84,15 +87,14 @@ export default function SubjectsPage() {
       ),
     },
     {
-      key: 'actions',
+      key: 'actions' as const,
       header: '',
-      render: (item) => (
-        <button
-          onClick={(e) => handleDelete(item._id, e)}
-          className="text-red-600 hover:text-red-800 text-sm"
-        >
-          Delete
-        </button>
+      render: (item: Subject) => (
+        <ActionMenu items={[
+          { label: 'View', onClick: (e: React.MouseEvent) => { e.stopPropagation(); navigate(`/subjects/${item._id}`) } },
+          { label: 'Edit', onClick: (e: React.MouseEvent) => { e.stopPropagation(); navigate(`/subjects/${item._id}/edit`) }, hidden: !can('write_subjects') },
+          { label: 'Delete', onClick: (e: React.MouseEvent) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_subjects') },
+        ]} />
       ),
     },
   ];
@@ -105,7 +107,9 @@ export default function SubjectsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Subjects</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total subjects</p>
         </div>
-        <Button onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
+        {can('write_subjects') && (
+          <Button onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
+        )}
       </div>
 
       {error && (

@@ -1,26 +1,34 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { teacherService } from '../../../../lib/api-services'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
 import Avatar from '../../../../components/ui/Avatar'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog'
+import Modal from '../../../../components/ui/Modal'
+import PermissionManager from '../../../../components/permissions/PermissionManager'
+import { useAuth } from '../../../../lib/auth-context'
+import { usePermission } from '../../../../lib/use-permission'
 
 export default function TeacherDetailPage() {
   const pageContext = usePageContext()
+  useAuth()
   const id = (pageContext.routeParams as any)?.id
   const [teacher, setTeacher] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [roleModalOpen, setRoleModalOpen] = useState(false)
+
+  const { can } = usePermission()
 
   useEffect(() => {
     const fetchTeacher = async () => {
       try {
-        const res = await api.get<any>(`/teachers/${id}`)
+        const res = await teacherService.getById(id)
         setTeacher(res.data)
       } catch {
         setTeacher(null)
@@ -34,7 +42,7 @@ export default function TeacherDetailPage() {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await api.delete(`/teachers/${id}`)
+      await teacherService.delete(id)
       await navigate('/teachers')
     } catch {
       setDeleting(false)
@@ -62,7 +70,9 @@ export default function TeacherDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Teacher Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/teachers')}>Back</Button>
-          <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
+          {can('write_users') && <Button variant="primary" onClick={() => navigate(`/teachers/${id}/edit`)}>Edit</Button>}
+          {can('write_users') && <Button variant="primary" onClick={() => setRoleModalOpen(true)}>Manage Role</Button>}
+          {can('write_users') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
 
@@ -174,6 +184,23 @@ export default function TeacherDetailPage() {
           </div>
         </div>
       </Card>
+
+      {/* Permissions & Role Management Modal */}
+      <Modal open={roleModalOpen} onClose={() => setRoleModalOpen(false)} title="Manage Role & Permissions" size="xl">
+        <PermissionManager
+          userId={user._id}
+          currentPermissions={user.permissions || []}
+          embedded
+          onUpdate={async () => {
+            try {
+              const res = await teacherService.getById(id)
+              setTeacher(res.data)
+            } catch (err) {
+              // Silently fail, permission update already succeeded
+            }
+          }}
+        />
+      </Modal>
 
       <ConfirmDialog
         open={deleteOpen}

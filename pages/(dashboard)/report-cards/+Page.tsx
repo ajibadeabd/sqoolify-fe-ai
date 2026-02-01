@@ -8,8 +8,10 @@ import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import { useAppConfig } from '../../../lib/use-app-config';
 
 export default function ReportCardsPage() {
+  const { termsPerSession } = useAppConfig();
   const [reportCards, setReportCards] = useState<ReportCard[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
@@ -182,9 +184,9 @@ export default function ReportCardsPage() {
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Terms</option>
-          <option value="1">Term 1</option>
-          <option value="2">Term 2</option>
-          <option value="3">Term 3</option>
+          {Array.from({ length: termsPerSession }, (_, i) => (
+            <option key={i + 1} value={i + 1}>Term {i + 1}</option>
+          ))}
         </select>
       </div>
 

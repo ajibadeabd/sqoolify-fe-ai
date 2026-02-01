@@ -4,16 +4,23 @@ interface ModalProps {
   open: boolean
   onClose: () => void
   title?: string
+  size?: 'default' | 'lg' | 'xl'
   children: ReactNode
 }
 
-export default function Modal({ open, onClose, title, children }: ModalProps) {
+const sizeClasses = {
+  default: 'max-w-lg',
+  lg: 'max-w-2xl',
+  xl: 'max-w-3xl',
+}
+
+export default function Modal({ open, onClose, title, size = 'default', children }: ModalProps) {
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white rounded-xl shadow-xl max-w-lg w-full mx-4 max-h-[90vh] overflow-y-auto">
+      <div className={`relative bg-white rounded-xl shadow-xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] overflow-y-auto`}>
         {title && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold">{title}</h3>

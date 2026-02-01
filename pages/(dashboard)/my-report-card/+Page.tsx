@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../../../lib/api'
+import { studentService } from '../../../lib/api-services'
 import Card from '../../../components/ui/Card'
 import Button from '../../../components/ui/Button'
 import Badge from '../../../components/ui/Badge'
@@ -13,9 +13,8 @@ export default function MyReportCardPage() {
   useEffect(() => {
     const fetchReportCard = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const res = await api.get<any>('/students/my-report-card', { token })
-        setReportCard(res)
+        const res = await studentService.getMyReportCard()
+        setReportCard(res.data)
       } catch {
         setReportCard(null)
       } finally {

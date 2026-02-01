@@ -45,6 +45,16 @@ export const authService = {
 
   getProfile: () =>
     api.get<ApiResponse<User>>('/auth/me', authOptions()),
+
+  // Admin registration endpoints
+  registerParent: (data: any) =>
+    api.post<ApiResponse<Parent>>('/auth/register-parent', data, authOptions()),
+
+  registerStudent: (data: any) =>
+    api.post<ApiResponse<Student>>('/auth/register-student', data, authOptions()),
+
+  registerTeacher: (data: any) =>
+    api.post<ApiResponse<Teacher>>('/auth/register-teacher', data, authOptions()),
 };
 
 // ============ USERS ============
@@ -99,6 +109,12 @@ export const studentService = {
 
   assignClass: (studentId: string, classId: string) =>
     api.patch<ApiResponse<Student>>(`/students/${studentId}/assign-class`, { classId }, authOptions()),
+
+  getMyReportCard: () =>
+    api.get<ApiResponse<any>>('/students/my-report-card', authOptions()),
+
+  getMyResults: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get<ApiResponse<any[]>>(`/students/my-results${buildQuery(params || {})}`, authOptions()),
 };
 
 // ============ TEACHERS ============
@@ -123,6 +139,12 @@ export const teacherService = {
 
   assignSubject: (teacherId: string, subjectId: string) =>
     api.patch<ApiResponse<Teacher>>(`/teachers/${teacherId}/assign-subject`, { subjectId }, authOptions()),
+
+  getMyClasses: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get<ApiResponse<SchoolClass[]>>(`/teachers/my-classes${buildQuery(params || {})}`, authOptions()),
+
+  getMySubjects: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get<ApiResponse<Subject[]>>(`/teachers/my-subjects${buildQuery(params || {})}`, authOptions()),
 };
 
 // ============ PARENTS ============
@@ -144,6 +166,12 @@ export const parentService = {
 
   getChildren: (parentId: string) =>
     api.get<ApiResponse<Student[]>>(`/parents/${parentId}/children`, authOptions()),
+
+  getMyChildren: () =>
+    api.get<ApiResponse<Student[]>>('/parents/my-children', authOptions()),
+
+  getMyChildReportCard: (childId: string) =>
+    api.get<ApiResponse<any>>(`/parents/my-children/${childId}/report-card`, authOptions()),
 };
 
 // ============ CLASSES ============
@@ -234,6 +262,15 @@ export const examService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/exams/${id}`, authOptions()),
+
+  getMyExams: (params?: { limit?: number }) =>
+    api.get<ApiResponse<Exam[]>>(`/teachers/my-exams${buildQuery(params || {})}`, authOptions()),
+
+  getScores: (examId: string) =>
+    api.get<ApiResponse<Score[]>>(`/exams/${examId}/scores`, authOptions()),
+
+  submitScores: (examId: string, scores: { student: string; score: number }[]) =>
+    api.post<ApiResponse<any>>(`/exams/${examId}/scores`, { scores }, authOptions()),
 };
 
 // ============ SCORES ============
@@ -469,4 +506,10 @@ export const configService = {
 
   update: (settings: Partial<ConfigSettings>) =>
     api.patch<ApiResponse<AppConfig>>('/config', { settings }, authOptions()),
+};
+
+// ============ AUDIT LOGS ============
+export const auditLogService = {
+  getAll: (params?: { limit?: number; userId?: string }) =>
+    api.get<ApiResponse<any[]>>(`/audit-logs${buildQuery(params || {})}`, authOptions()),
 };

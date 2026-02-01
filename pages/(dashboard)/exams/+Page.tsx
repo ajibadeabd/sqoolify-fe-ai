@@ -7,8 +7,13 @@ import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
+import { useAppConfig } from '../../../lib/use-app-config';
 
 export default function ExamsPage() {
+  const { can } = usePermission();
+  const { termsPerSession } = useAppConfig();
   const [exams, setExams] = useState<Exam[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
@@ -134,20 +139,12 @@ export default function ExamsPage() {
       key: 'actions',
       header: '',
       render: (item) => (
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => { e.stopPropagation(); navigate(`/exams/${item._id}/scores`); }}
-            className="text-blue-600 hover:text-blue-800 text-sm"
-          >
-            Scores
-          </button>
-          <button
-            onClick={(e) => handleDelete(item._id, e)}
-            className="text-red-600 hover:text-red-800 text-sm"
-          >
-            Delete
-          </button>
-        </div>
+        <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/exams/${item._id}`) } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/exams/${item._id}/edit`) }, hidden: !can('write_exams') },
+          { label: 'Scores', onClick: (e) => { e.stopPropagation(); navigate(`/exams/${item._id}/scores`) }, hidden: !can('grade_exams') },
+          { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_exams') },
+        ]} />
       ),
     },
   ];
@@ -210,9 +207,9 @@ export default function ExamsPage() {
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Terms</option>
-          <option value="1">Term 1</option>
-          <option value="2">Term 2</option>
-          <option value="3">Term 3</option>
+          {Array.from({ length: termsPerSession }, (_, i) => (
+            <option key={i + 1} value={i + 1}>Term {i + 1}</option>
+          ))}
         </select>
       </div>
 
@@ -223,7 +220,7 @@ export default function ExamsPage() {
         )}
         loading={loading}
         emptyMessage="No exams found"
-        onRowClick={(item) => navigate(`/exams/${item._id}/scores`)}
+        onRowClick={(item) => navigate(`/exams/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

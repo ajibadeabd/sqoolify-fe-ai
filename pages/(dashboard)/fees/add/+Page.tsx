@@ -7,6 +7,7 @@ import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import type { SchoolClass, Session, ApiResponse } from '../../../../lib/types'
+import { useAppConfig } from '../../../../lib/use-app-config'
 
 interface FeeBreakdown {
   item: string
@@ -21,6 +22,8 @@ interface TermFee {
 }
 
 export default function AddFeePage() {
+  const { termsPerSession, formatCurrency, currencySymbol } = useAppConfig()
+
   const [form, setForm] = useState({
     classId: '',
     sessionId: '',
@@ -56,9 +59,10 @@ export default function AddFeePage() {
 
   const addTerm = () => {
     const usedTerms = terms.map((t) => t.term)
-    const availableTerms = [1, 2, 3].filter((t) => !usedTerms.includes(t))
+    const allTerms = Array.from({ length: termsPerSession }, (_, i) => i + 1)
+    const availableTerms = allTerms.filter((t) => !usedTerms.includes(t))
     if (availableTerms.length === 0) {
-      toast.error('Maximum 3 terms allowed')
+      toast.error(`Maximum ${termsPerSession} terms allowed`)
       return
     }
     setTerms([...terms, { term: availableTerms[0], amount: 0, breakdowns: [], dueDate: '' }])
@@ -100,14 +104,6 @@ export default function AddFeePage() {
     const totalAmount = updated[termIndex].breakdowns.reduce((sum, b) => sum + (Number(b.amount) || 0), 0)
     updated[termIndex].amount = totalAmount
     setTerms(updated)
-  }
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount)
   }
 
   const totalFees = terms.reduce((sum, t) => sum + (t.amount || 0), 0)
@@ -212,7 +208,7 @@ export default function AddFeePage() {
                 <div className="border-t pt-6">
                   <div className="flex items-center justify-between mb-4">
                     <h3 className="text-lg font-semibold text-gray-900">Term Fees</h3>
-                    {terms.length < 3 && (
+                    {terms.length < termsPerSession && (
                       <Button type="button" variant="outline" onClick={addTerm}>
                         + Add Term
                       </Button>
@@ -234,9 +230,9 @@ export default function AddFeePage() {
                                 onChange={(e) => updateTerm(termIndex, 'term', parseInt(e.target.value))}
                                 className="mt-1 px-3 py-1.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                               >
-                                <option value={1}>Term 1</option>
-                                <option value={2}>Term 2</option>
-                                <option value={3}>Term 3</option>
+                                {Array.from({ length: termsPerSession }, (_, i) => (
+                                  <option key={i + 1} value={i + 1}>Term {i + 1}</option>
+                                ))}
                               </select>
                             </div>
                           </div>
@@ -255,7 +251,7 @@ export default function AddFeePage() {
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount</label>
                             <div className="relative">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">₦</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">{currencySymbol}</span>
                               <input
                                 type="number"
                                 value={term.amount || ''}
@@ -307,7 +303,7 @@ export default function AddFeePage() {
                                     className="flex-1 px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                   />
                                   <div className="relative w-32">
-                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">₦</span>
+                                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm">{currencySymbol}</span>
                                     <input
                                       type="number"
                                       value={breakdown.amount || ''}
@@ -388,7 +384,7 @@ export default function AddFeePage() {
                 <ul className="text-xs text-blue-700 space-y-1">
                   <li>• Add fee breakdowns for transparent billing</li>
                   <li>• Set due dates to track payment deadlines</li>
-                  <li>• You can add up to 3 terms per session</li>
+                  <li>• You can add up to {termsPerSession} terms per session</li>
                 </ul>
               </div>
             </Card>

@@ -1,10 +1,12 @@
 import { useAuth } from '../../lib/auth-context';
+import { usePermission } from '../../lib/use-permission';
 
 interface NavItem {
   label: string;
   href: string;
   icon: string;
   roles?: string[];
+  permissions?: string[]; // Array of required permissions (user needs at least one)
   section?: string;
 }
 
@@ -23,34 +25,34 @@ const navSections: NavSection[] = [
   {
     title: 'People',
     items: [
-      { label: 'Students', href: '/students', icon: 'users', roles: ['admin', 'teacher'] },
-      { label: 'Teachers', href: '/teachers', icon: 'briefcase', roles: ['admin'] },
-      { label: 'Parents', href: '/parents', icon: 'heart', roles: ['admin'] },
+      { label: 'Students', href: '/students', icon: 'users', permissions: ['read_students'] },
+      { label: 'Teachers', href: '/teachers', icon: 'briefcase', permissions: ['read_teachers'] },
+      { label: 'Parents', href: '/parents', icon: 'heart', permissions: ['read_parents'] },
     ],
   },
   {
     title: 'Academics',
     items: [
-      { label: 'Classes', href: '/classes', icon: 'book-open', roles: ['admin'] },
-      { label: 'Subjects', href: '/subjects', icon: 'file-text', roles: ['admin'] },
-      { label: 'Sessions', href: '/sessions', icon: 'calendar', roles: ['admin'] },
-      { label: 'Exams', href: '/exams', icon: 'clipboard', roles: ['admin', 'teacher'] },
-      { label: 'Report Cards', href: '/report-cards', icon: 'award', roles: ['admin', 'teacher'] },
-      { label: 'Attendance', href: '/attendance', icon: 'check-circle', roles: ['admin', 'teacher'] },
+      { label: 'Classes', href: '/classes', icon: 'book-open', permissions: ['read_classes'] },
+      { label: 'Subjects', href: '/subjects', icon: 'file-text', permissions: ['read_subjects'] },
+      { label: 'Sessions', href: '/sessions', icon: 'calendar', permissions: ['read_sessions'] },
+      { label: 'Exams', href: '/exams', icon: 'clipboard', permissions: ['read_exams'] },
+      { label: 'Report Cards', href: '/report-cards', icon: 'award', permissions: ['read_report_cards'] },
+      { label: 'Attendance', href: '/attendance', icon: 'check-circle', permissions: ['read_attendance'] },
     ],
   },
   {
     title: 'Finance',
     items: [
-      { label: 'Fees', href: '/fees', icon: 'dollar', roles: ['admin'] },
-      { label: 'Payments', href: '/payments', icon: 'credit-card', roles: ['admin'] },
-      { label: 'Banks', href: '/banks', icon: 'bank', roles: ['admin'] },
+      { label: 'Fees', href: '/fees', icon: 'dollar', permissions: ['read_fees'] },
+      { label: 'Payments', href: '/payments', icon: 'credit-card', permissions: ['read_payments'] },
+      { label: 'Banks', href: '/banks', icon: 'bank', permissions: ['read_banks'] },
     ],
   },
   {
     title: 'Communication',
     items: [
-      { label: 'Notices', href: '/notices', icon: 'bell', roles: ['admin', 'teacher', 'parent', 'student'] },
+      { label: 'Notices', href: '/notices', icon: 'bell', permissions: ['read_notices'] },
     ],
   },
   {
@@ -77,8 +79,9 @@ const navSections: NavSection[] = [
   {
     title: 'Admin',
     items: [
-      { label: 'Subscriptions', href: '/subscriptions', icon: 'star', roles: ['admin'] },
-      { label: 'Settings', href: '/settings', icon: 'settings', roles: ['admin'] },
+      { label: 'Subscriptions', href: '/subscriptions', icon: 'star', permissions: ['read_subscriptions'] },
+      { label: 'Audit Logs', href: '/audit-logs', icon: 'shield', permissions: ['view_audit_logs'] },
+      { label: 'Settings', href: '/settings', icon: 'settings', permissions: ['read_school_settings'] },
     ],
   },
 ];
@@ -102,20 +105,38 @@ const iconMap: Record<string, string> = {
   bank: 'M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v3M12 14v3M16 14v3',
   bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
   star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
+  shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
 };
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
   // Handle SSR - useAuth returns safe defaults during server rendering
   const auth = useAuth();
-  const userRole = auth?.user?.role || 'admin';
+  const { canAny, permissions } = usePermission();
+
+  // Get user's role from first school (for backwards compatibility)
+  const userRole = auth?.user?.schools?.[0]?.roles?.[0] || 'admin';
+
+  // Wait for auth to load before filtering (prevents showing all tabs on initial load)
+  if (auth.isLoading || !auth.user) {
+    return null;
+  }
 
   // Filter sections to only show items the user has access to
   const filteredSections = navSections
     .map((section) => ({
       ...section,
-      items: section.items.filter(
-        (item) => !item.roles || item.roles.includes(userRole)
-      ),
+      items: section.items.filter((item) => {
+        // If item has permissions specified, check permissions (preferred)
+        if (item.permissions && item.permissions.length > 0) {
+          return canAny(item.permissions);
+        }
+        // Fallback to role-based check (backwards compatibility)
+        if (item.roles && item.roles.length > 0) {
+          return item.roles.includes(userRole);
+        }
+        // If no restrictions, show to everyone
+        return true;
+      }),
     }))
     .filter((section) => section.items.length > 0);
 

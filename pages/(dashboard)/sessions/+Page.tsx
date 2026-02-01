@@ -8,6 +8,8 @@ import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
 
 export default function SessionsPage() {
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -18,6 +20,7 @@ export default function SessionsPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [settingCurrent, setSettingCurrent] = useState<string | null>(null);
+  const { can } = usePermission();
 
   const fetchSessions = useCallback(async () => {
     setLoading(true);
@@ -100,13 +103,7 @@ export default function SessionsPage() {
         item.isCurrent ? (
           <Badge variant="success">Current</Badge>
         ) : (
-          <button
-            className="text-sm text-blue-600 hover:underline disabled:opacity-50"
-            disabled={settingCurrent === item._id}
-            onClick={(e) => handleSetCurrent(item._id, e)}
-          >
-            {settingCurrent === item._id ? 'Setting...' : 'Set Current'}
-          </button>
+          <span className="text-gray-400 text-sm">Inactive</span>
         ),
     },
     {
@@ -118,16 +115,13 @@ export default function SessionsPage() {
       },
     },
     {
-      key: 'actions',
+      key: 'actions' as const,
       header: '',
-      render: (item) => (
-        <button
-          onClick={(e) => handleDelete(item._id, e)}
-          className="text-red-600 hover:text-red-800 text-sm"
-          disabled={item.isCurrent}
-        >
-          Delete
-        </button>
+      render: (item: Session) => (
+        <ActionMenu items={[
+          { label: 'Set Current', onClick: (e: React.MouseEvent) => handleSetCurrent(item._id, e), hidden: item.isCurrent || !can('write_sessions') },
+          { label: 'Delete', onClick: (e: React.MouseEvent) => handleDelete(item._id, e), variant: 'danger', hidden: item.isCurrent || !can('delete_sessions') },
+        ]} />
       ),
     },
   ];
@@ -140,7 +134,9 @@ export default function SessionsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Academic Sessions</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total sessions</p>
         </div>
-        <Button onClick={() => navigate('/sessions/add')}>+ Add Session</Button>
+        {can('write_sessions') && (
+          <Button onClick={() => navigate('/sessions/add')}>+ Add Session</Button>
+        )}
       </div>
 
       {error && (
@@ -170,6 +166,7 @@ export default function SessionsPage() {
         )}
         loading={loading}
         emptyMessage="No sessions found"
+        onRowClick={(item) => navigate(`/sessions/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

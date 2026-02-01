@@ -6,20 +6,19 @@ import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
+import { useAppConfig } from '../../../../lib/use-app-config'
+import { getTermOptions, getTermColorByName } from '../../../../lib/term-utils'
 
 interface TermForm {
-  name: 'First' | 'Second' | 'Third'
+  name: string
   startDate: string
   endDate: string
 }
 
-const TERM_COLORS = {
-  First: { bg: 'bg-blue-100', text: 'text-blue-700', border: 'border-blue-200', badge: 'bg-blue-600' },
-  Second: { bg: 'bg-green-100', text: 'text-green-700', border: 'border-green-200', badge: 'bg-green-600' },
-  Third: { bg: 'bg-purple-100', text: 'text-purple-700', border: 'border-purple-200', badge: 'bg-purple-600' },
-}
-
 export default function AddSessionPage() {
+  const { termsPerSession } = useAppConfig()
+  const termOptions = getTermOptions(termsPerSession)
+
   const [form, setForm] = useState({
     name: '',
     startDate: '',
@@ -32,11 +31,9 @@ export default function AddSessionPage() {
 
   const addTerm = () => {
     const usedNames = terms.map((t) => t.name)
-    const availableNames = (['First', 'Second', 'Third'] as const).filter(
-      (n) => !usedNames.includes(n)
-    )
+    const availableNames = termOptions.map((o) => o.value).filter((n) => !usedNames.includes(n))
     if (availableNames.length === 0) {
-      toast.error('Maximum 3 terms allowed')
+      toast.error(`Maximum ${termsPerSession} terms allowed`)
       return
     }
     setTerms([...terms, { name: availableNames[0], startDate: '', endDate: '' }])
@@ -170,7 +167,7 @@ export default function AddSessionPage() {
                     <h3 className="text-lg font-semibold text-gray-900">Academic Terms</h3>
                     <p className="text-sm text-gray-500">Define term dates for this session</p>
                   </div>
-                  {terms.length < 3 && (
+                  {terms.length < termsPerSession && (
                     <Button type="button" variant="outline" onClick={addTerm}>
                       + Add Term
                     </Button>
@@ -183,7 +180,7 @@ export default function AddSessionPage() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                     <p className="text-gray-600 font-medium mb-1">No terms added</p>
-                    <p className="text-sm text-gray-500 mb-4">Add up to 3 terms for this academic session</p>
+                    <p className="text-sm text-gray-500 mb-4">Add up to {termsPerSession} terms for this academic session</p>
                     <Button type="button" variant="outline" onClick={addTerm}>
                       + Add First Term
                     </Button>
@@ -191,7 +188,7 @@ export default function AddSessionPage() {
                 ) : (
                   <div className="space-y-4">
                     {terms.map((term, index) => {
-                      const colors = TERM_COLORS[term.name]
+                      const colors = getTermColorByName(term.name)
                       return (
                         <div key={index} className={`border-2 rounded-xl p-5 ${colors.border} ${colors.bg}`}>
                           <div className="flex items-center justify-between mb-4">
@@ -205,9 +202,9 @@ export default function AddSessionPage() {
                                   onChange={(e) => updateTerm(index, 'name', e.target.value)}
                                   className={`font-semibold ${colors.text} bg-transparent border-0 focus:ring-0 text-lg cursor-pointer`}
                                 >
-                                  <option value="First">First Term</option>
-                                  <option value="Second">Second Term</option>
-                                  <option value="Third">Third Term</option>
+                                  {termOptions.map((opt) => (
+                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                  ))}
                                 </select>
                               </div>
                             </div>
@@ -291,7 +288,7 @@ export default function AddSessionPage() {
                   <p className="text-sm font-medium text-gray-700 mb-2">Terms ({terms.length})</p>
                   <div className="space-y-2">
                     {terms.map((term, i) => {
-                      const colors = TERM_COLORS[term.name]
+                      const colors = getTermColorByName(term.name)
                       return (
                         <div key={i} className={`p-3 rounded-lg ${colors.bg}`}>
                           <p className={`font-medium ${colors.text}`}>{term.name} Term</p>

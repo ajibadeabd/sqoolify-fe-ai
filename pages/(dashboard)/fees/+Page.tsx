@@ -2,12 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
 import { feeService, classService, sessionService } from '../../../lib/api-services';
 import { Fee, SchoolClass, Session } from '../../../lib/types';
+import { useAppConfig } from '../../../lib/use-app-config';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+import ActionMenu from '../../../components/ui/ActionMenu';
+import { usePermission } from '../../../lib/use-permission';
 
 export default function FeesPage() {
+  const { can } = usePermission();
+  const { formatCurrency } = useAppConfig();
   const [fees, setFees] = useState<Fee[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -79,14 +84,6 @@ export default function FeesPage() {
     }
   };
 
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
-
   const columns: Column<Fee>[] = [
     {
       key: 'class',
@@ -116,12 +113,9 @@ export default function FeesPage() {
       key: 'actions',
       header: '',
       render: (item) => (
-        <button
-          onClick={(e) => handleDelete(item._id, e)}
-          className="text-red-600 hover:text-red-800 text-sm"
-        >
-          Delete
-        </button>
+        <ActionMenu items={[
+          { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_fees') },
+        ]} />
       ),
     },
   ];

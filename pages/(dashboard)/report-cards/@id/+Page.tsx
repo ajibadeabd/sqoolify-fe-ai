@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { reportCardService } from '../../../../lib/api-services'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
@@ -18,9 +18,8 @@ export default function ReportCardDetailPage() {
   useEffect(() => {
     const fetchReportCard = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const res = await api.get<any>(`/report-cards/${id}`, { token })
-        setReportCard(res)
+        const res = await reportCardService.getById(id)
+        setReportCard(res.data)
       } catch {
         setReportCard(null)
       } finally {

@@ -1,18 +1,17 @@
 import { useState, useEffect, useCallback } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { api, authOptions } from '../../../../lib/api-services'
+import { authService, classService, parentService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
-import type { SchoolClass, Parent, ApiResponse } from '../../../../lib/types'
+import type { SchoolClass, Parent } from '../../../../lib/types'
 
 interface StudentForm {
   firstName: string
   lastName: string
   email: string
-  password: string
   phone: string
   dateOfBirth: string
   gender: string
@@ -36,7 +35,6 @@ const INITIAL_FORM: StudentForm = {
   firstName: '',
   lastName: '',
   email: '',
-  password: '',
   phone: '',
   dateOfBirth: '',
   gender: '',
@@ -68,8 +66,8 @@ export default function AddStudentPage() {
     const fetchData = async () => {
       try {
         const [classesRes, parentsRes] = await Promise.all([
-          api.get<ApiResponse<SchoolClass[]>>('/classes', authOptions()),
-          api.get<ApiResponse<Parent[]>>('/parents', authOptions()),
+          classService.getAll(),
+          parentService.getAll(),
         ])
         setClasses(classesRes.data || [])
         setParents(parentsRes.data || [])
@@ -118,15 +116,6 @@ export default function AddStudentPage() {
       newErrors.email = 'Invalid email format'
     }
 
-    // Password validation
-    if (!form.password) {
-      newErrors.password = 'Password is required'
-    } else if (form.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters'
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/.test(form.password)) {
-      newErrors.password = 'Password must include uppercase, lowercase, and number'
-    }
-
     // Phone validation (optional but if provided, must be valid)
     if (form.phone && !/^[\d\s+()-]{10,}$/.test(form.phone)) {
       newErrors.phone = 'Invalid phone number'
@@ -169,29 +158,24 @@ export default function AddStudentPage() {
         ? form.hobbies.split(',').map((h) => h.trim()).filter(Boolean)
         : undefined
 
-      await api.post(
-        '/auth/register-student',
-        {
-          firstName: form.firstName.trim(),
-          lastName: form.lastName.trim(),
-          email: form.email.trim().toLowerCase(),
-          password: form.password,
-          phone: form.phone || undefined,
-          dateOfBirth: form.dateOfBirth || undefined,
-          gender: form.gender || undefined,
-          address: form.address?.trim() || undefined,
-          bloodGroup: form.bloodGroup || undefined,
-          admissionDate: form.admissionDate || undefined,
-          status: form.status || undefined,
-          classId: form.classId || undefined,
-          parentId: form.parentId || undefined,
-          language: form.language?.trim() || undefined,
-          aboutMe: form.aboutMe?.trim() || undefined,
-          hobbies: hobbiesArray,
-          photo: form.photo?.trim() || undefined,
-        },
-        authOptions()
-      )
+      await authService.registerStudent({
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
+        email: form.email.trim().toLowerCase(),
+        phone: form.phone || undefined,
+        dateOfBirth: form.dateOfBirth || undefined,
+        gender: form.gender || undefined,
+        address: form.address?.trim() || undefined,
+        bloodGroup: form.bloodGroup || undefined,
+        admissionDate: form.admissionDate || undefined,
+        status: form.status || undefined,
+        classId: form.classId || undefined,
+        parentId: form.parentId || undefined,
+        language: form.language?.trim() || undefined,
+        aboutMe: form.aboutMe?.trim() || undefined,
+        hobbies: hobbiesArray,
+        photo: form.photo?.trim() || undefined,
+      })
 
       toast.success('Student created successfully')
       setIsDirty(false)
@@ -268,17 +252,6 @@ export default function AddStudentPage() {
                 required
                 autoComplete="email"
               />
-              <Input
-                id="password"
-                label="Password"
-                type="password"
-                value={form.password}
-                onChange={(e) => update('password', e.target.value)}
-                error={getFieldError('password')}
-                required
-                autoComplete="new-password"
-                helperText="Min 8 chars with uppercase, lowercase, and number"
-              />
             </div>
 
             <Input
@@ -289,6 +262,7 @@ export default function AddStudentPage() {
               onChange={(e) => update('phone', e.target.value)}
               error={getFieldError('phone')}
               autoComplete="tel"
+              helperText="Password will be auto-generated and sent via email"
             />
 
             {/* Personal Information */}

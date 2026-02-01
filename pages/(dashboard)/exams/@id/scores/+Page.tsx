@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../../lib/api'
+import { examService, studentService } from '../../../../../lib/api-services'
 import Card from '../../../../../components/ui/Card'
 import Button from '../../../../../components/ui/Button'
 import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
@@ -19,21 +19,24 @@ export default function ScoreEntryPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const examRes = await api.get<any>(`/exams/${id}`, { token })
-        setExam(examRes)
+        const examRes = await examService.getById(id)
+        setExam(examRes.data)
 
         // Fetch students for the exam's class
-        if (examRes.class?._id) {
-          const studentsRes = await api.get<any>(`/students?class=${examRes.class._id}&limit=100`, { token })
-          setStudents(studentsRes.result || [])
+        if (examRes.data?.class?._id) {
+          const studentsRes = await studentService.getAll({
+            // @ts-ignore - class filter not in type but works
+            class: examRes.data.class._id,
+            limit: 100
+          })
+          setStudents(studentsRes.data || [])
         }
 
         // Fetch existing scores
-        const scoresRes = await api.get<any>(`/exams/${id}/scores`, { token })
+        const scoresRes = await examService.getScores(id)
         const existingScores: Record<string, string> = {}
-        if (scoresRes.result) {
-          scoresRes.result.forEach((s: any) => {
+        if (scoresRes.data) {
+          scoresRes.data.forEach((s: any) => {
             existingScores[s.student?._id || s.student] = String(s.score)
           })
         }
@@ -55,7 +58,6 @@ export default function ScoreEntryPage() {
     setSaving(true)
     setMessage('')
     try {
-      const token = localStorage.getItem('accessToken') || ''
       const scoreEntries = Object.entries(scores)
         .filter(([, value]) => value !== '')
         .map(([studentId, score]) => ({
@@ -63,7 +65,7 @@ export default function ScoreEntryPage() {
           score: Number(score),
         }))
 
-      await api.post(`/exams/${id}/scores`, { scores: scoreEntries }, { token })
+      await examService.submitScores(id, scoreEntries)
       setMessage('Scores saved successfully!')
     } catch (err: any) {
       setMessage(err.message || 'Failed to save scores')

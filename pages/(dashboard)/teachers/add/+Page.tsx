@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { api } from '../../../../lib/api'
+import { authService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -12,7 +12,6 @@ export default function AddTeacherPage() {
     firstName: '',
     lastName: '',
     email: '',
-    password: '',
     phone: '',
     employeeId: '',
     qualification: '',
@@ -32,11 +31,10 @@ export default function AddTeacherPage() {
     setLoading(true)
 
     try {
-      await api.post('/auth/register-teacher', {
+      await authService.registerTeacher({
         firstName: form.firstName,
         lastName: form.lastName,
         email: form.email,
-        password: form.password,
         phone: form.phone || undefined,
         employeeId: form.employeeId || undefined,
         qualification: form.qualification || undefined,
@@ -71,10 +69,14 @@ export default function AddTeacherPage() {
             <Input label="Last Name" value={form.lastName} onChange={(e) => update('lastName', (e.target as HTMLInputElement).value)} required />
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input label="Email" type="email" value={form.email} onChange={(e) => update('email', (e.target as HTMLInputElement).value)} required />
-            <Input label="Password" type="password" value={form.password} onChange={(e) => update('password', (e.target as HTMLInputElement).value)} required />
-          </div>
+          <Input
+            label="Email"
+            type="email"
+            value={form.email}
+            onChange={(e) => update('email', (e.target as HTMLInputElement).value)}
+            required
+            helperText="Password will be auto-generated and sent via email"
+          />
 
           <Input label="Phone" value={form.phone} onChange={(e) => update('phone', (e.target as HTMLInputElement).value)} />
 

@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { api } from '../../../../lib/api'
+import { subjectService, classService, teacherService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
-import type { SchoolClass, Teacher, ApiResponse } from '../../../../lib/types'
+import type { SchoolClass, Teacher } from '../../../../lib/types'
 
 export default function AddSubjectPage() {
   const [form, setForm] = useState({
@@ -25,8 +25,8 @@ export default function AddSubjectPage() {
     const fetchData = async () => {
       try {
         const [classesRes, teachersRes] = await Promise.all([
-          api.get<ApiResponse<SchoolClass[]>>('/classes?limit=100'),
-          api.get<ApiResponse<Teacher[]>>('/teachers?limit=100'),
+          classService.getAll({ limit: 100 }),
+          teacherService.getAll({ limit: 100 }),
         ])
         setClasses(classesRes.data || [])
         setTeachers(teachersRes.data || [])
@@ -47,7 +47,7 @@ export default function AddSubjectPage() {
     setLoading(true)
 
     try {
-      await api.post('/subjects', {
+      await subjectService.create({
         name: form.name,
         code: form.code,
         isCore: form.isCore,

@@ -1,1 +1,3 @@
-export default 'Sqoolify - AI-Powered School Management'
+export default 'Acad AI - AI-Powered School Management'
+
+

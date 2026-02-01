@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../../lib/api'
+import { parentService, studentService } from '../../../../../lib/api-services'
 import Card from '../../../../../components/ui/Card'
 import Button from '../../../../../components/ui/Button'
 import Badge from '../../../../../components/ui/Badge'
@@ -19,12 +19,11 @@ export default function ChildReportCardPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const token = localStorage.getItem('accessToken') || ''
-        const studentRes = await api.get<any>(`/students/${id}`, { token })
-        setStudent(studentRes)
+        const studentRes = await studentService.getById(id)
+        setStudent(studentRes.data)
 
-        const reportRes = await api.get<any>(`/parents/my-children/${id}/report-card`, { token })
-        setReportCard(reportRes)
+        const reportRes = await parentService.getMyChildReportCard(id)
+        setReportCard(reportRes.data)
       } catch {
         setReportCard(null)
       } finally {

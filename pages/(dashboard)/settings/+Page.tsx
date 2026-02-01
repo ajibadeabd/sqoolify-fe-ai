@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { configService, schoolService } from '../../../lib/api-services';
 import { AppConfig, School } from '../../../lib/types';
 import { useAuth } from '../../../lib/auth-context';
@@ -11,8 +12,6 @@ export default function SettingsPage() {
   const [school, setSchool] = useState<School | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
 
   const [settings, setSettings] = useState({
     currency: 'NGN',
@@ -27,7 +26,6 @@ export default function SettingsPage() {
 
   const fetchData = useCallback(async () => {
     setLoading(true);
-    setError(null);
     try {
       const [configRes, schoolRes] = await Promise.all([
         configService.get().catch(() => ({ data: null })),
@@ -50,7 +48,7 @@ export default function SettingsPage() {
       }
       setSchool(schoolRes.data);
     } catch (err: any) {
-      setError(err.message || 'Failed to load settings');
+      toast.error(err.message || 'Failed to load settings');
     } finally {
       setLoading(false);
     }
@@ -62,13 +60,11 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     setSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       await configService.update(settings);
-      setSuccess('Settings saved successfully!');
+      toast.success('Settings saved successfully!');
     } catch (err: any) {
-      setError(err.message || 'Failed to save settings');
+      toast.error(err.message || 'Failed to save settings');
     } finally {
       setSaving(false);
     }
@@ -89,18 +85,6 @@ export default function SettingsPage() {
         <h1 className="text-2xl font-bold text-gray-900">School Settings</h1>
         <p className="text-sm text-gray-500 mt-1">Configure your school's preferences</p>
       </div>
-
-      {error && (
-        <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-          {error}
-        </div>
-      )}
-
-      {success && (
-        <div className="mb-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-          {success}
-        </div>
-      )}
 
       {/* School Info */}
       {school && (

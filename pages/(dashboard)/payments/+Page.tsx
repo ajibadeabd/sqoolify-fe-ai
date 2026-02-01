@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
 import { paymentService, studentService } from '../../../lib/api-services';
 import { Payment, Student } from '../../../lib/types';
+import { useAppConfig } from '../../../lib/use-app-config';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -10,6 +11,7 @@ import Badge from '../../../components/ui/Badge';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 
 export default function PaymentsPage() {
+  const { formatCurrency } = useAppConfig();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -17,7 +19,7 @@ export default function PaymentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<{ totalPayments: number; totalAmount: number } | null>(null);
+  const [summary, setSummary] = useState<{ totalPayments: number } | null>(null);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState('');
@@ -49,14 +51,6 @@ export default function PaymentsPage() {
   useEffect(() => {
     fetchPayments();
   }, [fetchPayments]);
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
-  };
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return '-';
@@ -135,7 +129,7 @@ export default function PaymentsPage() {
 
   return (
     <div>
-      <Breadcrumbs items={[{ label: 'Payments' }]} />
+        <Breadcrumbs items={[{ label: 'Payments' }]} />
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Payments</h1>
@@ -153,7 +147,7 @@ export default function PaymentsPage() {
           </div>
           <div className="bg-green-50 rounded-xl border border-green-200 p-6">
             <p className="text-sm text-green-600 mb-1">Total Amount</p>
-            <p className="text-2xl font-bold text-green-700">{formatCurrency(summary.totalAmount)}</p>
+            <p className="text-2xl font-bold text-green-700">{formatCurrency(summary.totalPayments)}</p>
           </div>
         </div>
       )}

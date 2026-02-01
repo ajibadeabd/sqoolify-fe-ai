@@ -3,7 +3,6 @@ import { apply, serve } from '@photonjs/express'
 
 function startServer() {
   const app = express()
-  app.use(express.json())
 
   // Health check
   app.get('/api/health', (_req, res) => {

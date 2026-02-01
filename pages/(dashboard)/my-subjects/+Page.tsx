@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { api } from '../../../lib/api'
+import { teacherService } from '../../../lib/api-services'
 import DataTable, { type Column } from '../../../components/ui/DataTable'
 import Pagination from '../../../components/ui/Pagination'
 import SearchBar from '../../../components/ui/SearchBar'
@@ -15,9 +15,8 @@ export default function MySubjectsPage() {
   const fetchSubjects = async () => {
     setLoading(true)
     try {
-      const token = localStorage.getItem('accessToken') || ''
-      const res = await api.get<any>(`/teachers/my-subjects?page=${page}&limit=10&search=${search}`, { token })
-      setSubjects(res.result || [])
+      const res = await teacherService.getMySubjects({ page, limit: 10, search })
+      setSubjects(res.data || [])
       setTotalPages(res.pagination?.totalPages || 1)
     } catch {
       setSubjects([])

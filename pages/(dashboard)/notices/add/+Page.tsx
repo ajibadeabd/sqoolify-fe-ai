@@ -10,23 +10,24 @@ import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 const VISIBILITY_OPTIONS = [
   { value: 'everyone', label: 'Everyone', icon: '🌐' },
   { value: 'staff', label: 'Staff Only', icon: '👨‍🏫' },
-  { value: 'teachers', label: 'Teachers', icon: '📚' },
-  { value: 'students', label: 'Students', icon: '🎓' },
-  { value: 'parents', label: 'Parents', icon: '👪' },
+  { value: 'teacher', label: 'Teachers', icon: '📚' },
+  { value: 'student', label: 'Students', icon: '🎓' },
+  { value: 'parent', label: 'Parents', icon: '👪' },
 ]
 
 const NOTIFICATION_TYPES = [
+  { value: 'general', label: 'General', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: '📢' },
   { value: 'info', label: 'Information', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: 'ℹ️' },
-  { value: 'warning', label: 'Warning', color: 'bg-yellow-100 text-yellow-700 border-yellow-200', icon: '⚠️' },
-  { value: 'urgent', label: 'Urgent', color: 'bg-red-100 text-red-700 border-red-200', icon: '🚨' },
-  { value: 'success', label: 'Success', color: 'bg-green-100 text-green-700 border-green-200', icon: '✅' },
+  { value: 'academic', label: 'Academic', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: '📚' },
+  { value: 'event', label: 'Event', color: 'bg-green-100 text-green-700 border-green-200', icon: '📅' },
+  { value: 'emergency', label: 'Emergency', color: 'bg-red-100 text-red-700 border-red-200', icon: '🚨' },
 ]
 
 export default function AddNoticePage() {
   const [form, setForm] = useState({
     title: '',
     content: '',
-    notificationType: 'info',
+    notificationType: 'general',
     isPinned: false,
     expiresAt: '',
   })

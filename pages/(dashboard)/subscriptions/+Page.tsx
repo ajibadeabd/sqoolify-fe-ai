@@ -1,11 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
+import { toast } from 'sonner';
 import { subscriptionService, planService } from '../../../lib/api-services';
 import { Subscription, SubscriptionHistory, Plan } from '../../../lib/types';
+import { useAppConfig } from '../../../lib/use-app-config';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 
 export default function SubscriptionsPage() {
+  const { formatCurrency } = useAppConfig();
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [plans, setPlans] = useState<Plan[]>([]);
   const [history, setHistory] = useState<SubscriptionHistory[]>([]);
@@ -26,7 +29,9 @@ export default function SubscriptionsPage() {
       setPlans(plansRes.data || []);
       setHistory(historyRes.data || []);
     } catch (err: any) {
-      setError(err.message || 'Failed to load subscription data');
+      const errorMsg = err.message || 'Failed to load subscription data';
+      setError(errorMsg);
+      toast.error(errorMsg);
     } finally {
       setLoading(false);
     }
@@ -39,10 +44,18 @@ export default function SubscriptionsPage() {
   const handleSubscribe = async (planId: string) => {
     setActionLoading(true);
     try {
-      await subscriptionService.subscribe(planId, true);
+      if (subscription && subscription.status === 'active') {
+        // Upgrade/change plan
+        await subscriptionService.renew(planId);
+        toast.success('Plan upgraded successfully');
+      } else {
+        // New subscription
+        await subscriptionService.subscribe(planId, true);
+        toast.success('Successfully subscribed to plan');
+      }
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'Failed to subscribe');
+      toast.error(err.message || 'Failed to subscribe');
     } finally {
       setActionLoading(false);
     }
@@ -53,9 +66,10 @@ export default function SubscriptionsPage() {
     setActionLoading(true);
     try {
       await subscriptionService.cancel();
+      toast.success('Subscription cancelled successfully');
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'Failed to cancel subscription');
+      toast.error(err.message || 'Failed to cancel subscription');
     } finally {
       setActionLoading(false);
     }
@@ -65,20 +79,13 @@ export default function SubscriptionsPage() {
     setActionLoading(true);
     try {
       await subscriptionService.renew();
+      toast.success('Subscription renewed successfully');
       fetchData();
     } catch (err: any) {
-      alert(err.message || 'Failed to renew subscription');
+      toast.error(err.message || 'Failed to renew subscription');
     } finally {
       setActionLoading(false);
     }
-  };
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-NG', {
-      style: 'currency',
-      currency: 'NGN',
-      minimumFractionDigits: 0,
-    }).format(amount);
   };
 
   const formatDate = (date: string | Date | undefined) => {
@@ -105,16 +112,14 @@ export default function SubscriptionsPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
   return (
     <div>
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        </div>
+      ) : (
+        <div>
       <Breadcrumbs items={[{ label: 'Subscriptions' }]} />
       <div className="mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Subscription Management</h1>
@@ -236,6 +241,14 @@ export default function SubscriptionsPage() {
                       Report Cards
                     </li>
                   )}
+                  {plan.features.hasNoticeBoard && (
+                    <li className="flex items-center gap-2 text-sm text-gray-600">
+                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                      </svg>
+                      Notice Board
+                    </li>
+                  )}
                   {plan.features.hasPayments && (
                     <li className="flex items-center gap-2 text-sm text-gray-600">
                       <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
@@ -250,8 +263,13 @@ export default function SubscriptionsPage() {
                 className="w-full mt-4"
                 onClick={() => handleSubscribe(plan._id)}
                 disabled={(subscription?.plan as any)?._id === plan._id || actionLoading}
+                loading={actionLoading}
               >
-                {(subscription?.plan as any)?._id === plan._id ? 'Current Plan' : 'Select Plan'}
+                {(subscription?.plan as any)?._id === plan._id
+                  ? 'Current Plan'
+                  : subscription?.status === 'active'
+                    ? 'Upgrade to this Plan'
+                    : 'Select Plan'}
               </Button>
             </div>
           ))}
@@ -275,6 +293,8 @@ export default function SubscriptionsPage() {
               </div>
             ))}
           </div>
+        </div>
+      )}
         </div>
       )}
     </div>

@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { api } from '../../../../lib/api'
+import { classService } from '../../../../lib/api-services'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
@@ -19,7 +19,7 @@ export default function ClassDetailPage() {
   useEffect(() => {
     const fetchClass = async () => {
       try {
-        const res = await api.get<any>(`/classes/${id}`)
+        const res = await classService.getById(id)
         setCls(res.data)
       } catch {
         setCls(null)
@@ -33,7 +33,7 @@ export default function ClassDetailPage() {
   const handleDelete = async () => {
     setDeleting(true)
     try {
-      await api.delete(`/classes/${id}`)
+      await classService.delete(id)
       await navigate('/classes')
     } catch {
       setDeleting(false)
@@ -59,6 +59,7 @@ export default function ClassDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Class Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/classes')}>Back</Button>
+          <Button variant="primary" onClick={() => navigate(`/classes/${id}/edit`)}>Edit</Button>
           <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
         </div>
       </div>

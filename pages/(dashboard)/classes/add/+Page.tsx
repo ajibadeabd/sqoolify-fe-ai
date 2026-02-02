@@ -1,6 +1,7 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
-import { classService } from '../../../../lib/api-services'
+import { classService, teacherService } from '../../../../lib/api-services'
+import type { Teacher } from '../../../../lib/types'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -11,9 +12,15 @@ export default function AddClassPage() {
     name: '',
     section: '',
     capacity: '',
+    classTeacher: '',
   })
+  const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  useEffect(() => {
+    teacherService.getAll({ limit: 100 }).then((res) => setTeachers(res.data || []))
+  }, [])
 
   const update = (key: string, value: string) => setForm({ ...form, [key]: value })
 
@@ -27,6 +34,7 @@ export default function AddClassPage() {
         name: form.name,
         section: form.section || undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
+        classTeacherId: form.classTeacher || undefined,
       })
 
       await navigate('/classes')
@@ -53,6 +61,26 @@ export default function AddClassPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <Input label="Section" value={form.section} onChange={(e) => update('section', (e.target as HTMLInputElement).value)} placeholder="e.g. A, B, Science" />
             <Input label="Capacity" type="number" value={form.capacity} onChange={(e) => update('capacity', (e.target as HTMLInputElement).value)} placeholder="e.g. 40" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class Teacher</label>
+            <select
+              value={form.classTeacher}
+              onChange={(e) => update('classTeacher', e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="">Select class teacher</option>
+              {teachers.map((teacher) => {
+                const user = typeof teacher.user === 'object' ? teacher.user : null
+                const name = user ? `${user.firstName} ${user.lastName}` : 'Unknown'
+                return (
+                  <option key={teacher._id} value={teacher._id}>
+                    {name}
+                  </option>
+                )
+              })}
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">

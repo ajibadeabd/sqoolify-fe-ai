@@ -3,15 +3,18 @@ import { navigate } from 'vike/client/router';
 import { paymentService, studentService } from '../../../lib/api-services';
 import { Payment, Student } from '../../../lib/types';
 import { useAppConfig } from '../../../lib/use-app-config';
+import { usePermission } from '../../../lib/use-permission';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
+import ActionMenu from '../../../components/ui/ActionMenu';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 
 export default function PaymentsPage() {
   const { formatCurrency } = useAppConfig();
+  const { can } = usePermission();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -32,7 +35,7 @@ export default function PaymentsPage() {
         paymentService.getAll({
           page,
           limit: 10,
-          status: filterStatus || undefined,
+          paymentStatus: filterStatus || undefined,
         }),
         paymentService.getSummary(),
       ]);
@@ -125,6 +128,16 @@ export default function PaymentsPage() {
       header: 'Date',
       render: (item) => formatDate(item.createdAt),
     },
+    {
+      key: 'actions',
+      header: '',
+      render: (item) => (
+        <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/payments/${item._id}`); } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/payments/${item._id}/edit`); }, hidden: !can('write_payments') },
+        ]} />
+      ),
+    },
   ];
 
   return (
@@ -193,6 +206,7 @@ export default function PaymentsPage() {
         )}
         loading={loading}
         emptyMessage="No payments found"
+        onRowClick={(item) => navigate(`/payments/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { classService } from '../../../../../lib/api-services'
+import { classService, teacherService } from '../../../../../lib/api-services'
+import type { Teacher } from '../../../../../lib/types'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -16,21 +17,29 @@ export default function EditClassPage() {
     name: '',
     section: '',
     capacity: '',
+    classTeacher: '',
   })
+  const [teachers, setTeachers] = useState<Teacher[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState('')
 
   useEffect(() => {
     if (!id) return
-    const fetchClass = async () => {
+    const fetchData = async () => {
       try {
-        const res = await classService.getById(id)
-        const cls = res.data
+        const [classRes, teachersRes] = await Promise.all([
+          classService.getById(id),
+          teacherService.getAll({ limit: 100 }),
+        ])
+        const cls = classRes.data
+        setTeachers(teachersRes.data || [])
+        const teacherId = typeof cls.classTeacher === 'object' ? cls.classTeacher?._id : cls.classTeacher
         setForm({
           name: cls.name || '',
           section: cls.section || '',
           capacity: cls.capacity?.toString() || '',
+          classTeacher: teacherId || '',
         })
       } catch {
         toast.error('Failed to load class')
@@ -39,7 +48,7 @@ export default function EditClassPage() {
         setLoading(false)
       }
     }
-    fetchClass()
+    fetchData()
   }, [id])
 
   const update = (key: string, value: string) => setForm({ ...form, [key]: value })
@@ -54,6 +63,7 @@ export default function EditClassPage() {
         name: form.name,
         section: form.section || undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
+        classTeacherId: form.classTeacher || undefined,
       })
       toast.success('Class updated successfully')
       await navigate(`/classes/${id}`)
@@ -89,6 +99,26 @@ export default function EditClassPage() {
           <div className="grid sm:grid-cols-2 gap-4">
             <Input label="Section" value={form.section} onChange={(e) => update('section', (e.target as HTMLInputElement).value)} placeholder="e.g. A, B, Science" />
             <Input label="Capacity" type="number" value={form.capacity} onChange={(e) => update('capacity', (e.target as HTMLInputElement).value)} placeholder="e.g. 40" />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class Teacher</label>
+            <select
+              value={form.classTeacher}
+              onChange={(e) => update('classTeacher', e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+            >
+              <option value="">Select class teacher</option>
+              {teachers.map((teacher) => {
+                const user = typeof teacher.user === 'object' ? teacher.user : null
+                const name = user ? `${user.firstName} ${user.lastName}` : 'Unknown'
+                return (
+                  <option key={teacher._id} value={teacher._id}>
+                    {name}
+                  </option>
+                )
+              })}
+            </select>
           </div>
 
           <div className="flex gap-3 pt-2">

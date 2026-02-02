@@ -68,7 +68,6 @@ export default function EditTeacherPage() {
 
     try {
       await teacherService.update(id, {
-        employeeId: form.employeeId?.trim() || undefined,
         qualification: form.qualification?.trim() || undefined,
         level: form.level?.trim() || undefined,
         aboutMe: form.aboutMe?.trim() || undefined,
@@ -133,8 +132,7 @@ export default function EditTeacherPage() {
               id="employeeId"
               label="Employee ID"
               value={form.employeeId}
-              onChange={(e) => update('employeeId', (e.target as HTMLInputElement).value)}
-              placeholder="e.g. TCH001"
+              disabled
             />
             <Input
               id="qualification"

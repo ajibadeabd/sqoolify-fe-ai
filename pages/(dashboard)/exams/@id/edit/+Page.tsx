@@ -7,7 +7,7 @@ import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
 import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
-import type { SchoolClass, Subject, Session } from '../../../../../lib/types'
+import type { SchoolClass, Subject, Session, ExamMode } from '../../../../../lib/types'
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import { getTermOptions } from '../../../../../lib/term-utils'
 
@@ -15,6 +15,13 @@ const EXAM_TYPES = [
   { value: 'CA1', label: 'CA 1', description: 'First Continuous Assessment', icon: '📝' },
   { value: 'CA2', label: 'CA 2', description: 'Second Continuous Assessment', icon: '📋' },
   { value: 'Exam', label: 'Examination', description: 'End of Term Examination', icon: '📄' },
+]
+
+const EXAM_MODES: { value: ExamMode; label: string; description: string; icon: string }[] = [
+  { value: 'traditional', label: 'Traditional', description: 'Enter scores manually', icon: '📊' },
+  { value: 'cbt', label: 'CBT', description: 'Online questions & auto-grading', icon: '💻' },
+  { value: 'file-upload', label: 'File Upload', description: 'Upload question papers', icon: '📎' },
+  { value: 'hybrid', label: 'Hybrid', description: 'Questions + file uploads', icon: '🔄' },
 ]
 
 export default function EditExamPage() {
@@ -32,6 +39,10 @@ export default function EditExamPage() {
     term: 'First',
     maxScore: 100,
     date: '',
+    examMode: 'traditional' as ExamMode,
+    duration: 60,
+    startTime: '',
+    endTime: '',
   })
   const [saving, setSaving] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -54,6 +65,13 @@ export default function EditExamPage() {
         setSessions(sessionsRes.data || [])
 
         const exam = examRes.data
+        const formatLocalDateTime = (dateStr?: string) => {
+          if (!dateStr) return ''
+          const d = new Date(dateStr)
+          const pad = (n: number) => n.toString().padStart(2, '0')
+          return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`
+        }
+
         setForm({
           name: exam.name || '',
           type: exam.type || 'CA1',
@@ -63,6 +81,10 @@ export default function EditExamPage() {
           term: exam.term || 'First',
           maxScore: exam.maxScore || 100,
           date: exam.date ? new Date(exam.date).toISOString().slice(0, 10) : '',
+          examMode: exam.examMode || 'traditional',
+          duration: exam.duration || 60,
+          startTime: formatLocalDateTime(exam.startTime),
+          endTime: formatLocalDateTime(exam.endTime),
         })
       } catch (err: any) {
         toast.error(err.message || 'Failed to load exam')
@@ -74,6 +96,8 @@ export default function EditExamPage() {
   }, [id])
 
   const update = (key: string, value: string | number) => setForm({ ...form, [key]: value })
+
+  const isCbtMode = form.examMode === 'cbt' || form.examMode === 'hybrid'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -100,6 +124,10 @@ export default function EditExamPage() {
         term: form.term,
         maxScore: form.maxScore,
         date: form.date || undefined,
+        examMode: form.examMode,
+        duration: isCbtMode ? form.duration : undefined,
+        startTime: isCbtMode && form.startTime ? form.startTime : undefined,
+        endTime: isCbtMode && form.endTime ? form.endTime : undefined,
       })
 
       toast.success('Exam updated successfully')
@@ -114,6 +142,7 @@ export default function EditExamPage() {
   const selectedClass = classes.find(c => c._id === form.classId)
   const selectedSubject = subjects.find(s => s._id === form.subjectId)
   const selectedSession = sessions.find(s => s._id === form.sessionId)
+  const selectedMode = EXAM_MODES.find(m => m.value === form.examMode)
 
   if (loading) {
     return (
@@ -144,6 +173,30 @@ export default function EditExamPage() {
         <div className="lg:col-span-2">
           <Card>
             <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Exam Mode */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-3">Exam Mode *</label>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                  {EXAM_MODES.map((mode) => (
+                    <button
+                      key={mode.value}
+                      type="button"
+                      onClick={() => update('examMode', mode.value)}
+                      className={`p-3 rounded-xl border-2 transition-all text-left ${
+                        form.examMode === mode.value
+                          ? 'border-blue-500 bg-blue-50 shadow-sm'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <span className="text-xl mb-1 block">{mode.icon}</span>
+                      <span className="font-semibold text-gray-900 block text-sm">{mode.label}</span>
+                      <span className="text-xs text-gray-500">{mode.description}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Exam Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Exam Type *</label>
                 <div className="grid grid-cols-3 gap-3">
@@ -166,6 +219,7 @@ export default function EditExamPage() {
                 </div>
               </div>
 
+              {/* Term */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Term *</label>
                 <div className="flex gap-3 flex-wrap">
@@ -186,6 +240,7 @@ export default function EditExamPage() {
                 </div>
               </div>
 
+              {/* Exam Details */}
               <div className="border-t pt-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Exam Details</h3>
 
@@ -276,6 +331,47 @@ export default function EditExamPage() {
                 </div>
               </div>
 
+              {/* CBT Settings */}
+              {isCbtMode && (
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold text-gray-900 mb-4">CBT Settings</h3>
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">Duration (minutes) *</label>
+                      <input
+                        type="number"
+                        value={form.duration}
+                        onChange={(e) => update('duration', parseInt(e.target.value) || 0)}
+                        className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        min={1}
+                        placeholder="e.g. 60"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">How long students have to complete the exam</p>
+                    </div>
+                    <div className="grid sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Available From (Optional)</label>
+                        <input
+                          type="datetime-local"
+                          value={form.startTime}
+                          onChange={(e) => update('startTime', e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">Available Until (Optional)</label>
+                        <input
+                          type="datetime-local"
+                          value={form.endTime}
+                          onChange={(e) => update('endTime', e.target.value)}
+                          className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex gap-3 pt-4 border-t">
                 <Button type="submit" loading={saving} className="flex-1 sm:flex-none">
                   Save Changes
@@ -304,6 +400,10 @@ export default function EditExamPage() {
 
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
+                    <span className="text-gray-500">Mode</span>
+                    <span className="font-medium">{selectedMode?.icon} {selectedMode?.label}</span>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-gray-500">Class</span>
                     <span className="font-medium">{selectedClass?.name || '-'}</span>
                   </div>
@@ -330,6 +430,12 @@ export default function EditExamPage() {
                     <span className="text-gray-500">Max Score</span>
                     <span className="font-bold text-blue-600">{form.maxScore}</span>
                   </div>
+                  {isCbtMode && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Duration</span>
+                      <span className="font-medium">{form.duration} min</span>
+                    </div>
+                  )}
                   {form.date && (
                     <div className="flex justify-between">
                       <span className="text-gray-500">Date</span>

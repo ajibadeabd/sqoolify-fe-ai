@@ -9,7 +9,8 @@ import {
   Bank, CreateBankData, Notice, CreateNoticeData, Plan, Subscription,
   SubscriptionHistory, Fee, CreateFeeData, StudentFee, Payment, CreatePaymentData,
   ExamResult, CreateExamResultData, AssessmentConfig, AppConfig, ConfigSettings,
-  DashboardStats, UploadResponse
+  DashboardStats, UploadResponse,
+  Question, CreateQuestionData, StudentAnswer, ExamAttempt, ExamAttachment,
 } from './types';
 
 // Helper to get auth options
@@ -55,6 +56,15 @@ export const authService = {
 
   registerTeacher: (data: any) =>
     api.post<ApiResponse<Teacher>>('/auth/register-teacher', data, authOptions()),
+
+  bulkRegisterStudents: (students: any[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/auth/bulk-register-students', { students }, authOptions()),
+
+  bulkRegisterTeachers: (teachers: any[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/auth/bulk-register-teachers', { teachers }, authOptions()),
+
+  bulkRegisterParents: (parents: any[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/auth/bulk-register-parents', { parents }, authOptions()),
 };
 
 // ============ USERS ============
@@ -89,7 +99,7 @@ export const schoolService = {
 
 // ============ STUDENTS ============
 export const studentService = {
-  getAll: (params?: { page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; search?: string; sortBy?: string; sortOrder?: string; classId?: string; unassigned?: boolean }) =>
     api.get<ApiResponse<Student[]>>(`/students${buildQuery(params || {})}`, authOptions()),
 
   getById: (id: string) =>
@@ -107,8 +117,11 @@ export const studentService = {
   assignParent: (studentId: string, parentId: string) =>
     api.patch<ApiResponse<Student>>(`/students/${studentId}/assign-parent`, { parentId }, authOptions()),
 
-  assignClass: (studentId: string, classId: string) =>
-    api.patch<ApiResponse<Student>>(`/students/${studentId}/assign-class`, { classId }, authOptions()),
+  bulkAssignClass: (studentIds: string[], classId: string) =>
+    api.post<ApiResponse<{ success: number; failed: number }>>('/students/bulk-assign-class', { studentIds, classId }, authOptions()),
+
+  bulkRemoveClass: (studentIds: string[]) =>
+    api.post<ApiResponse<{ success: number; failed: number }>>('/students/bulk-remove-class', { studentIds }, authOptions()),
 
   getMyReportCard: () =>
     api.get<ApiResponse<any>>('/students/my-report-card', authOptions()),
@@ -196,6 +209,9 @@ export const classService = {
 
   getStudents: (classId: string) =>
     api.get<ApiResponse<Student[]>>(`/classes/${classId}/students`, authOptions()),
+
+  bulkImport: (classes: any[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/classes/bulk-import', { classes }, authOptions()),
 };
 
 // ============ SUBJECTS ============
@@ -216,10 +232,16 @@ export const subjectService = {
     api.delete<ApiResponse<void>>(`/subjects/${id}`, authOptions()),
 
   assignTeacher: (subjectId: string, teacherId: string) =>
-    api.patch<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-teacher`, { teacherId }, authOptions()),
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-teacher/${teacherId}`, {}, authOptions()),
+
+  removeTeacher: (subjectId: string) =>
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/remove-teacher`, {}, authOptions()),
 
   assignClass: (subjectId: string, classId: string) =>
-    api.patch<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-class`, { classId }, authOptions()),
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-class/${classId}`, {}, authOptions()),
+
+  bulkImport: (subjects: any[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/subjects/bulk-import', { subjects }, authOptions()),
 };
 
 // ============ SESSIONS ============
@@ -271,6 +293,61 @@ export const examService = {
 
   submitScores: (examId: string, scores: { student: string; score: number }[]) =>
     api.post<ApiResponse<any>>(`/exams/${examId}/scores`, { scores }, authOptions()),
+
+  // Question management (CBT)
+  getQuestions: (examId: string) =>
+    api.get<ApiResponse<Question[]>>(`/exams/${examId}/questions`, authOptions()),
+
+  createQuestion: (examId: string, data: CreateQuestionData) =>
+    api.post<ApiResponse<Question>>(`/exams/${examId}/questions`, data, authOptions()),
+
+  updateQuestion: (examId: string, questionId: string, data: Partial<CreateQuestionData>) =>
+    api.patch<ApiResponse<Question>>(`/exams/${examId}/questions/${questionId}`, data, authOptions()),
+
+  deleteQuestion: (examId: string, questionId: string) =>
+    api.delete<ApiResponse<void>>(`/exams/${examId}/questions/${questionId}`, authOptions()),
+
+  bulkCreateQuestions: (examId: string, questions: CreateQuestionData[]) =>
+    api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>(`/exams/${examId}/questions/bulk`, { questions }, authOptions()),
+
+  reorderQuestions: (examId: string, questionIds: string[]) =>
+    api.patch<ApiResponse<void>>(`/exams/${examId}/questions/reorder`, { questionIds }, authOptions()),
+
+  publishExam: (examId: string) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/publish`, {}, authOptions()),
+
+  unpublishExam: (examId: string) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/unpublish`, {}, authOptions()),
+
+  // File attachments
+  addAttachment: (examId: string, data: ExamAttachment) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/attachments`, data, authOptions()),
+
+  removeAttachment: (examId: string, publicId: string) =>
+    api.delete<ApiResponse<Exam>>(`/exams/${examId}/attachments/${publicId}`, authOptions()),
+
+  // Student exam taking (CBT)
+  startExam: (examId: string) =>
+    api.get<ApiResponse<{ attempt: ExamAttempt; questions: Question[] }>>(`/exams/${examId}/start`, authOptions()),
+
+  saveAnswer: (examId: string, questionId: string, answer: string) =>
+    api.post<ApiResponse<StudentAnswer>>(`/exams/${examId}/answer`, { questionId, answer }, authOptions()),
+
+  submitExam: (examId: string) =>
+    api.post<ApiResponse<ExamAttempt>>(`/exams/${examId}/submit`, {}, authOptions()),
+
+  // Teacher grading (CBT)
+  getSubmissions: (examId: string) =>
+    api.get<ApiResponse<ExamAttempt[]>>(`/exams/${examId}/submissions`, authOptions()),
+
+  getStudentSubmission: (examId: string, studentId: string) =>
+    api.get<ApiResponse<{ answers: StudentAnswer[]; attempt: ExamAttempt }>>(`/exams/${examId}/submissions/${studentId}`, authOptions()),
+
+  gradeAnswer: (examId: string, data: { studentId: string; questionId: string; score: number; feedback?: string }) =>
+    api.patch<ApiResponse<StudentAnswer>>(`/exams/${examId}/grade`, data, authOptions()),
+
+  finalizeGrades: (examId: string) =>
+    api.post<ApiResponse<Score[]>>(`/exams/${examId}/finalize-grades`, {}, authOptions()),
 };
 
 // ============ SCORES ============
@@ -453,7 +530,7 @@ export const feeService = {
 
 // ============ PAYMENTS ============
 export const paymentService = {
-  getAll: (params?: { page?: number; limit?: number; studentId?: string; status?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; studentId?: string; paymentStatus?: string }) =>
     api.get<ApiResponse<Payment[]>>(`/payments${buildQuery(params || {})}`, authOptions()),
 
   getById: (id: string) =>
@@ -461,6 +538,9 @@ export const paymentService = {
 
   create: (data: CreatePaymentData) =>
     api.post<ApiResponse<Payment>>('/payments', data, authOptions()),
+
+  update: (id: string, data: Record<string, any>) =>
+    api.patch<ApiResponse<Payment>>(`/payments/${id}`, data, authOptions()),
 
   getSummary: (params?: { sessionId?: string; term?: number }) =>
     api.get<ApiResponse<{ totalPayments: number; totalAmount: number }>>(`/payments/summary${buildQuery(params || {})}`, authOptions()),

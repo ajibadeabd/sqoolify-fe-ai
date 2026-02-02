@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { navigate } from 'vike/client/router';
 import { bankService } from '../../../lib/api-services';
 import { Bank } from '../../../lib/types';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
@@ -105,6 +106,8 @@ export default function BanksPage() {
       header: '',
       render: (item) => (
         <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/banks/${item._id}`); } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/banks/${item._id}`); }, hidden: !can('write_banks') },
           { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_banks') },
         ]} />
       ),
@@ -192,6 +195,7 @@ export default function BanksPage() {
         data={banks}
         loading={loading}
         emptyMessage="No bank accounts found"
+        onRowClick={(item) => navigate(`/banks/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

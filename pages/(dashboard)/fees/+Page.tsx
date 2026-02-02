@@ -114,6 +114,8 @@ export default function FeesPage() {
       header: '',
       render: (item) => (
         <ActionMenu items={[
+          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/fees/${item._id}`); } },
+          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/fees/${item._id}/edit`); }, hidden: !can('write_fees') },
           { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_fees') },
         ]} />
       ),
@@ -183,6 +185,7 @@ export default function FeesPage() {
         data={fees}
         loading={loading}
         emptyMessage="No fee structures found"
+        onRowClick={(item) => navigate(`/fees/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

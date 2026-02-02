@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
-import { parentService } from '../../../lib/api-services';
+import { toast } from 'sonner';
+import { parentService, authService } from '../../../lib/api-services';
 import { Parent } from '../../../lib/types';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
@@ -8,7 +9,23 @@ import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import ActionMenu from '../../../components/ui/ActionMenu';
+import CsvImportModal from '../../../components/ui/CsvImportModal';
 import { usePermission } from '../../../lib/use-permission';
+
+const PARENT_CSV_COLUMNS = [
+  { key: 'firstName', label: 'First Name', required: true },
+  { key: 'lastName', label: 'Last Name', required: true },
+  { key: 'email', label: 'Email', required: true },
+  { key: 'phone', label: 'Phone' },
+  { key: 'occupation', label: 'Occupation' },
+  { key: 'relationship', label: 'Relationship' },
+  { key: 'address', label: 'Address' },
+];
+
+const PARENT_TEMPLATE_ROWS = [
+  { firstName: 'Michael', lastName: 'Doe', email: 'michael.doe@example.com', phone: '08055556666', occupation: 'Engineer', relationship: 'father', address: '123 Main St' },
+  { firstName: 'Sarah', lastName: 'Smith', email: 'sarah.smith@example.com', phone: '08077778888', occupation: 'Teacher', relationship: 'mother', address: '456 Oak Ave' },
+];
 
 export default function ParentsPage() {
   const { can, canWrite } = usePermission();
@@ -19,6 +36,7 @@ export default function ParentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showImport, setShowImport] = useState(false);
 
   const fetchParents = useCallback(async () => {
     setLoading(true);
@@ -111,7 +129,10 @@ export default function ParentsPage() {
           <p className="text-sm text-gray-500 mt-1">{total} total parents</p>
         </div>
         {canWrite('parents') && (
-          <Button onClick={() => navigate('/parents/add')}>+ Add Parent</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button onClick={() => navigate('/parents/add')}>+ Add Parent</Button>
+          </div>
         )}
       </div>
 
@@ -144,6 +165,23 @@ export default function ParentsPage() {
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <CsvImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        title="Import Parents from CSV"
+        columns={PARENT_CSV_COLUMNS}
+        templateRows={PARENT_TEMPLATE_ROWS}
+        templateFilename="parents-template.csv"
+        onImport={async (rows) => {
+          const result = await authService.bulkRegisterParents(rows);
+          if (result.data.failureCount === 0) {
+            toast.success(`${result.data.successCount} parents imported`);
+            fetchParents();
+          }
+          return result.data;
+        }}
+      />
     </div>
   );
 }

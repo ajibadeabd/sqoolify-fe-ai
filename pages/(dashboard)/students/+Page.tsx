@@ -1,14 +1,35 @@
 import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
-import { studentService } from '../../../lib/api-services';
-import { Student } from '../../../lib/types';
+import { toast } from 'sonner';
+import { studentService, authService, classService } from '../../../lib/api-services';
+import { Student, SchoolClass } from '../../../lib/types';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import ActionMenu from '../../../components/ui/ActionMenu';
+import CsvImportModal from '../../../components/ui/CsvImportModal';
 import { usePermission } from '../../../lib/use-permission';
+
+const STUDENT_CSV_COLUMNS = [
+  { key: 'firstName', label: 'First Name', required: true },
+  { key: 'lastName', label: 'Last Name', required: true },
+  { key: 'email', label: 'Email', required: true },
+  { key: 'phone', label: 'Phone' },
+  { key: 'gender', label: 'Gender' },
+  { key: 'bloodGroup', label: 'Blood Group' },
+  { key: 'admissionDate', label: 'Admission Date' },
+  { key: 'language', label: 'Language' },
+  { key: 'aboutMe', label: 'About' },
+  { key: 'dateOfBirth', label: 'Date of Birth' },
+  { key: 'address', label: 'Address' },
+];
+
+const STUDENT_TEMPLATE_ROWS = [
+  { firstName: 'John', lastName: 'Doe', email: 'john.doe@example.com', phone: '08012345678', gender: 'male', dateOfBirth: '2010-05-15', address: '123 Main St', bloodGroup: 'O+', admissionDate: '2023-09-01', language: 'English', aboutMe: 'Loves science' },
+  { firstName: 'Jane', lastName: 'Smith', email: 'jane.smith@example.com', phone: '08087654321', gender: 'female', dateOfBirth: '2011-03-20', address: '456 Oak Ave', bloodGroup: 'A-', admissionDate: '2023-09-01', language: 'French', aboutMe: 'Enjoys reading' },
+];
 
 export default function StudentsPage() {
   const { can, canWrite } = usePermission();
@@ -19,12 +40,24 @@ export default function StudentsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showImport, setShowImport] = useState(false);
+  const [classes, setClasses] = useState<SchoolClass[]>([]);
+  const [selectedClass, setSelectedClass] = useState('');
+
+  useEffect(() => {
+    classService.getAll({ limit: 100 }).then((res) => setClasses(res.data || []));
+  }, []);
 
   const fetchStudents = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
-      const res = await studentService.getAll({ page, limit: 10, search: search || undefined });
+      const res = await studentService.getAll({
+        page,
+        limit: 10,
+        search: search || undefined,
+        classId: selectedClass || undefined,
+      });
       setStudents(res.data || []);
       setTotalPages(res.pagination?.totalPages || 1);
       setTotal(res.pagination?.total || 0);
@@ -34,7 +67,7 @@ export default function StudentsPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, selectedClass]);
 
   useEffect(() => {
     fetchStudents();
@@ -105,7 +138,10 @@ export default function StudentsPage() {
           <p className="text-sm text-gray-500 mt-1">{total} total students</p>
         </div>
         {canWrite('students') && (
-          <Button onClick={() => navigate('/students/add')}>+ Add Student</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button onClick={() => navigate('/students/add')}>+ Add Student</Button>
+          </div>
         )}
       </div>
 
@@ -118,15 +154,32 @@ export default function StudentsPage() {
         </div>
       )}
 
-      <div className="mb-4 max-w-sm">
-        <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
+      <div className="mb-4 flex items-center gap-4">
+        <div className="max-w-sm flex-1">
+          <SearchBar
+            value={search}
+            onChange={(val) => {
+              setSearch(val);
+              setPage(1);
+            }}
+            placeholder="Search by name or admission no..."
+          />
+        </div>
+        <select
+          value={selectedClass}
+          onChange={(e) => {
+            setSelectedClass(e.target.value);
             setPage(1);
           }}
-          placeholder="Search by name or admission no..."
-        />
+          className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+        >
+          <option value="">All Classes</option>
+          {classes.map((cls) => (
+            <option key={cls._id} value={cls._id}>
+              {cls.name}{cls.section ? ` - ${cls.section}` : ''}
+            </option>
+          ))}
+        </select>
       </div>
 
       <DataTable
@@ -138,6 +191,23 @@ export default function StudentsPage() {
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <CsvImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        title="Import Students from CSV"
+        columns={STUDENT_CSV_COLUMNS}
+        templateRows={STUDENT_TEMPLATE_ROWS}
+        templateFilename="students-template.csv"
+        onImport={async (rows) => {
+          const result = await authService.bulkRegisterStudents(rows);
+          if (result.data.failureCount === 0) {
+            toast.success(`${result.data.successCount} students imported`);
+            fetchStudents();
+          }
+          return result.data;
+        }}
+      />
     </div>
   );
 }

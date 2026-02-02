@@ -83,8 +83,8 @@ export default function NoticeDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Notice Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/notices')}>Back</Button>
-          {can('write_notices') && <Button variant="primary" onClick={() => navigate(`/notices/${id}/edit`)}>Edit</Button>}
-          {can('delete_notices') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
+          {can('write_notices') && !isExpired && <Button variant="primary" onClick={() => navigate(`/notices/${id}/edit`)}>Edit</Button>}
+          {can('delete_notices') && !isExpired && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
 

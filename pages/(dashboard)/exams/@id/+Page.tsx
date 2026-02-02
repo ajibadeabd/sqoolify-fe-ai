@@ -9,16 +9,23 @@ import Badge from '../../../../components/ui/Badge'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import ConfirmDialog from '../../../../components/ui/ConfirmDialog'
 import { usePermission } from '../../../../lib/use-permission'
+import type { ExamAttempt } from '../../../../lib/types'
 
 export default function ExamDetailPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
-  const { can } = usePermission()
+  const { can ,canWrite} = usePermission()
   const [exam, setExam] = useState<any>(null)
   const [scores, setScores] = useState<any[]>([])
+  const [submissions, setSubmissions] = useState<ExamAttempt[]>([])
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [publishing, setPublishing] = useState(false)
+
+  const isCbt = exam?.examMode === 'cbt' || exam?.examMode === 'hybrid'
+  const isFileUpload = exam?.examMode === 'file-upload' || exam?.examMode === 'hybrid'
+  const isTraditional = !exam?.examMode || exam?.examMode === 'traditional'
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -26,12 +33,23 @@ export default function ExamDetailPage() {
         const res = await examService.getById(id)
         setExam(res.data)
 
-        // Also fetch scores
+        // Fetch scores for traditional/all modes
         try {
           const scoresRes = await examService.getScores(id)
           setScores(scoresRes.data || [])
         } catch {
           // Scores may not exist yet
+        }
+
+        // Fetch submissions for CBT/hybrid modes
+        const mode = res.data?.examMode
+        if (mode === 'cbt' || mode === 'hybrid') {
+          try {
+            const subsRes = await examService.getSubmissions(id)
+            setSubmissions(subsRes.data || [])
+          } catch {
+            // No submissions yet
+          }
         }
       } catch {
         setExam(null)
@@ -50,6 +68,32 @@ export default function ExamDetailPage() {
       await navigate('/exams')
     } catch {
       setDeleting(false)
+    }
+  }
+
+  const handlePublish = async () => {
+    setPublishing(true)
+    try {
+      await examService.publishExam(id)
+      toast.success('Exam published successfully')
+      setExam((prev: any) => ({ ...prev, published: true }))
+    } catch {
+      toast.error('Failed to publish exam')
+    } finally {
+      setPublishing(false)
+    }
+  }
+
+  const handleUnpublish = async () => {
+    setPublishing(true)
+    try {
+      await examService.unpublishExam(id)
+      toast.success('Exam unpublished — now in draft mode')
+      setExam((prev: any) => ({ ...prev, published: false }))
+    } catch (err: any) {
+      toast.error(err?.data?.message || 'Failed to unpublish exam')
+    } finally {
+      setPublishing(false)
     }
   }
 
@@ -75,10 +119,32 @@ export default function ExamDetailPage() {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   }
 
+  const formatDateTime = (date: string | undefined) => {
+    if (!date) return '-'
+    return new Date(date).toLocaleString('en-US', {
+      year: 'numeric', month: 'short', day: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+  }
+
   const typeColors: Record<string, string> = {
     CA1: 'bg-blue-100 text-blue-700',
     CA2: 'bg-indigo-100 text-indigo-700',
     Exam: 'bg-purple-100 text-purple-700',
+  }
+
+  const modeLabels: Record<string, string> = {
+    traditional: 'Traditional',
+    cbt: 'CBT',
+    'file-upload': 'File Upload',
+    hybrid: 'Hybrid',
+  }
+
+  const modeColors: Record<string, string> = {
+    traditional: 'bg-gray-100 text-gray-700',
+    cbt: 'bg-green-100 text-green-700',
+    'file-upload': 'bg-orange-100 text-orange-700',
+    hybrid: 'bg-violet-100 text-violet-700',
   }
 
   return (
@@ -86,11 +152,41 @@ export default function ExamDetailPage() {
       <Breadcrumbs items={[{ label: 'Exams', href: '/exams' }, { label: exam.name }]} />
 
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Exam Details</h1>
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-gray-900">Exam Details</h1>
+          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${modeColors[exam.examMode || 'traditional']}`}>
+            {modeLabels[exam.examMode || 'traditional']}
+          </span>
+          {isCbt && (
+            <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${exam.published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+              {exam.published ? 'Published' : 'Draft'}
+            </span>
+          )}
+        </div>
+        <div className="flex gap-3 flex-wrap">
           <Button variant="outline" onClick={() => navigate('/exams')}>Back</Button>
-          {can('write_exams') && <Button variant="primary" onClick={() => navigate(`/exams/${id}/edit`)}>Edit</Button>}
-          {can('grade_exams') && <Button onClick={() => navigate(`/exams/${id}/scores`)}>Enter Scores</Button>}
+          {canWrite('exams') && !exam.published && <Button variant="primary" onClick={() => navigate(`/exams/${id}/edit`)}>Edit</Button>}
+          {  canWrite('exams') && (
+            <Button variant="outline" onClick={() => navigate(`/exams/${id}/questions`)}>
+              Manage Questions
+            </Button>
+          )}
+          {isCbt && can('write_exams') && !exam.published && (
+            <Button onClick={handlePublish} disabled={publishing}>
+              {publishing ? 'Publishing...' : 'Publish'}
+            </Button>
+          )}
+          {isCbt && can('write_exams') && exam.published && submissions.length === 0 && (
+            <Button variant="outline" onClick={handleUnpublish} disabled={publishing}>
+              {publishing ? 'Unpublishing...' : 'Unpublish'}
+            </Button>
+          )}
+          {isTraditional && can('grade_exams') && (
+            <Button onClick={() => navigate(`/exams/${id}/scores`)}>Enter Scores</Button>
+          )}
+          {isCbt && can('grade_exams') && (
+            <Button onClick={() => navigate(`/exams/${id}/grade`)}>Grade</Button>
+          )}
           {can('delete_exams') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
@@ -107,6 +203,14 @@ export default function ExamDetailPage() {
             <p>
               <span className={`px-2 py-1 text-xs rounded-full ${typeColors[exam.type] || 'bg-gray-100 text-gray-700'}`}>
                 {exam.type}
+              </span>
+            </p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Exam Mode</label>
+            <p>
+              <span className={`px-2 py-1 text-xs rounded-full ${modeColors[exam.examMode || 'traditional']}`}>
+                {modeLabels[exam.examMode || 'traditional']}
               </span>
             </p>
           </div>
@@ -134,6 +238,22 @@ export default function ExamDetailPage() {
             <label className="text-sm text-gray-500">Date</label>
             <p className="font-medium">{formatDate(exam.date)}</p>
           </div>
+          {isCbt && (
+            <>
+              <div>
+                <label className="text-sm text-gray-500">Duration</label>
+                <p className="font-medium">{exam.duration ? `${exam.duration} minutes` : '-'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Start Time</label>
+                <p className="font-medium">{formatDateTime(exam.startTime)}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">End Time</label>
+                <p className="font-medium">{formatDateTime(exam.endTime)}</p>
+              </div>
+            </>
+          )}
           <div>
             <label className="text-sm text-gray-500">Created</label>
             <p className="font-medium">{formatDate(exam.createdAt)}</p>
@@ -141,12 +261,118 @@ export default function ExamDetailPage() {
         </div>
       </Card>
 
-      {/* Scores Summary */}
+      {/* Attachments Section (file-upload / hybrid) */}
+      {isFileUpload && (
+        <Card title={`Attachments (${exam.attachments?.length || 0})`}>
+          {(!exam.attachments || exam.attachments.length === 0) ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500">No attachments uploaded yet</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {exam.attachments.map((att: any) => (
+                <div key={att.publicId} className="border rounded-lg p-4 flex items-center gap-3">
+                  {att.fileType?.startsWith('image/') ? (
+                    <img src={att.url} alt={att.filename} className="w-12 h-12 object-cover rounded" />
+                  ) : (
+                    <div className="w-12 h-12 bg-red-50 rounded flex items-center justify-center text-red-500 text-xs font-bold">
+                      PDF
+                    </div>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900 truncate">{att.filename}</p>
+                    <a
+                      href={att.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-600 hover:underline"
+                    >
+                      View / Download
+                    </a>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* CBT Submissions Summary */}
+      {isCbt && (
+        <Card title={`Submissions (${submissions.length})`}>
+          {submissions.length === 0 ? (
+            <div className="text-center py-8">
+              <p className="text-gray-500 mb-3">No submissions yet</p>
+              {!exam.published && can('write_exams') && (
+                <p className="text-sm text-yellow-600">Publish the exam first so students can take it.</p>
+              )}
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">#</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Student</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Score</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Time Spent</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Submitted</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {submissions.map((sub, index) => {
+                    const student = typeof sub.student === 'object' ? sub.student as any : null
+                    const studentUser = student?.user && typeof student.user === 'object' ? student.user : null
+                    const studentName = studentUser
+                      ? `${studentUser.firstName} ${studentUser.lastName}`
+                      : 'Unknown'
+                    const statusColors: Record<string, string> = {
+                      in_progress: 'warning',
+                      submitted: 'info',
+                      graded: 'success',
+                    }
+                    const timeMinutes = sub.timeSpent ? Math.round(sub.timeSpent / 60) : null
+
+                    return (
+                      <tr key={sub._id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 text-sm text-gray-500">{index + 1}</td>
+                        <td className="px-6 py-4 text-sm text-gray-900 font-medium">{studentName}</td>
+                        <td className="px-6 py-4">
+                          <Badge variant={statusColors[sub.status] as any || 'default'}>
+                            {sub.status.replace('_', ' ')}
+                          </Badge>
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {sub.totalScore != null ? (
+                            <>
+                              <span className="font-medium">{sub.totalScore}</span>
+                              <span className="text-gray-400">/{exam.maxScore}</span>
+                            </>
+                          ) : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {timeMinutes != null ? `${timeMinutes} min` : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {sub.submittedAt ? formatDateTime(sub.submittedAt) : '-'}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+      {/* Scores Summary (traditional + all modes after finalization) */}
       <Card title={`Scores (${scores.length})`}>
         {scores.length === 0 ? (
           <div className="text-center py-8">
             <p className="text-gray-500 mb-3">No scores recorded yet</p>
-            {can('grade_exams') && (
+            {isTraditional && can('grade_exams') && (
               <Button onClick={() => navigate(`/exams/${id}/scores`)}>Enter Scores</Button>
             )}
           </div>

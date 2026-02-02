@@ -75,6 +75,18 @@ export default function SessionsPage() {
     });
   };
 
+  const getCurrentTerm = (terms?: { name: string; startDate: string; endDate: string }[]) => {
+    if (!terms?.length) return null;
+    const now = new Date();
+    const active = terms.find((t) => new Date(t.startDate) <= now && new Date(t.endDate) >= now);
+    if (active) return { term: active, upcoming: false };
+    const upcoming = terms
+      .filter((t) => new Date(t.startDate) > now)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+    if (upcoming) return { term: upcoming, upcoming: true };
+    return null;
+  };
+
   const columns: Column<Session>[] = [
     { key: 'name', header: 'Name' },
     {
@@ -90,11 +102,22 @@ export default function SessionsPage() {
     {
       key: 'currentTerm',
       header: 'Current Term',
-      render: (item) => (
-        <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-          Term {item.currentTerm || 1}
-        </span>
-      ),
+      render: (item) => {
+        const result = getCurrentTerm(item.terms);
+        if (!result) return <span className="text-gray-400 text-sm">—</span>;
+        if (result.upcoming) {
+          return (
+            <span className="px-2 py-1 text-xs bg-amber-100 text-amber-700 rounded-full">
+              {result.term.name} Term (upcoming)
+            </span>
+          );
+        }
+        return (
+          <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
+            {result.term.name} Term
+          </span>
+        );
+      },
     },
     {
       key: 'isCurrent',

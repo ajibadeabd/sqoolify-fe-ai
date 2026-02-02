@@ -112,6 +112,10 @@ export default function EditSessionPage() {
         toast.error(`${term.name} Term: End date must be after start date`)
         return
       }
+      if (new Date(term.startDate) < new Date(form.startDate) || new Date(term.endDate) > new Date(form.endDate)) {
+        toast.error(`${term.name} Term: Dates must fall within the session start and end dates`)
+        return
+      }
     }
 
     setSaving(true)
@@ -267,6 +271,8 @@ export default function EditSessionPage() {
                                 type="date"
                                 value={term.startDate}
                                 onChange={(e) => updateTerm(index, 'startDate', e.target.value)}
+                                min={form.startDate || undefined}
+                                max={form.endDate || undefined}
                                 className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 required
                               />
@@ -277,6 +283,8 @@ export default function EditSessionPage() {
                                 type="date"
                                 value={term.endDate}
                                 onChange={(e) => updateTerm(index, 'endDate', e.target.value)}
+                                min={form.startDate || undefined}
+                                max={form.endDate || undefined}
                                 className="w-full px-4 py-2.5 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                                 required
                               />

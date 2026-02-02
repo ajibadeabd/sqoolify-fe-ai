@@ -15,6 +15,8 @@ export default function AddSubjectPage() {
     isCore: false,
     classId: '',
     teacherId: '',
+    description: '',
+    isActive: true,
   })
   const [loading, setLoading] = useState(false)
   const [classes, setClasses] = useState<SchoolClass[]>([])
@@ -53,6 +55,8 @@ export default function AddSubjectPage() {
         isCore: form.isCore,
         classId: form.classId || undefined,
         teacherId: form.teacherId || undefined,
+        description: form.description || undefined,
+        isActive: form.isActive,
       })
 
       toast.success('Subject created successfully')
@@ -96,17 +100,43 @@ export default function AddSubjectPage() {
               />
             </div>
 
-            <div className="flex items-center gap-2">
-              <input
-                type="checkbox"
-                id="isCore"
-                checked={form.isCore}
-                onChange={(e) => update('isCore', e.target.checked)}
-                className="h-4 w-4 text-blue-600 rounded border-gray-300"
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <textarea
+                value={form.description}
+                onChange={(e) => update('description', e.target.value)}
+                placeholder="Brief description of the subject"
+                rows={3}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
               />
-              <label htmlFor="isCore" className="text-sm font-medium text-gray-700">
-                Core Subject
-              </label>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isCore"
+                  checked={form.isCore}
+                  onChange={(e) => update('isCore', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                />
+                <label htmlFor="isCore" className="text-sm font-medium text-gray-700">
+                  Core Subject
+                </label>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={form.isActive}
+                  onChange={(e) => update('isActive', e.target.checked)}
+                  className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                />
+                <label htmlFor="isActive" className="text-sm font-medium text-gray-700">
+                  Active
+                </label>
+              </div>
             </div>
 
             <h3 className="text-lg font-medium text-gray-900 border-b pb-2 pt-4">Assign To (Optional)</h3>

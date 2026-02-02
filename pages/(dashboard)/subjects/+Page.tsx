@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
+import { toast } from 'sonner';
 import { subjectService } from '../../../lib/api-services';
 import { Subject } from '../../../lib/types';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
@@ -8,6 +9,7 @@ import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import ActionMenu from '../../../components/ui/ActionMenu';
+import CsvImportModal from '../../../components/ui/CsvImportModal';
 import { usePermission } from '../../../lib/use-permission';
 
 export default function SubjectsPage() {
@@ -19,6 +21,7 @@ export default function SubjectsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showImport, setShowImport] = useState(false);
 
   const fetchSubjects = useCallback(async () => {
     setLoading(true);
@@ -108,7 +111,10 @@ export default function SubjectsPage() {
           <p className="text-sm text-gray-500 mt-1">{total} total subjects</p>
         </div>
         {can('write_subjects') && (
-          <Button onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
+          </div>
         )}
       </div>
 
@@ -137,9 +143,41 @@ export default function SubjectsPage() {
         data={subjects}
         loading={loading}
         emptyMessage="No subjects found"
+        onRowClick={(item) => navigate(`/subjects/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <CsvImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        title="Import Subjects from CSV"
+        columns={[
+          { key: 'name', label: 'Subject Name', required: true },
+          { key: 'code', label: 'Subject Code', required: true },
+          { key: 'isCore', label: 'Is Core' },
+          { key: 'description', label: 'Description' },
+        ]}
+        templateRows={[
+          { name: 'Mathematics', code: 'MATH101', isCore: 'true', description: 'Basic mathematics' },
+          { name: 'English', code: 'ENG101', isCore: 'true', description: 'English language' },
+        ]}
+        templateFilename="subjects-template.csv"
+        onImport={async (rows) => {
+          const parsed = rows.map((r: any) => ({
+            name: r.name,
+            code: r.code,
+            isCore: r.isCore === 'true' || r.isCore === '1',
+            description: r.description || undefined,
+          }));
+          const result = await subjectService.bulkImport(parsed);
+          if (result.data.failureCount === 0) {
+            toast.success(`${result.data.successCount} subjects imported`);
+            fetchSubjects();
+          }
+          return result.data;
+        }}
+      />
     </div>
   );
 }

@@ -269,6 +269,8 @@ export interface Subject {
   name: string;
   code: string;
   isCore?: boolean;
+  description?: string;
+  isActive?: boolean;
   class?: SchoolClass | string;
   teacher?: Teacher | string;
   school: string;
@@ -282,6 +284,8 @@ export interface CreateSubjectData {
   isCore?: boolean;
   classId?: string;
   teacherId?: string;
+  description?: string;
+  isActive?: boolean;
 }
 
 // Session
@@ -312,6 +316,15 @@ export interface CreateSessionData {
 }
 
 // Exam
+export type ExamMode = 'traditional' | 'cbt' | 'file-upload' | 'hybrid';
+
+export interface ExamAttachment {
+  url: string;
+  publicId: string;
+  filename: string;
+  fileType: string;
+}
+
 export interface Exam {
   _id: string;
   name: string;
@@ -322,6 +335,12 @@ export interface Exam {
   term: 'First' | 'Second' | 'Third';
   maxScore: number;
   date?: string;
+  examMode?: ExamMode;
+  duration?: number;
+  attachments?: ExamAttachment[];
+  published?: boolean;
+  startTime?: string;
+  endTime?: string;
   school: string;
   createdAt?: string;
   updatedAt?: string;
@@ -336,6 +355,69 @@ export interface CreateExamData {
   term: string;
   maxScore: number;
   date?: string;
+  examMode?: ExamMode;
+  duration?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+// Question (CBT)
+export type QuestionType = 'mcq' | 'true_false' | 'short_answer' | 'essay';
+
+export interface Question {
+  _id: string;
+  exam: string;
+  type: QuestionType;
+  questionText: string;
+  points: number;
+  order: number;
+  options?: string[];
+  correctAnswer?: string;
+  markingScheme?: string;
+  school: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateQuestionData {
+  type: QuestionType;
+  questionText: string;
+  points: number;
+  order?: number;
+  options?: string[];
+  correctAnswer?: string;
+  markingScheme?: string;
+}
+
+// Student Answer (CBT)
+export interface StudentAnswer {
+  _id: string;
+  student: Student | string;
+  exam: string;
+  question: Question | string;
+  answer?: string;
+  score?: number;
+  isCorrect?: boolean;
+  status: 'in_progress' | 'submitted' | 'graded';
+  feedback?: string;
+  school: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// Exam Attempt (CBT)
+export interface ExamAttempt {
+  _id: string;
+  student: Student | string;
+  exam: string;
+  startedAt: string;
+  submittedAt?: string;
+  totalScore?: number;
+  status: 'in_progress' | 'submitted' | 'graded';
+  timeSpent?: number;
+  school: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 // Score

@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { navigate } from 'vike/client/router';
-import { teacherService } from '../../../lib/api-services';
+import { toast } from 'sonner';
+import { teacherService, authService } from '../../../lib/api-services';
 import { Teacher } from '../../../lib/types';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
@@ -8,7 +9,27 @@ import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import ActionMenu from '../../../components/ui/ActionMenu';
+import CsvImportModal from '../../../components/ui/CsvImportModal';
 import { usePermission } from '../../../lib/use-permission';
+
+const TEACHER_CSV_COLUMNS = [
+  { key: 'firstName', label: 'First Name', required: true },
+  { key: 'lastName', label: 'Last Name', required: true },
+  { key: 'email', label: 'Email', required: true },
+  { key: 'phone', label: 'Phone' },
+  { key: 'qualification', label: 'Qualification' },
+  { key: 'level', label: 'Level' },
+  { key: 'experience', label: 'Experience' },
+  { key: 'employmentDate', label: 'Employment Date' },
+  { key: 'primarySubject', label: 'Primary Subject' },
+  { key: 'address', label: 'Address' },
+  { key: 'aboutMe', label: 'About' },
+];
+
+const TEACHER_TEMPLATE_ROWS = [
+  { firstName: 'Alice', lastName: 'Johnson', email: 'alice.j@example.com', phone: '08011112222', qualification: 'B.Ed', level: 'Senior', experience: '10 years', employmentDate: '2020-01-15', primarySubject: 'Mathematics', address: '789 Elm St', aboutMe: 'Passionate about teaching math' },
+  { firstName: 'Bob', lastName: 'Williams', email: 'bob.w@example.com', phone: '08033334444', qualification: 'M.Sc', level: 'Junior', experience: '3 years', employmentDate: '2023-09-01', primarySubject: 'Physics', address: '321 Pine Rd', aboutMe: 'Physics enthusiast' },
+];
 
 export default function TeachersPage() {
   const { can } = usePermission();
@@ -19,6 +40,7 @@ export default function TeachersPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
+  const [showImport, setShowImport] = useState(false);
 
   const fetchTeachers = useCallback(async () => {
     setLoading(true);
@@ -110,7 +132,12 @@ export default function TeachersPage() {
           <h1 className="text-2xl font-bold text-gray-900">Teachers</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total teachers</p>
         </div>
-        {can('write_teachers') && <Button onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>}
+        {can('write_teachers') && (
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>
+          </div>
+        )}
       </div>
 
       {error && (
@@ -142,6 +169,23 @@ export default function TeachersPage() {
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+
+      <CsvImportModal
+        open={showImport}
+        onClose={() => setShowImport(false)}
+        title="Import Teachers from CSV"
+        columns={TEACHER_CSV_COLUMNS}
+        templateRows={TEACHER_TEMPLATE_ROWS}
+        templateFilename="teachers-template.csv"
+        onImport={async (rows) => {
+          const result = await authService.bulkRegisterTeachers(rows);
+          if (result.data.failureCount === 0) {
+            toast.success(`${result.data.successCount} teachers imported`);
+            fetchTeachers();
+          }
+          return result.data;
+        }}
+      />
     </div>
   );
 }

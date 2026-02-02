@@ -143,14 +143,17 @@ export default function NoticesPage() {
     {
       key: 'actions',
       header: '',
-      render: (item) => (
-        <ActionMenu items={[
-          { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}`) } },
-          { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}/edit`) }, hidden: !can('write_notices') },
-          { label: item.isPinned ? 'Unpin' : 'Pin', onClick: (e) => handleTogglePin(item._id, e), hidden: !can('write_notices') },
-          { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_notices') },
-        ]} />
-      ),
+      render: (item) => {
+        const isExpired = item.expiresAt ? new Date(item.expiresAt) < new Date() : false;
+        return (
+          <ActionMenu items={[
+            { label: 'View', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}`) } },
+            { label: 'Edit', onClick: (e) => { e.stopPropagation(); navigate(`/notices/${item._id}/edit`) }, hidden: !can('write_notices') || isExpired },
+            { label: item.isPinned ? 'Unpin' : 'Pin', onClick: (e) => handleTogglePin(item._id, e), hidden: !can('write_notices') || isExpired },
+            { label: 'Delete', onClick: (e) => handleDelete(item._id, e), variant: 'danger', hidden: !can('delete_notices') || isExpired },
+          ]} />
+        );
+      },
     },
   ];
 
@@ -190,6 +193,7 @@ export default function NoticesPage() {
         data={notices}
         loading={loading}
         emptyMessage="No notices found"
+        onRowClick={(item) => navigate(`/notices/${item._id}`)}
       />
 
       <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />

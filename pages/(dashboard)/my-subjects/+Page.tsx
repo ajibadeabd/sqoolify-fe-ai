@@ -11,6 +11,7 @@ export default function MySubjectsPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
   const fetchSubjects = async () => {
     setLoading(true)
@@ -18,6 +19,7 @@ export default function MySubjectsPage() {
       const res = await teacherService.getMySubjects({ page, limit: 10, search })
       setSubjects(res.data || [])
       setTotalPages(res.pagination?.totalPages || 1)
+      setTotal(res.pagination?.total || 0)
     } catch {
       setSubjects([])
     } finally {
@@ -36,7 +38,7 @@ export default function MySubjectsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'My Subjects' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">My Subjects</h1>
       </div>
 
@@ -51,7 +53,7 @@ export default function MySubjectsPage() {
         emptyMessage="No subjects assigned to you"
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   )
 }

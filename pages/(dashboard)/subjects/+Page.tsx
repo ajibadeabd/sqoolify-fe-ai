@@ -66,18 +66,20 @@ export default function SubjectsPage() {
       ),
     },
     {
-      key: 'class',
-      header: 'Class',
-      render: (item) => (item.class as any)?.name || '-',
-    },
-    {
-      key: 'teacher',
-      header: 'Teacher',
+      key: 'teachers',
+      header: 'Teachers',
       render: (item) => {
-        const teacher = item.teacher as any;
-        return teacher?.user
-          ? `${teacher.user.firstName} ${teacher.user.lastName}`
-          : '-';
+        const teachers = (item.teachers || []) as any[];
+        if (!teachers.length) return '-';
+        return (
+          <div className="flex flex-wrap gap-1">
+            {teachers.map((t, i) => (
+              <span key={i} className="px-1.5 py-0.5 text-xs bg-green-50 text-green-700 rounded">
+                {t?.user ? `${t.user.firstName} ${t.user.lastName}` : t}
+              </span>
+            ))}
+          </div>
+        );
       },
     },
     {
@@ -105,15 +107,15 @@ export default function SubjectsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Subjects' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Subjects</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total subjects</p>
         </div>
         {can('write_subjects') && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
-            <Button onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button size="sm" onClick={() => navigate('/subjects/add')}>+ Add Subject</Button>
           </div>
         )}
       </div>
@@ -146,7 +148,7 @@ export default function SubjectsPage() {
         onRowClick={(item) => navigate(`/subjects/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
 
       <CsvImportModal
         open={showImport}

@@ -171,7 +171,7 @@ export default function EditFeePage() {
     <div>
       <Breadcrumbs items={[{ label: 'Fees', href: '/fees' }, { label: 'Edit Fee Structure' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edit Fee Structure</h1>
           <p className="text-sm text-gray-500 mt-1">Update fee details for this class and session</p>

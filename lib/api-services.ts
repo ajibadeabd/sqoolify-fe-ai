@@ -41,8 +41,8 @@ export const authService = {
   forgotPassword: (email: string) =>
     api.post<ApiResponse<{ message: string }>>('/auth/forgot-password', { email }),
 
-  resetPassword: (email: string, otp: string, newPassword: string) =>
-    api.post<ApiResponse<{ message: string }>>('/auth/reset-password', { email, otp, newPassword }),
+  resetPassword: (token: string, newPassword: string) =>
+    api.post<ApiResponse<{ message: string }>>('/auth/reset-password', { token, newPassword }),
 
   getProfile: () =>
     api.get<ApiResponse<User>>('/auth/me', authOptions()),
@@ -128,6 +128,15 @@ export const studentService = {
 
   getMyResults: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get<ApiResponse<any[]>>(`/students/my-results${buildQuery(params || {})}`, authOptions()),
+
+  getMyAttendance: (params?: { page?: number; limit?: number; startDate?: string; endDate?: string }) =>
+    api.get<ApiResponse<any>>(`/students/my-attendance${buildQuery(params || {})}`, authOptions()),
+
+  getMyExams: (params?: { page?: number; limit?: number; search?: string }) =>
+    api.get<ApiResponse<any[]>>(`/students/my-exams${buildQuery(params || {})}`, authOptions()),
+
+  getMyFees: () =>
+    api.get<ApiResponse<any[]>>('/students/my-fees', authOptions()),
 };
 
 // ============ TEACHERS ============
@@ -148,10 +157,10 @@ export const teacherService = {
     api.delete<ApiResponse<void>>(`/teachers/${id}`, authOptions()),
 
   assignClass: (teacherId: string, classId: string) =>
-    api.patch<ApiResponse<Teacher>>(`/teachers/${teacherId}/assign-class`, { classId }, authOptions()),
+    api.post<ApiResponse<Teacher>>(`/teachers/${teacherId}/assign-class/${classId}`, {}, authOptions()),
 
   assignSubject: (teacherId: string, subjectId: string) =>
-    api.patch<ApiResponse<Teacher>>(`/teachers/${teacherId}/assign-subject`, { subjectId }, authOptions()),
+    api.post<ApiResponse<Teacher>>(`/teachers/${teacherId}/assign-subject/${subjectId}`, {}, authOptions()),
 
   getMyClasses: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get<ApiResponse<SchoolClass[]>>(`/teachers/my-classes${buildQuery(params || {})}`, authOptions()),
@@ -183,13 +192,26 @@ export const parentService = {
   getMyChildren: () =>
     api.get<ApiResponse<Student[]>>('/parents/my-children', authOptions()),
 
+  getMyChildById: (childId: string) =>
+    api.get<ApiResponse<any>>(`/parents/my-children/${childId}`, authOptions()),
+
   getMyChildReportCard: (childId: string) =>
     api.get<ApiResponse<any>>(`/parents/my-children/${childId}/report-card`, authOptions()),
+
+  downloadChildReportCardPdf: async (childId: string, reportCardId: string) => {
+    const API_URL = import.meta.env.VITE_API_URL;
+    const token = getStoredToken() || '';
+    const response = await fetch(`${API_URL}/parents/my-children/${childId}/report-card/${reportCardId}/pdf`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!response.ok) throw new Error('Failed to download PDF');
+    return response.blob();
+  },
 };
 
 // ============ CLASSES ============
 export const classService = {
-  getAll: (params?: { page?: number; limit?: number; search?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; search?: string; sessionId?: string }) =>
     api.get<ApiResponse<SchoolClass[]>>(`/classes${buildQuery(params || {})}`, authOptions()),
 
   getById: (id: string) =>
@@ -205,7 +227,7 @@ export const classService = {
     api.delete<ApiResponse<void>>(`/classes/${id}`, authOptions()),
 
   assignTeacher: (classId: string, teacherId: string) =>
-    api.patch<ApiResponse<SchoolClass>>(`/classes/${classId}/assign-teacher`, { teacherId }, authOptions()),
+    api.post<ApiResponse<SchoolClass>>(`/classes/${classId}/assign-teacher/${teacherId}`, {}, authOptions()),
 
   getStudents: (classId: string) =>
     api.get<ApiResponse<Student[]>>(`/classes/${classId}/students`, authOptions()),
@@ -234,11 +256,14 @@ export const subjectService = {
   assignTeacher: (subjectId: string, teacherId: string) =>
     api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-teacher/${teacherId}`, {}, authOptions()),
 
-  removeTeacher: (subjectId: string) =>
-    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/remove-teacher`, {}, authOptions()),
+  removeTeacher: (subjectId: string, teacherId: string) =>
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/remove-teacher/${teacherId}`, {}, authOptions()),
 
-  assignClass: (subjectId: string, classId: string) =>
-    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-class/${classId}`, {}, authOptions()),
+  assignClass: (subjectId: string, classId: string, teacherIds?: string[]) =>
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/assign-class/${classId}`, { teacherIds }, authOptions()),
+
+  removeClass: (subjectId: string, classId: string) =>
+    api.post<ApiResponse<Subject>>(`/subjects/${subjectId}/remove-class/${classId}`, {}, authOptions()),
 
   bulkImport: (subjects: any[]) =>
     api.post<ApiResponse<{ successCount: number; failureCount: number; errors: string[] }>>('/subjects/bulk-import', { subjects }, authOptions()),
@@ -312,6 +337,15 @@ export const examService = {
 
   reorderQuestions: (examId: string, questionIds: string[]) =>
     api.patch<ApiResponse<void>>(`/exams/${examId}/questions/reorder`, { questionIds }, authOptions()),
+
+  submitForApproval: (examId: string) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/submit-for-approval`, {}, authOptions()),
+
+  approveExam: (examId: string) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/approve`, {}, authOptions()),
+
+  rejectExam: (examId: string, reason: string) =>
+    api.post<ApiResponse<Exam>>(`/exams/${examId}/reject`, { reason }, authOptions()),
 
   publishExam: (examId: string) =>
     api.post<ApiResponse<Exam>>(`/exams/${examId}/publish`, {}, authOptions()),
@@ -405,6 +439,9 @@ export const attendanceService = {
 
   getSummary: (classId: string, params?: { startDate?: string; endDate?: string }) =>
     api.get<ApiResponse<AttendanceSummary[]>>(`/attendance/summary/${classId}${buildQuery(params || {})}`, authOptions()),
+
+  getChildAttendance: (childId: string, params?: { page?: number; limit?: number; startDate?: string; endDate?: string }) =>
+    api.get<ApiResponse<{ child: any; summary: any; records: Attendance[] }>>(`/attendance/my-children/${childId}${buildQuery(params || {})}`, authOptions()),
 };
 
 // ============ BANKS ============
@@ -521,16 +558,25 @@ export const feeService = {
   assignToStudent: (feeId: string, studentId: string) =>
     api.post<ApiResponse<StudentFee>>('/fees/assign', { feeId, studentId }, authOptions()),
 
+  bulkAssign: (feeId: string) =>
+    api.post<ApiResponse<{ assigned: number; skipped: number }>>(`/fees/${feeId}/bulk-assign`, {}, authOptions()),
+
   getStudentFees: (params?: { studentId?: string; status?: string }) =>
     api.get<ApiResponse<StudentFee[]>>(`/fees/student-fees${buildQuery(params || {})}`, authOptions()),
 
   getSummary: () =>
     api.get<ApiResponse<{ totalCollected: number; totalOutstanding: number }>>('/fees/summary', authOptions()),
+
+  getMyChildrenFees: () =>
+    api.get<ApiResponse<{ children: Student[]; studentFees: StudentFee[] }>>('/fees/my-children-fees', authOptions()),
+
+  getChildFees: (childId: string) =>
+    api.get<ApiResponse<{ child: any; studentFees: any[] }>>(`/fees/my-children-fees/${childId}`, authOptions()),
 };
 
 // ============ PAYMENTS ============
 export const paymentService = {
-  getAll: (params?: { page?: number; limit?: number; studentId?: string; paymentStatus?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; studentId?: string; paymentStatus?: string; paymentCategory?: string; startDate?: string; endDate?: string; sortBy?: string; sortOrder?: string }) =>
     api.get<ApiResponse<Payment[]>>(`/payments${buildQuery(params || {})}`, authOptions()),
 
   getById: (id: string) =>
@@ -543,7 +589,19 @@ export const paymentService = {
     api.patch<ApiResponse<Payment>>(`/payments/${id}`, data, authOptions()),
 
   getSummary: (params?: { sessionId?: string; term?: number }) =>
-    api.get<ApiResponse<{ totalPayments: number; totalAmount: number }>>(`/payments/summary${buildQuery(params || {})}`, authOptions()),
+    api.get<ApiResponse<{ totalPayments: number; byCategory: Record<string, number>; byStatus: Record<string, number> }>>(`/payments/summary${buildQuery(params || {})}`, authOptions()),
+
+  initialize: (data: { studentFeeId: string; term?: number }) =>
+    api.post<ApiResponse<{ authorization_url: string; access_code: string; reference: string }>>('/payments/initialize', data, authOptions()),
+
+  verify: (reference: string) =>
+    api.get<ApiResponse<{ status: string; payment: Payment }>>(`/payments/verify/${reference}`, authOptions()),
+
+  reverify: (reference: string) =>
+    api.post<ApiResponse<{ status: string; payment: Payment }>>(`/payments/reverify/${reference}`, {}, authOptions()),
+
+  getMyPayments: (params?: { page?: number; limit?: number }) =>
+    api.get<ApiResponse<Payment[]>>(`/payments/my-payments${buildQuery(params || {})}`, authOptions()),
 };
 
 // ============ EXAM RESULTS ============
@@ -590,6 +648,15 @@ export const configService = {
 
 // ============ AUDIT LOGS ============
 export const auditLogService = {
-  getAll: (params?: { limit?: number; userId?: string }) =>
+  getAll: (params?: { page?: number; limit?: number; action?: string; startDate?: string; endDate?: string; userId?: string }) =>
     api.get<ApiResponse<any[]>>(`/audit-logs${buildQuery(params || {})}`, authOptions()),
+};
+
+// ============ CHAT ============
+export const chatService = {
+  getRooms: () =>
+    api.get<ApiResponse<any[]>>('/chat/rooms', authOptions()),
+
+  getMessages: (roomId: string, params?: { page?: number; limit?: number }) =>
+    api.get<ApiResponse<any[]>>(`/chat/rooms/${roomId}/messages${buildQuery(params || {})}`, authOptions()),
 };

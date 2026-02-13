@@ -5,6 +5,16 @@ import Badge from '../../../components/ui/Badge'
 import Breadcrumbs from '../../../components/layout/Breadcrumbs'
 import { formatDistanceToNow } from 'date-fns'
 
+const ACTION_OPTIONS = [
+  { value: '', label: 'All Actions' },
+  { value: 'LOGIN', label: 'Login' },
+  { value: 'LOGOUT', label: 'Logout' },
+  { value: 'CREATE_USER', label: 'Create User' },
+  { value: 'DELETE_USER', label: 'Delete User' },
+  { value: 'UPDATE_PERMISSIONS', label: 'Update Permissions' },
+  { value: 'UPDATE_ROLE', label: 'Update Role' },
+]
+
 interface AuditLog {
   _id: string
   action: string
@@ -30,21 +40,42 @@ interface AuditLog {
   metadata?: Record<string, any>
 }
 
+interface Pagination {
+  total: number
+  currentPage: number
+  pageSize: number
+  totalPages: number
+  hasNextPage: boolean
+  hasPreviousPage: boolean
+}
+
 export default function AuditLogsPage() {
   const [logs, setLogs] = useState<AuditLog[]>([])
   const [loading, setLoading] = useState(true)
-  const [limit, setLimit] = useState(50)
   const [expandedLog, setExpandedLog] = useState<string | null>(null)
+  const [pagination, setPagination] = useState<Pagination | null>(null)
+
+  const [page, setPage] = useState(1)
+  const [limit, setLimit] = useState(20)
+  const [actionFilter, setActionFilter] = useState('')
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   useEffect(() => {
     fetchLogs()
-  }, [limit])
+  }, [page, limit, actionFilter, startDate, endDate])
 
   const fetchLogs = async () => {
     setLoading(true)
     try {
-      const res = await auditLogService.getAll({ limit })
+      const params: any = { page, limit }
+      if (actionFilter) params.action = actionFilter
+      if (startDate) params.startDate = startDate
+      if (endDate) params.endDate = endDate
+
+      const res = await auditLogService.getAll(params)
       setLogs(res.data || [])
+      setPagination((res as any).pagination || null)
     } catch (err) {
       console.error('Failed to fetch audit logs:', err)
     } finally {
@@ -57,6 +88,7 @@ export default function AuditLogsPage() {
     if (action.includes('DELETE')) return 'danger'
     if (action.includes('UPDATE')) return 'warning'
     if (action.includes('LOGIN')) return 'info'
+    if (action.includes('LOGOUT')) return 'default'
     return 'default'
   }
 
@@ -72,7 +104,6 @@ export default function AuditLogsPage() {
 
     const { before, after } = changes
 
-    // Extract permissions changes
     if (before?.permissions && after?.permissions) {
       const beforePerms = before.permissions || []
       const afterPerms = after.permissions || []
@@ -109,7 +140,6 @@ export default function AuditLogsPage() {
       )
     }
 
-    // Extract role changes
     if (before?.role !== after?.role && after?.role) {
       return (
         <div className="mt-2 text-sm">
@@ -126,7 +156,19 @@ export default function AuditLogsPage() {
     return null
   }
 
-  if (loading) {
+  const renderMetadata = (log: AuditLog) => {
+    if (!log.metadata) return null
+    if (log.metadata.role) {
+      return (
+        <span className="text-sm text-gray-500 ml-2">
+          (role: <span className="capitalize">{log.metadata.role}</span>)
+        </span>
+      )
+    }
+    return null
+  }
+
+  if (loading && logs.length === 0) {
     return (
       <div className="animate-pulse space-y-4">
         <div className="h-8 bg-gray-200 rounded w-48" />
@@ -144,20 +186,63 @@ export default function AuditLogsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Audit Logs</h1>
           <p className="text-gray-500 mt-1">Track all system changes and user actions</p>
         </div>
-        <div className="flex items-center gap-3">
-          <label className="text-sm text-gray-600">Show:</label>
-          <select
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
-            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-          >
-            <option value={25}>25 logs</option>
-            <option value={50}>50 logs</option>
-            <option value={100}>100 logs</option>
-            <option value={200}>200 logs</option>
-          </select>
-        </div>
       </div>
+
+      <Card>
+        <div className="flex flex-wrap items-end gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Action</label>
+            <select
+              value={actionFilter}
+              onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            >
+              {ACTION_OPTIONS.map(opt => (
+                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => { setStartDate(e.target.value); setPage(1) }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => { setEndDate(e.target.value); setPage(1) }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Per page</label>
+            <select
+              value={limit}
+              onChange={(e) => { setLimit(Number(e.target.value)); setPage(1) }}
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            >
+              <option value={10}>10</option>
+              <option value={20}>20</option>
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+            </select>
+          </div>
+          {(actionFilter || startDate || endDate) && (
+            <button
+              onClick={() => { setActionFilter(''); setStartDate(''); setEndDate(''); setPage(1) }}
+              className="px-3 py-2 text-sm text-gray-600 hover:text-gray-900 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              Clear Filters
+            </button>
+          )}
+        </div>
+      </Card>
 
       {logs.length === 0 ? (
         <Card>
@@ -187,9 +272,9 @@ export default function AuditLogsPage() {
                     <div className="mt-2">
                       <p className="text-sm text-gray-700">
                         <span className="font-medium">
-                          {log.performedBy.firstName} {log.performedBy.lastName}
+                          {log.performedBy?.firstName} {log.performedBy?.lastName}
                         </span>
-                        <span className="text-gray-500 ml-1">({log.performedBy.email})</span>
+                        <span className="text-gray-500 ml-1">({log.performedBy?.email})</span>
                         {log.targetUser && (
                           <>
                             <span className="mx-2">→</span>
@@ -199,6 +284,7 @@ export default function AuditLogsPage() {
                             <span className="text-gray-500 ml-1">({log.targetUser.email})</span>
                           </>
                         )}
+                        {renderMetadata(log)}
                       </p>
 
                       {renderChanges(log.changes)}
@@ -244,6 +330,30 @@ export default function AuditLogsPage() {
               </div>
             ))}
           </div>
+
+          {pagination && pagination.totalPages > 1 && (
+            <div className="flex items-center justify-between mt-6 pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600">
+                Showing page {pagination.currentPage} of {pagination.totalPages} ({pagination.total} total)
+              </p>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage(page - 1)}
+                  disabled={!pagination.hasPreviousPage}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Previous
+                </button>
+                <button
+                  onClick={() => setPage(page + 1)}
+                  disabled={!pagination.hasNextPage}
+                  className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </Card>
       )}
     </div>

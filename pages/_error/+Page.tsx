@@ -81,7 +81,7 @@ export default function ErrorPage() {
         <div className={`transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
           <Topbar />
           <main className="p-6">
-            <ErrorContent is404={is404} isAuthenticated={true} />
+            <ErrorContent is404={!!is404} isAuthenticated={true} />
           </main>
         </div>
       </div>
@@ -89,5 +89,5 @@ export default function ErrorPage() {
   }
 
   // Not logged in: show standalone error page
-  return <ErrorContent is404={is404} isAuthenticated={false} />
+  return <ErrorContent is404={!!is404} isAuthenticated={false} />
 }

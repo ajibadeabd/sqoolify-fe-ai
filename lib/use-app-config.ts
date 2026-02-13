@@ -1,15 +1,22 @@
 import { useState, useEffect } from 'react';
 import { configService } from './api-services';
+import { useAuth } from './auth-context';
 import type { AppConfig } from './types';
 
 let cachedConfig: AppConfig | null = null;
 
 export function useAppConfig() {
+  const { user } = useAuth();
   const [config, setConfig] = useState<AppConfig | null>(cachedConfig);
   const [loading, setLoading] = useState(!cachedConfig);
 
+  const canReadConfig = (user?.permissions || []).includes('read_app_config');
+
   useEffect(() => {
-    if (cachedConfig) return;
+    if (cachedConfig || !canReadConfig) {
+      setLoading(false);
+      return;
+    }
 
     configService.get().then((res) => {
       cachedConfig = res.data;
@@ -18,7 +25,7 @@ export function useAppConfig() {
     }).catch(() => {
       setLoading(false);
     });
-  }, []);
+  }, [canReadConfig]);
 
   const currency = config?.settings?.currency ?? 'NGN';
   const currencySymbol = getCurrencySymbol(currency);
@@ -27,6 +34,15 @@ export function useAppConfig() {
     config,
     loading,
     termsPerSession: config?.settings?.termsPerSession ?? 3,
+    classLevels: config?.settings?.classLevels ?? [],
+    sectionPresets: config?.settings?.sectionPresets ?? [],
+    examTypes: config?.settings?.examTypes ?? [],
+    paymentCategories: config?.settings?.paymentCategories ?? [],
+    paymentTypes: config?.settings?.paymentTypes ?? [],
+    paymentMethods: config?.settings?.paymentMethods ?? [],
+    studentStatuses: config?.settings?.studentStatuses ?? [],
+    noticeVisibility: config?.settings?.noticeVisibility ?? [],
+    noticeTypes: config?.settings?.noticeTypes ?? [],
     currency,
     currencySymbol,
     formatCurrency: (amount?: number) => {

@@ -62,6 +62,23 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
 
   // Dashboard - everyone with VIEW_DASHBOARD can access
   '/dashboard': [PERMISSIONS.VIEW_DASHBOARD],
+
+  // Parent Portal
+  '/my-children': [PERMISSIONS.VIEW_CHILDREN],
+  '/my-children/:id': [PERMISSIONS.VIEW_CHILDREN],
+  '/my-children/:id/fees': [PERMISSIONS.VIEW_CHILDREN_FEES],
+  '/my-children/:id/attendance': [PERMISSIONS.VIEW_CHILDREN_ATTENDANCE],
+  '/my-children/:id/report-card': [PERMISSIONS.VIEW_CHILDREN_REPORT_CARDS],
+  '/my-fees': [PERMISSIONS.VIEW_CHILDREN_FEES, PERMISSIONS.VIEW_MY_RESULTS],
+
+  // Student Portal
+  '/my-results': [PERMISSIONS.VIEW_MY_RESULTS],
+  '/my-report-card': [PERMISSIONS.VIEW_MY_REPORT_CARD],
+  '/my-exams': [PERMISSIONS.TAKE_EXAMS],
+  '/my-attendance': [PERMISSIONS.VIEW_MY_ATTENDANCE],
+
+  // Chat
+  '/chat-rooms': [PERMISSIONS.ACCESS_CHAT],
 };
 
 /**

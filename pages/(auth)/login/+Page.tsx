@@ -18,11 +18,9 @@ export default function LoginPage() {
     try {
       const result = await login({ email, password })
 
-      // If school selection is required, navigate to school selection page
       if (result.requiresSchoolSelection) {
         await navigate('/select-school')
       } else {
-        // Successfully logged in, navigate to dashboard
         await navigate('/dashboard')
       }
     } catch (err: any) {
@@ -33,76 +31,135 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <a href="/" className="text-3xl font-bold text-blue-600">Sqoolify</a>
-          <p className="text-gray-600 mt-2">Sign in to your account</p>
+    <div className="min-h-screen flex">
+      {/* Left Panel — Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-400 to-blue-600 text-white p-12 flex-col justify-between relative overflow-hidden">
+        <div className="absolute inset-0">
+          <div className="absolute top-20 -left-10 w-72 h-72 bg-blue-300/30 rounded-full" />
+          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-300/20 rounded-full" />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-200/25 rounded-full" />
         </div>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 space-y-5">
+        <div className="relative z-10">
+          <a href="/" className="text-3xl font-bold">Sqoolify</a>
+        </div>
+
+        <div className="relative z-10 space-y-8">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              placeholder="you@example.com"
-            />
+            <h1 className="text-4xl font-bold leading-tight mb-4">
+              Manage your entire school from one platform
+            </h1>
+            <p className="text-blue-100 text-lg leading-relaxed">
+              Students, teachers, exams, fees, attendance, report cards — everything in one place.
+            </p>
           </div>
 
-          <div>
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
-              Password
-            </label>
-            <div className="relative">
+          <div className="space-y-4">
+            {[
+              { icon: '👥', text: 'Student, Teacher & Parent portals' },
+              { icon: '📝', text: 'CBT exams with auto-grading' },
+              { icon: '💰', text: 'Fee management & online payments' },
+              { icon: '📊', text: 'Report cards & analytics' },
+            ].map((item) => (
+              <div key={item.text} className="flex items-center gap-3 bg-white/10 rounded-lg px-4 py-3">
+                <span className="text-xl">{item.icon}</span>
+                <span className="text-sm font-medium">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="relative z-10">
+          <p className="text-blue-200 text-sm">&copy; {new Date().getFullYear()} Sqoolify. All rights reserved.</p>
+        </div>
+      </div>
+
+      {/* Right Panel — Login Form */}
+      <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gray-50">
+        <div className="w-full max-w-md">
+          <div className="lg:hidden text-center mb-8">
+            <a href="/" className="text-3xl font-bold text-blue-600">Sqoolify</a>
+          </div>
+
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-gray-900">Welcome back</h2>
+            <p className="text-gray-500 mt-1">Sign in to your account to continue</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+                Email address
+              </label>
               <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                id="email"
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full px-4 py-2.5 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                placeholder="Enter your password"
+                autoComplete="email"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+                placeholder="you@school.com"
               />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-              >
-                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-              </button>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" className="rounded border-gray-300" />
-              <span className="text-gray-600">Remember me</span>
-            </label>
-            <a href="/forgot-password" className="text-sm text-blue-600 hover:underline">
-              Forgot password?
-            </a>
-          </div>
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                  Password
+                </label>
+                <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                  Forgot password?
+                </a>
+              </div>
+              <div className="relative">
+                <input
+                  id="password"
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full px-4 py-3 pr-11 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? 'Signing in...' : 'Sign In'}
-          </button>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="remember" className="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
+              <label htmlFor="remember" className="text-sm text-gray-600">Remember me for 30 days</label>
+            </div>
 
-          <p className="text-center text-sm text-gray-600">
-            Don't have an account?{' '}
-            <a href="/register" className="text-blue-600 hover:underline">Register your school</a>
-          </p>
-        </form>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                  </svg>
+                  Signing in...
+                </span>
+              ) : 'Sign In'}
+            </button>
+
+            <p className="text-center text-sm text-gray-500">
+              Don't have an account?{' '}
+              <a href="/register" className="text-blue-600 font-medium hover:text-blue-700">Create your school</a>
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   )

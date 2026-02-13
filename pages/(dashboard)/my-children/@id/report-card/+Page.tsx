@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
-import { parentService, studentService } from '../../../../../lib/api-services'
+import { parentService } from '../../../../../lib/api-services'
 import Card from '../../../../../components/ui/Card'
 import Button from '../../../../../components/ui/Button'
 import Badge from '../../../../../components/ui/Badge'
@@ -12,18 +12,16 @@ export default function ChildReportCardPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
   const [reportCard, setReportCard] = useState<any>(null)
-  const [student, setStudent] = useState<any>(null)
+  const [child, setChild] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const studentRes = await studentService.getById(id)
-        setStudent(studentRes.data)
-
         const reportRes = await parentService.getMyChildReportCard(id)
-        setReportCard(reportRes.data)
+        setChild(reportRes.data?.child || null)
+        setReportCard(reportRes.data?.reportCard || null)
       } catch {
         setReportCard(null)
       } finally {
@@ -37,12 +35,7 @@ export default function ChildReportCardPage() {
     if (!reportCard?._id) return
     setDownloading(true)
     try {
-      const token = localStorage.getItem('accessToken') || ''
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'
-      const response = await fetch(`${API_URL}/report-cards/${reportCard._id}/pdf`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      const blob = await response.blob()
+      const blob = await parentService.downloadChildReportCardPdf(id, reportCard._id)
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -65,19 +58,21 @@ export default function ChildReportCardPage() {
     </div>
   }
 
-  const user = student?.user || {}
+  const childUser = child?.user || {}
+  const childName = `${childUser.firstName || ''} ${childUser.lastName || ''}`.trim() || 'Child'
+  const student = reportCard?.student
 
   if (!reportCard) {
     return (
       <div>
         <Breadcrumbs items={[
           { label: 'My Children', href: '/my-children' },
-          { label: `${user.firstName || ''} ${user.lastName || ''}` },
+          { label: childName, href: `/my-children/${id}` },
           { label: 'Report Card' },
         ]} />
         <div className="text-center py-12 text-gray-500">
           <p>No report card available for this child yet.</p>
-          <Button variant="outline" className="mt-4" onClick={() => navigate('/my-children')}>Back</Button>
+          <Button variant="outline" className="mt-4" onClick={() => navigate(`/my-children/${id}`)}>Back</Button>
         </div>
       </div>
     )
@@ -87,11 +82,11 @@ export default function ChildReportCardPage() {
     <div>
       <Breadcrumbs items={[
         { label: 'My Children', href: '/my-children' },
-        { label: `${user.firstName || ''} ${user.lastName || ''}` },
+        { label: childName, href: `/my-children/${id}` },
         { label: 'Report Card' },
       ]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">Report Card</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/my-children')}>Back</Button>
@@ -101,13 +96,13 @@ export default function ChildReportCardPage() {
 
       <Card>
         <div className="flex items-center gap-6 mb-6">
-          <Avatar name={`${user.firstName || ''} ${user.lastName || ''}`} size="lg" />
+          <Avatar name={childName} size="lg" />
           <div>
-            <h2 className="text-xl font-semibold">{user.firstName} {user.lastName}</h2>
+            <h2 className="text-xl font-semibold">{childName}</h2>
             <p className="text-gray-500">Admission No: {student?.admissionNo}</p>
             <div className="flex gap-2 mt-1">
-              {reportCard.class?.name && <Badge variant="info">{reportCard.class.name}</Badge>}
-              {reportCard.term?.name && <Badge variant="default">{reportCard.term.name}</Badge>}
+              {student?.class?.name && <Badge variant="info">{student.class.name}</Badge>}
+              {reportCard.term && <Badge variant="default">{reportCard.term}</Badge>}
               {reportCard.session?.name && <Badge variant="default">{reportCard.session.name}</Badge>}
             </div>
           </div>

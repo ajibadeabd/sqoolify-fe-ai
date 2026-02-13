@@ -34,7 +34,7 @@ export default function PermissionManager({
     // Fetch available roles and permission categories from backend
     const fetchRolesAndCategories = async () => {
       try {
-        const res = await api.get<{ roles: string[]; categories: Record<string, string[]> }>('/users/roles')
+        const res = await api.get<{ data: { roles: string[]; categories: Record<string, string[]> } }>('/users/roles')
         setAvailableRoles(res.data.roles || [])
         setPermissionCategories(res.data.categories || {})
       } catch (err) {
@@ -60,7 +60,7 @@ export default function PermissionManager({
   const handleApplyRole = async (role: string) => {
     setSaving(true)
     try {
-      const res = await api.patch(`/users/${userId}/permissions`, { role })
+      const res = await api.patch<{ data: { permissions: string[] } }>(`/users/${userId}/permissions`, { role })
       setPermissions(res.data.permissions || [])
       setSelectedRole(role)
       toast.success(`Applied ${role} role permissions`)

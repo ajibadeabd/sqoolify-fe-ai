@@ -195,7 +195,7 @@ export default function AttendancePage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Attendance' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Attendance Management</h1>
           <p className="text-sm text-gray-500 mt-1">Take and manage student attendance</p>

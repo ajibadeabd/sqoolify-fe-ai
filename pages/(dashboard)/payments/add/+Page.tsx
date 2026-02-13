@@ -9,39 +9,15 @@ import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import type { Student, Session } from '../../../../lib/types'
 import { useAppConfig } from '../../../../lib/use-app-config'
 
-const PAYMENT_TYPES = [
-  { value: 'full', label: 'Full Payment', icon: '💰', description: 'Complete payment for the term' },
-  { value: 'partial', label: 'Partial Payment', icon: '💵', description: 'Part of the total amount' },
-  { value: 'installment', label: 'Installment', icon: '📅', description: 'Scheduled payment plan' },
-]
-
-const PAYMENT_METHODS = [
-  { value: 'cash', label: 'Cash', icon: '💵' },
-  { value: 'bank_transfer', label: 'Bank Transfer', icon: '🏦' },
-  { value: 'card', label: 'Card Payment', icon: '💳' },
-  { value: 'pos', label: 'POS', icon: '🖥️' },
-  { value: 'online', label: 'Online Payment', icon: '🌐' },
-]
-
-const PAYMENT_CATEGORIES = [
-  { value: 'tuition', label: 'Tuition Fee' },
-  { value: 'books', label: 'Books & Materials' },
-  { value: 'uniform', label: 'Uniform' },
-  { value: 'transport', label: 'Transport' },
-  { value: 'exam', label: 'Exam Fee' },
-  { value: 'activity', label: 'Activity Fee' },
-  { value: 'other', label: 'Other' },
-]
-
 export default function AddPaymentPage() {
-  const { formatCurrency, termsPerSession, currencySymbol } = useAppConfig()
+  const { formatCurrency, termsPerSession, currencySymbol, paymentCategories, paymentTypes, paymentMethods: allPaymentMethods } = useAppConfig()
+  const paymentMethods = allPaymentMethods.filter(m => m !== 'online')
   const [form, setForm] = useState({
     studentId: '',
     amount: 0,
-    paymentType: 'full',
-    paymentMethod: 'cash',
-    paymentCategory: 'tuition',
-    reference: '',
+    paymentType: '',
+    paymentMethod: '',
+    paymentCategory: '',
     sessionId: '',
     term: 1,
   })
@@ -50,6 +26,15 @@ export default function AddPaymentPage() {
   const [sessions, setSessions] = useState<Session[]>([])
   const [dataLoading, setDataLoading] = useState(true)
   const [studentSearch, setStudentSearch] = useState('')
+
+  useEffect(() => {
+    setForm(prev => ({
+      ...prev,
+      paymentType: prev.paymentType || paymentTypes[0] || 'full',
+      paymentMethod: prev.paymentMethod || paymentMethods[0] || 'cash',
+      paymentCategory: prev.paymentCategory || paymentCategories[0] || 'tuition',
+    }))
+  }, [paymentTypes, paymentMethods, paymentCategories])
 
   useEffect(() => {
     const fetchData = async () => {
@@ -78,13 +63,6 @@ export default function AddPaymentPage() {
 
   const update = (key: string, value: string | number) => setForm({ ...form, [key]: value })
 
-  const generateReference = () => {
-    const prefix = 'PAY'
-    const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
-    const random = Math.random().toString(36).substring(2, 8).toUpperCase()
-    setForm(prev => ({ ...prev, reference: `${prefix}-${date}-${random}` }))
-  }
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
@@ -107,7 +85,6 @@ export default function AddPaymentPage() {
         paymentType: form.paymentType,
         paymentMethod: form.paymentMethod,
         paymentCategory: form.paymentCategory,
-        reference: form.reference || undefined,
         sessionId: form.sessionId || undefined,
         term: form.term,
       })
@@ -123,7 +100,7 @@ export default function AddPaymentPage() {
 
   const filteredStudents = studentSearch
     ? students.filter(s => {
-        const name = s.user ? `${s.user.firstName} ${s.user.lastName}`.toLowerCase() : ''
+        const u = typeof s.user === 'object' ? s.user : null; const name = u ? `${u.firstName} ${u.lastName}`.toLowerCase() : ''
         const admNo = (s.admissionNo || '').toLowerCase()
         return name.includes(studentSearch.toLowerCase()) || admNo.includes(studentSearch.toLowerCase())
       })
@@ -136,7 +113,7 @@ export default function AddPaymentPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Payments', href: '/payments' }, { label: 'Record Payment' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Record Payment</h1>
           <p className="text-sm text-gray-500 mt-1">Record a new fee payment for a student</p>
@@ -169,7 +146,7 @@ export default function AddPaymentPage() {
                       <p className="p-4 text-sm text-gray-500 text-center">No students found</p>
                     ) : (
                       filteredStudents.slice(0, 20).map((student) => {
-                        const name = student.user ? `${student.user.firstName} ${student.user.lastName}` : 'Unknown'
+                        const u = typeof student.user === 'object' ? student.user : null; const name = u ? `${u.firstName} ${u.lastName}` : 'Unknown'
                         return (
                           <button
                             key={student._id}
@@ -223,8 +200,8 @@ export default function AddPaymentPage() {
                         onChange={(e) => update('paymentCategory', e.target.value)}
                         className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                       >
-                        {PAYMENT_CATEGORIES.map((cat) => (
-                          <option key={cat.value} value={cat.value}>{cat.label}</option>
+                        {paymentCategories.map((cat) => (
+                          <option key={cat} value={cat}>{cat.charAt(0).toUpperCase() + cat.slice(1)}</option>
                         ))}
                       </select>
                     </div>
@@ -232,21 +209,19 @@ export default function AddPaymentPage() {
 
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-3">Payment Type *</label>
-                    <div className="grid grid-cols-3 gap-3">
-                      {PAYMENT_TYPES.map((type) => (
+                    <div className="flex flex-wrap gap-2">
+                      {paymentTypes.map((type) => (
                         <button
-                          key={type.value}
+                          key={type}
                           type="button"
-                          onClick={() => update('paymentType', type.value)}
-                          className={`p-4 rounded-xl border-2 transition-all text-left ${
-                            form.paymentType === type.value
-                              ? 'border-blue-500 bg-blue-50 shadow-sm'
-                              : 'border-gray-200 hover:border-gray-300 bg-white'
+                          onClick={() => update('paymentType', type)}
+                          className={`px-4 py-2.5 rounded-lg border-2 transition-all ${
+                            form.paymentType === type
+                              ? 'border-blue-500 bg-blue-50 text-blue-700'
+                              : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                           }`}
                         >
-                          <span className="text-2xl mb-1 block">{type.icon}</span>
-                          <span className="font-semibold text-gray-900 block text-sm">{type.label}</span>
-                          <span className="text-xs text-gray-500">{type.description}</span>
+                          <span className="text-sm font-medium capitalize">{type}</span>
                         </button>
                       ))}
                     </div>
@@ -255,41 +230,24 @@ export default function AddPaymentPage() {
                   <div className="mb-4">
                     <label className="block text-sm font-medium text-gray-700 mb-3">Payment Method *</label>
                     <div className="flex flex-wrap gap-2">
-                      {PAYMENT_METHODS.map((method) => (
+                      {paymentMethods.map((method) => (
                         <button
-                          key={method.value}
+                          key={method}
                           type="button"
-                          onClick={() => update('paymentMethod', method.value)}
-                          className={`px-4 py-2.5 rounded-lg border-2 transition-all flex items-center gap-2 ${
-                            form.paymentMethod === method.value
+                          onClick={() => update('paymentMethod', method)}
+                          className={`px-4 py-2.5 rounded-lg border-2 transition-all ${
+                            form.paymentMethod === method
                               ? 'border-green-500 bg-green-50 text-green-700'
                               : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                           }`}
                         >
-                          <span>{method.icon}</span>
-                          <span className="text-sm font-medium">{method.label}</span>
+                          <span className="text-sm font-medium capitalize">{method.replace('_', ' ')}</span>
                         </button>
                       ))}
                     </div>
                   </div>
 
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">Reference Number</label>
-                      <div className="flex gap-2">
-                        <input
-                          type="text"
-                          value={form.reference}
-                          onChange={(e) => update('reference', e.target.value)}
-                          placeholder="e.g. PAY-20240115-ABC123"
-                          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                        />
-                        <Button type="button" variant="outline" onClick={generateReference}>
-                          Generate
-                        </Button>
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">Term</label>
                       <select
@@ -342,7 +300,7 @@ export default function AddPaymentPage() {
                   <div className="p-4 bg-gray-50 rounded-lg">
                     <p className="text-sm text-gray-500 mb-1">Student</p>
                     <p className="font-semibold text-gray-900">
-                      {selectedStudent.user ? `${selectedStudent.user.firstName} ${selectedStudent.user.lastName}` : 'Unknown'}
+                      {typeof selectedStudent.user === 'object' ? `${selectedStudent.user.firstName} ${selectedStudent.user.lastName}` : 'Unknown'}
                     </p>
                     <p className="text-xs text-gray-500">{selectedStudent.admissionNo || 'No Adm No'}</p>
                   </div>
@@ -369,12 +327,6 @@ export default function AddPaymentPage() {
                     <span className="text-gray-500">Term</span>
                     <span className="font-medium">Term {form.term}</span>
                   </div>
-                  {form.reference && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-500">Reference</span>
-                      <span className="font-mono text-xs">{form.reference}</span>
-                    </div>
-                  )}
                 </div>
               </div>
 

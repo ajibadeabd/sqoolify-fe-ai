@@ -12,6 +12,7 @@ export default function MyClassesPage() {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [total, setTotal] = useState(0)
 
   const fetchClasses = async () => {
     setLoading(true)
@@ -19,6 +20,7 @@ export default function MyClassesPage() {
       const res = await teacherService.getMyClasses({ page, limit: 10, search })
       setClasses(res.data || [])
       setTotalPages(res.pagination?.totalPages || 1)
+      setTotal(res.pagination?.total || 0)
     } catch {
       setClasses([])
     } finally {
@@ -38,7 +40,7 @@ export default function MyClassesPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'My Classes' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">My Classes</h1>
       </div>
 
@@ -54,7 +56,7 @@ export default function MyClassesPage() {
         onRowClick={(item) => navigate(`/classes/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   )
 }

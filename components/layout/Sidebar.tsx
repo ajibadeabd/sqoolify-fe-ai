@@ -1,3 +1,4 @@
+import { usePageContext } from 'vike-react/usePageContext';
 import { useAuth } from '../../lib/auth-context';
 import { usePermission } from '../../lib/use-permission';
 
@@ -53,6 +54,7 @@ const navSections: NavSection[] = [
     title: 'Communication',
     items: [
       { label: 'Notices', href: '/notices', icon: 'bell', permissions: ['read_notices'] },
+      { label: 'Chat Rooms', href: '/chat-rooms', icon: 'message-circle', permissions: ['access_chat'] },
     ],
   },
   {
@@ -66,14 +68,18 @@ const navSections: NavSection[] = [
   {
     title: 'Parent Portal',
     items: [
-      { label: 'My Children', href: '/my-children', icon: 'users', roles: ['parent'] },
+      { label: 'My Children', href: '/my-children', icon: 'users', roles: ['parent'], permissions: ['view_children'] },
+      { label: 'My Fees', href: '/my-fees', icon: 'dollar', roles: ['parent'], permissions: ['view_children_fees'] },
     ],
   },
   {
     title: 'Student Portal',
     items: [
-      { label: 'My Results', href: '/my-results', icon: 'bar-chart', roles: ['student'] },
-      { label: 'My Report Card', href: '/my-report-card', icon: 'award', roles: ['student'] },
+      { label: 'My Exams', href: '/my-exams', icon: 'clipboard', roles: ['student'], permissions: ['take_exams'] },
+      { label: 'My Results', href: '/my-results', icon: 'bar-chart', roles: ['student'], permissions: ['view_my_results'] },
+      { label: 'My Attendance', href: '/my-attendance', icon: 'check-circle', roles: ['student'], permissions: ['view_my_attendance'] },
+      { label: 'My Fees', href: '/my-fees', icon: 'dollar', roles: ['student'], permissions: ['view_my_results'] },
+      { label: 'My Report Card', href: '/my-report-card', icon: 'award', roles: ['student'], permissions: ['view_my_report_card'] },
     ],
   },
   {
@@ -106,9 +112,12 @@ const iconMap: Record<string, string> = {
   bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
   star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  'message-circle': 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z',
 };
 
 export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; onToggle: () => void }) {
+  const pageContext = usePageContext();
+  const currentPath = (pageContext as any).urlPathname || '';
   // Handle SSR - useAuth returns safe defaults during server rendering
   const auth = useAuth();
   const { canAny, permissions } = usePermission();
@@ -126,15 +135,14 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => {
-        // If item has permissions specified, check permissions (preferred)
-        if (item.permissions && item.permissions.length > 0) {
-          return canAny(item.permissions);
-        }
-        // Fallback to role-based check (backwards compatibility)
+        // Role check — user must have one of the specified roles
         if (item.roles && item.roles.length > 0) {
-          return item.roles.includes(userRole);
+          if (!item.roles.includes(userRole)) return false;
         }
-        // If no restrictions, show to everyone
+        // Permission check — user must have at least one of the specified permissions
+        if (item.permissions && item.permissions.length > 0) {
+          if (!canAny(item.permissions)) return false;
+        }
         return true;
       }),
     }))
@@ -142,16 +150,23 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full bg-white border-r border-gray-200 z-30 transition-all duration-300 ${
+      className={`fixed top-0 left-0 h-full bg-linear-to-br from-blue-500 to-blue-700 z-30 transition-all duration-300 overflow-hidden ${
         collapsed ? 'w-16' : 'w-64'
       }`}
     >
+      {/* Decorative circles */}
+      <div className="absolute inset-0 pointer-events-none">
+        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full" />
+        <div className="absolute bottom-20 -right-8 w-48 h-48 bg-blue-400/15 rounded-full" />
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-blue-300/15 rounded-full" />
+      </div>
+
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-gray-200">
-        {!collapsed && <span className="text-xl font-bold text-blue-600">Sqoolify</span>}
+      <div className="h-16 flex items-center justify-between px-4 border-b border-blue-400/30 relative z-10">
+        {!collapsed && <span className="text-xl font-bold text-white">Sqoolify</span>}
         <button
           onClick={onToggle}
-          className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+          className="p-1.5 rounded-lg hover:bg-white/10 text-blue-100"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -160,38 +175,45 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
       </div>
 
       {/* Nav */}
-      <nav className="p-3 overflow-y-auto h-[calc(100%-4rem)]">
+      <nav className="p-3 overflow-y-auto h-[calc(100%-4rem)] relative z-10">
         {filteredSections.map((section, sectionIndex) => (
           <div key={section.title} className={sectionIndex > 0 ? 'mt-4' : ''}>
             {!collapsed && (
-              <p className="px-3 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+              <p className="px-3 mb-2 text-xs font-semibold text-blue-200/70 uppercase tracking-wider">
                 {section.title}
               </p>
             )}
             <div className="space-y-1">
-              {section.items.map((item) => (
-                <a
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition text-sm"
-                  title={collapsed ? item.label : undefined}
-                >
-                  <svg
-                    className="w-5 h-5 shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth={1.5}
-                    viewBox="0 0 24 24"
+              {section.items.map((item) => {
+                const isActive = currentPath === item.href || (item.href !== '/dashboard' && currentPath.startsWith(item.href + '/'));
+                return (
+                  <a
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm ${
+                      isActive
+                        ? 'bg-white/20 text-white font-medium'
+                        : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                    }`}
+                    title={collapsed ? item.label : undefined}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d={iconMap[item.icon] || iconMap.grid}
-                    />
-                  </svg>
-                  {!collapsed && <span>{item.label}</span>}
-                </a>
-              ))}
+                    <svg
+                      className="w-5 h-5 shrink-0"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth={isActive ? 2 : 1.5}
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d={iconMap[item.icon] || iconMap.grid}
+                      />
+                    </svg>
+                    {!collapsed && <span>{item.label}</span>}
+                  </a>
+                );
+              })}
             </div>
           </div>
         ))}

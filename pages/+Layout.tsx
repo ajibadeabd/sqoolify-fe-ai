@@ -6,7 +6,7 @@ import { AuthProvider } from '../lib/auth-context'
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <AuthProvider>
-      <div className="min-h-screen bg-gray-50 text-gray-900 antialiased">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-purple-50/30 text-gray-900 antialiased">
         {children}
         <Toaster
           position="top-right"

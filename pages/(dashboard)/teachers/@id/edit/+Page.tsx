@@ -107,105 +107,183 @@ export default function EditTeacherPage() {
         ]}
       />
 
-      <Card title="Edit Teacher">
-        <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-          {/* Account Information (read-only) */}
-          <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Account Information</h3>
-          <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2.5 rounded-lg text-sm">
-            Name, email, and phone belong to the user account and cannot be edited here.
-          </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Teacher</h1>
+        <p className="text-gray-500 mt-1">Update teacher details</p>
+      </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input id="firstName" label="First Name" value={form.firstName} disabled />
-            <Input id="lastName" label="Last Name" value={form.lastName} disabled />
-          </div>
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input id="email" label="Email" value={form.email} disabled />
-            <Input id="phone" label="Phone" value={form.phone} disabled />
-          </div>
+      <div className="grid lg:grid-cols-3 gap-6">
+        {/* Form */}
+        <Card title="Teacher Information" className="lg:col-span-2">
+          <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+            {/* Account Information (read-only) */}
+            <h3 className="text-lg font-medium text-gray-900 border-b pb-2">Account Information</h3>
+            <div className="bg-amber-50 border border-amber-200 text-amber-700 px-4 py-2.5 rounded-lg text-sm">
+              Name, email, and phone belong to the user account and cannot be edited here.
+            </div>
 
-          {/* Professional Information */}
-          <h3 className="text-lg font-medium text-gray-900 border-b pb-2 pt-4">Professional Information</h3>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input id="firstName" label="First Name" value={form.firstName} disabled />
+              <Input id="lastName" label="Last Name" value={form.lastName} disabled />
+            </div>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input id="email" label="Email" value={form.email} disabled />
+              <Input id="phone" label="Phone" value={form.phone} disabled />
+            </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+            {/* Professional Information */}
+            <h3 className="text-lg font-medium text-gray-900 border-b pb-2 pt-4">Professional Information</h3>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input
+                id="employeeId"
+                label="Employee ID"
+                value={form.employeeId}
+                disabled
+              />
+              <Input
+                id="qualification"
+                label="Qualification"
+                value={form.qualification}
+                onChange={(e) => update('qualification', (e.target as HTMLInputElement).value)}
+                placeholder="e.g. B.Ed, M.Sc"
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input
+                id="level"
+                label="Level"
+                value={form.level}
+                onChange={(e) => update('level', (e.target as HTMLInputElement).value)}
+                placeholder="e.g. Senior, Junior"
+              />
+              <Input
+                id="primarySubject"
+                label="Primary Subject"
+                value={form.primarySubject}
+                onChange={(e) => update('primarySubject', (e.target as HTMLInputElement).value)}
+                placeholder="e.g. Mathematics"
+              />
+            </div>
+
+            <div className="grid sm:grid-cols-2 gap-4">
+              <Input
+                id="employmentDate"
+                label="Employment Date"
+                type="date"
+                value={form.employmentDate}
+                onChange={(e) => update('employmentDate', (e.target as HTMLInputElement).value)}
+                max={new Date().toISOString().split('T')[0]}
+              />
+              <Input
+                id="experience"
+                label="Years of Experience"
+                value={form.experience}
+                onChange={(e) => update('experience', (e.target as HTMLInputElement).value)}
+                placeholder="e.g. 5 years"
+              />
+            </div>
+
             <Input
-              id="employeeId"
-              label="Employee ID"
-              value={form.employeeId}
-              disabled
+              id="address"
+              label="Address"
+              value={form.address}
+              onChange={(e) => update('address', (e.target as HTMLInputElement).value)}
+              placeholder="Full address"
             />
-            <Input
-              id="qualification"
-              label="Qualification"
-              value={form.qualification}
-              onChange={(e) => update('qualification', (e.target as HTMLInputElement).value)}
-              placeholder="e.g. B.Ed, M.Sc"
-            />
-          </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input
-              id="level"
-              label="Level"
-              value={form.level}
-              onChange={(e) => update('level', (e.target as HTMLInputElement).value)}
-              placeholder="e.g. Senior, Junior"
-            />
-            <Input
-              id="primarySubject"
-              label="Primary Subject"
-              value={form.primarySubject}
-              onChange={(e) => update('primarySubject', (e.target as HTMLInputElement).value)}
-              placeholder="e.g. Mathematics"
-            />
-          </div>
+            <div>
+              <label htmlFor="aboutMe" className="block text-sm font-medium text-gray-700 mb-1">About Me</label>
+              <textarea
+                id="aboutMe"
+                value={form.aboutMe}
+                onChange={(e) => update('aboutMe', e.target.value)}
+                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                rows={3}
+                placeholder="Brief description about the teacher..."
+                maxLength={500}
+              />
+              <p className="text-xs text-gray-500 mt-1">{form.aboutMe.length}/500 characters</p>
+            </div>
 
-          <div className="grid sm:grid-cols-2 gap-4">
-            <Input
-              id="employmentDate"
-              label="Employment Date"
-              type="date"
-              value={form.employmentDate}
-              onChange={(e) => update('employmentDate', (e.target as HTMLInputElement).value)}
-              max={new Date().toISOString().split('T')[0]}
-            />
-            <Input
-              id="experience"
-              label="Years of Experience"
-              value={form.experience}
-              onChange={(e) => update('experience', (e.target as HTMLInputElement).value)}
-              placeholder="e.g. 5 years"
-            />
-          </div>
+            <div className="flex gap-3 pt-4">
+              <Button type="submit" loading={saving} disabled={saving}>Update Teacher</Button>
+              <Button type="button" variant="outline" onClick={() => navigate(`/teachers/${id}`)} disabled={saving}>Cancel</Button>
+            </div>
+          </form>
+        </Card>
 
-          <Input
-            id="address"
-            label="Address"
-            value={form.address}
-            onChange={(e) => update('address', (e.target as HTMLInputElement).value)}
-            placeholder="Full address"
-          />
+        {/* Live Preview Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6">
+            <Card title="Live Preview">
+              <div className="space-y-3">
+                <div className="p-3 bg-gray-50 rounded-lg">
+                  <p className="text-xs text-gray-600 mb-1">Name</p>
+                  <p className="font-medium text-gray-700 text-sm">{form.firstName} {form.lastName}</p>
+                </div>
 
-          <div>
-            <label htmlFor="aboutMe" className="block text-sm font-medium text-gray-700 mb-1">About Me</label>
-            <textarea
-              id="aboutMe"
-              value={form.aboutMe}
-              onChange={(e) => update('aboutMe', e.target.value)}
-              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
-              rows={3}
-              placeholder="Brief description about the teacher..."
-              maxLength={500}
-            />
-            <p className="text-xs text-gray-500 mt-1">{form.aboutMe.length}/500 characters</p>
-          </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="p-3 bg-purple-50 rounded-lg">
+                    <p className="text-xs text-purple-600 mb-1">Qualification</p>
+                    <p className="font-medium text-purple-700 text-sm">{form.qualification || 'Not set'}</p>
+                  </div>
+                  <div className="p-3 bg-green-50 rounded-lg">
+                    <p className="text-xs text-green-600 mb-1">Level</p>
+                    <p className="font-medium text-green-700 text-sm">{form.level || 'Not set'}</p>
+                  </div>
+                </div>
 
-          <div className="flex gap-3 pt-4">
-            <Button type="submit" loading={saving} disabled={saving}>Update Teacher</Button>
-            <Button type="button" variant="outline" onClick={() => navigate(`/teachers/${id}`)} disabled={saving}>Cancel</Button>
+                <div className="p-3 bg-blue-50 rounded-lg">
+                  <p className="text-xs text-blue-600 mb-1">Employee ID</p>
+                  <p className="font-medium text-blue-700 text-sm">{form.employeeId || 'Not set'}</p>
+                </div>
+
+                {form.primarySubject && (
+                  <div className="p-3 bg-orange-50 rounded-lg">
+                    <p className="text-xs text-orange-600 mb-1">Primary Subject</p>
+                    <p className="font-medium text-orange-700 text-sm">{form.primarySubject}</p>
+                  </div>
+                )}
+
+                {form.experience && (
+                  <div className="p-3 bg-indigo-50 rounded-lg">
+                    <p className="text-xs text-indigo-600 mb-1">Experience</p>
+                    <p className="font-medium text-indigo-700 text-sm">{form.experience}</p>
+                  </div>
+                )}
+
+                {form.employmentDate && (
+                  <div className="p-3 bg-yellow-50 rounded-lg">
+                    <p className="text-xs text-yellow-600 mb-1">Employment Date</p>
+                    <p className="font-medium text-yellow-700 text-sm">{form.employmentDate}</p>
+                  </div>
+                )}
+
+                <div className="p-3 bg-sky-50 rounded-lg">
+                  <p className="text-xs text-sky-600 mb-1">Email</p>
+                  <p className="font-medium text-sky-700 text-sm">{form.email || 'Not set'}</p>
+                </div>
+
+                {form.address && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">Address</p>
+                    <p className="font-medium text-gray-700 text-sm">{form.address}</p>
+                  </div>
+                )}
+
+                {form.aboutMe && (
+                  <div className="p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-600 mb-1">About</p>
+                    <p className="font-medium text-gray-700 text-sm line-clamp-3">{form.aboutMe}</p>
+                  </div>
+                )}
+              </div>
+            </Card>
           </div>
-        </form>
-      </Card>
+        </div>
+      </div>
     </div>
   )
 }

@@ -160,12 +160,12 @@ export default function NoticesPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Notices' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Notice Board</h1>
           <p className="text-sm text-gray-500 mt-1">{total} notices</p>
         </div>
-        <Button onClick={() => navigate('/notices/add')}>+ Add Notice</Button>
+        {can('write_notices') && <Button onClick={() => navigate('/notices/add')}>+ Add Notice</Button>}
       </div>
 
       {error && (
@@ -196,7 +196,7 @@ export default function NoticesPage() {
         onRowClick={(item) => navigate(`/notices/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   );
 }

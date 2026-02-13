@@ -74,7 +74,7 @@ export default function MyReportCardPage() {
     <div>
       <Breadcrumbs items={[{ label: 'My Report Card' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <h1 className="text-2xl font-bold text-gray-900">My Report Card</h1>
         <Button onClick={handleDownloadPdf} loading={downloading}>Download PDF</Button>
       </div>

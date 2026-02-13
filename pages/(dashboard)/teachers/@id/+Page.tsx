@@ -66,124 +66,169 @@ export default function TeacherDetailPage() {
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Teachers', href: '/teachers' }, { label: `${user.firstName || ''} ${user.lastName || ''}` }]} />
 
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-gray-900">Teacher Details</h1>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate('/teachers')}>Back</Button>
-          {can('write_users') && <Button variant="primary" onClick={() => navigate(`/teachers/${id}/edit`)}>Edit</Button>}
-          {can('write_users') && <Button variant="primary" onClick={() => setRoleModalOpen(true)}>Manage Role</Button>}
-          {can('write_users') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Profile Header */}
+          <Card>
+            <div className="flex items-center gap-6">
+              <Avatar name={`${user.firstName || ''} ${user.lastName || ''}`} size="lg" />
+              <div>
+                <h2 className="text-xl font-semibold">{user.firstName} {user.lastName}</h2>
+                <p className="text-gray-500">Employee ID: {teacher.employeeId}</p>
+                <div className="flex gap-2 mt-1">
+                  <Badge variant={teacher.isActive !== false ? 'success' : 'danger'}>
+                    {teacher.isActive !== false ? 'Active' : 'Inactive'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </Card>
+
+          {/* Action Buttons */}
+          <div className="flex flex-wrap gap-3">
+            <Button variant="outline" onClick={() => navigate('/teachers')}>Back</Button>
+            {can('write_users') && <Button variant="primary" onClick={() => navigate(`/teachers/${id}/edit`)}>Edit</Button>}
+            {can('write_users') && <Button variant="primary" onClick={() => setRoleModalOpen(true)}>Manage Role</Button>}
+            {can('write_users') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
+          </div>
+
+          {/* Professional Information */}
+          <Card title="Professional Information">
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div>
+                <label className="text-sm text-gray-500">Qualification</label>
+                <p className="font-medium">{teacher.qualification || '-'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Level</label>
+                <p className="font-medium">{teacher.level || '-'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Experience</label>
+                <p className="font-medium">{teacher.experience || '-'}</p>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Primary Subject</label>
+                <p className="font-medium">{teacher.primarySubject || '-'}</p>
+              </div>
+              <div className="sm:col-span-2">
+                <label className="text-sm text-gray-500">Address</label>
+                <p className="font-medium">{teacher.address || '-'}</p>
+              </div>
+            </div>
+            {teacher.aboutMe && (
+              <div className="mt-4 pt-4 border-t">
+                <label className="text-sm text-gray-500">About</label>
+                <p className="font-medium">{teacher.aboutMe}</p>
+              </div>
+            )}
+          </Card>
+
+          {/* Assignments */}
+          <Card title="Assignments">
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div>
+                <label className="text-sm text-gray-500">Subjects</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {teacher.subjects?.length > 0 ? (
+                    teacher.subjects.map((s: any) => (
+                      <span key={s._id} className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded">
+                        {s.name} {s.code && `(${s.code})`}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500">No subjects assigned</span>
+                  )}
+                </div>
+              </div>
+              <div>
+                <label className="text-sm text-gray-500">Classes</label>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {teacher.classes?.length > 0 ? (
+                    teacher.classes.map((c: any) => (
+                      <span key={c._id} className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded">
+                        {c.name}{c.section ? ` - ${c.section}` : ''}
+                      </span>
+                    ))
+                  ) : (
+                    <span className="text-gray-500">No classes assigned</span>
+                  )}
+                </div>
+              </div>
+            </div>
+          </Card>
+        </div>
+
+        {/* Right Column - Sticky Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-6 space-y-4">
+            {/* Name */}
+            <div className="rounded-xl bg-gray-50 p-4">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Name</p>
+              <p className="mt-1 text-lg font-semibold text-gray-800">{user.firstName} {user.lastName}</p>
+            </div>
+
+            {/* Qualification & Level - 2-col grid */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="rounded-xl bg-purple-50 p-4">
+                <p className="text-xs font-medium text-purple-500 uppercase tracking-wide">Qualification</p>
+                <p className="mt-1 text-sm font-semibold text-purple-700">{teacher.qualification || '-'}</p>
+              </div>
+              <div className="rounded-xl bg-green-50 p-4">
+                <p className="text-xs font-medium text-green-500 uppercase tracking-wide">Level</p>
+                <p className="mt-1 text-sm font-semibold text-green-700">{teacher.level || '-'}</p>
+              </div>
+            </div>
+
+            {/* Employee ID */}
+            <div className="rounded-xl bg-blue-50 p-4">
+              <p className="text-xs font-medium text-blue-500 uppercase tracking-wide">Employee ID</p>
+              <p className="mt-1 text-lg font-semibold text-blue-700">{teacher.employeeId || '-'}</p>
+            </div>
+
+            {/* Primary Subject */}
+            <div className="rounded-xl bg-orange-50 p-4">
+              <p className="text-xs font-medium text-orange-500 uppercase tracking-wide">Primary Subject</p>
+              <p className="mt-1 text-lg font-semibold text-orange-700">{teacher.primarySubject || '-'}</p>
+            </div>
+
+            {/* Email */}
+            <div className="rounded-xl bg-indigo-50 p-4">
+              <p className="text-xs font-medium text-indigo-500 uppercase tracking-wide">Email</p>
+              <p className="mt-1 text-sm font-semibold text-indigo-700 break-all">{user.email || '-'}</p>
+            </div>
+
+            {/* Phone */}
+            <div className="rounded-xl bg-sky-50 p-4">
+              <p className="text-xs font-medium text-sky-500 uppercase tracking-wide">Phone</p>
+              <p className="mt-1 text-lg font-semibold text-sky-700">{user.phone || '-'}</p>
+            </div>
+
+            {/* Employment Date */}
+            <div className="rounded-xl bg-yellow-50 p-4">
+              <p className="text-xs font-medium text-yellow-600 uppercase tracking-wide">Employment Date</p>
+              <p className="mt-1 text-lg font-semibold text-yellow-700">
+                {teacher.employmentDate ? new Date(teacher.employmentDate).toLocaleDateString() : '-'}
+              </p>
+            </div>
+
+            {/* Experience */}
+            <div className="rounded-xl bg-teal-50 p-4">
+              <p className="text-xs font-medium text-teal-600 uppercase tracking-wide">Experience</p>
+              <p className="mt-1 text-lg font-semibold text-teal-700">{teacher.experience || '-'}</p>
+            </div>
+
+            {/* Address (conditional) */}
+            {teacher.address && (
+              <div className="rounded-xl bg-gray-50 p-4">
+                <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Address</p>
+                <p className="mt-1 text-sm font-semibold text-gray-700">{teacher.address}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-
-      {/* Profile Header */}
-      <Card>
-        <div className="flex items-center gap-6">
-          <Avatar name={`${user.firstName || ''} ${user.lastName || ''}`} size="lg" />
-          <div>
-            <h2 className="text-xl font-semibold">{user.firstName} {user.lastName}</h2>
-            <p className="text-gray-500">Employee ID: {teacher.employeeId}</p>
-            <div className="flex gap-2 mt-1">
-              <Badge variant={teacher.isActive !== false ? 'success' : 'danger'}>
-                {teacher.isActive !== false ? 'Active' : 'Inactive'}
-              </Badge>
-              {teacher.isClassTeacher && <Badge variant="info">Class Teacher</Badge>}
-            </div>
-          </div>
-        </div>
-      </Card>
-
-      {/* Account Information */}
-      <Card title="Account Information">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div>
-            <label className="text-sm text-gray-500">Email</label>
-            <p className="font-medium">{user.email || '-'}</p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Phone</label>
-            <p className="font-medium">{user.phone || '-'}</p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Employment Date</label>
-            <p className="font-medium">{teacher.employmentDate ? new Date(teacher.employmentDate).toLocaleDateString() : '-'}</p>
-          </div>
-        </div>
-      </Card>
-
-      {/* Professional Information */}
-      <Card title="Professional Information">
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          <div>
-            <label className="text-sm text-gray-500">Qualification</label>
-            <p className="font-medium">{teacher.qualification || '-'}</p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Level</label>
-            <p className="font-medium">{teacher.level || '-'}</p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Experience</label>
-            <p className="font-medium">{teacher.experience || '-'}</p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Primary Subject</label>
-            <p className="font-medium">{teacher.primarySubject || '-'}</p>
-          </div>
-          <div className="sm:col-span-2">
-            <label className="text-sm text-gray-500">Address</label>
-            <p className="font-medium">{teacher.address || '-'}</p>
-          </div>
-        </div>
-        {teacher.aboutMe && (
-          <div className="mt-4 pt-4 border-t">
-            <label className="text-sm text-gray-500">About</label>
-            <p className="font-medium">{teacher.aboutMe}</p>
-          </div>
-        )}
-      </Card>
-
-      {/* Assignment Information */}
-      <Card title="Assignments">
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div>
-            <label className="text-sm text-gray-500">Assigned Class</label>
-            <p className="font-medium">
-              {teacher.assignedClass?.name
-                ? `${teacher.assignedClass.name}${teacher.assignedClass.section ? ` - ${teacher.assignedClass.section}` : ''}`
-                : 'Not assigned'}
-            </p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Subjects</label>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {teacher.subjects?.length > 0 ? (
-                teacher.subjects.map((s: any) => (
-                  <span key={s._id} className="px-2 py-1 bg-blue-100 text-blue-700 text-sm rounded">
-                    {s.name} {s.code && `(${s.code})`}
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-500">No subjects assigned</span>
-              )}
-            </div>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Classes</label>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {teacher.classes?.length > 0 ? (
-                teacher.classes.map((c: any) => (
-                  <span key={c._id} className="px-2 py-1 bg-green-100 text-green-700 text-sm rounded">
-                    {c.name}{c.section ? ` - ${c.section}` : ''}
-                  </span>
-                ))
-              ) : (
-                <span className="text-gray-500">No classes assigned</span>
-              )}
-            </div>
-          </div>
-        </div>
-      </Card>
 
       {/* Permissions & Role Management Modal */}
       <Modal open={roleModalOpen} onClose={() => setRoleModalOpen(false)} title="Manage Role & Permissions" size="xl">

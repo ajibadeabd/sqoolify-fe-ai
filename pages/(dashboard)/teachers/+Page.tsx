@@ -74,33 +74,40 @@ export default function TeachersPage() {
   };
 
   const columns: Column<Teacher>[] = [
-    { key: 'employeeId', header: 'Employee ID' },
+    {
+      key: 'employeeId',
+      header: 'Employee ID',
+      render: (item) => (
+        <span className="font-mono text-xs px-2 py-0.5 bg-gray-100 rounded">{item.employeeId || '-'}</span>
+      ),
+    },
     {
       key: 'name',
       header: 'Name',
-      render: (item) => item.user ? `${item.user.firstName} ${item.user.lastName}` : '-',
+      render: (item) => { const u = typeof item.user === 'object' ? item.user : null; return u ? `${u.firstName} ${u.lastName}` : '-' },
     },
     {
       key: 'email',
       header: 'Email',
-      render: (item) => item.user?.email || '-',
+      render: (item) => { const u = typeof item.user === 'object' ? item.user : null; return u?.email || '-' },
     },
     {
       key: 'qualification',
       header: 'Qualification',
-      render: (item) => item.qualification || '-',
+      render: (item) => item.qualification ? (
+        <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">{item.qualification}</span>
+      ) : '-',
     },
     {
-      key: 'classTeacher',
-      header: 'Class Teacher',
+      key: 'classes',
+      header: 'Classes',
       render: (item) => {
-        if (!item.isClassTeacher) return <span className="text-gray-400">No</span>;
-        const className = (item.assignedClass as any)?.name;
-        return (
+        const count = item.classes?.length || 0;
+        return count > 0 ? (
           <span className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded-full">
-            {className || 'Yes'}
+            {count} {count === 1 ? 'class' : 'classes'}
           </span>
-        );
+        ) : <span className="text-gray-400">-</span>;
       },
     },
     {
@@ -108,7 +115,9 @@ export default function TeachersPage() {
       header: 'Subjects',
       render: (item) => {
         const count = item.subjects?.length || 0;
-        return count > 0 ? `${count} subject${count > 1 ? 's' : ''}` : '-';
+        return count > 0 ? (
+          <span className="px-2 py-0.5 text-xs bg-indigo-100 text-indigo-700 rounded-full">{count} subject{count > 1 ? 's' : ''}</span>
+        ) : '-';
       },
     },
     {
@@ -127,15 +136,15 @@ export default function TeachersPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Teachers' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Teachers</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total teachers</p>
         </div>
         {can('write_teachers') && (
           <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setShowImport(true)}>Import CSV</Button>
-            <Button onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>
+            <Button variant="outline" size="sm" onClick={() => setShowImport(true)}>Import CSV</Button>
+            <Button size="sm" onClick={() => navigate('/teachers/add')}>+ Add Teacher</Button>
           </div>
         )}
       </div>
@@ -168,7 +177,7 @@ export default function TeachersPage() {
         onRowClick={(item) => navigate(`/teachers/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
 
       <CsvImportModal
         open={showImport}

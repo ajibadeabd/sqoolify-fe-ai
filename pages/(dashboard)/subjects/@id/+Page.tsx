@@ -29,7 +29,7 @@ export default function SubjectDetailPage() {
   const [assigning, setAssigning] = useState(false)
 
   // Remove teacher state
-  const [removeOpen, setRemoveOpen] = useState(false)
+  const [removeTeacherId, setRemoveTeacherId] = useState<string | null>(null)
   const [removing, setRemoving] = useState(false)
 
   const fetchSubject = useCallback(async () => {
@@ -94,11 +94,12 @@ export default function SubjectDetailPage() {
   }
 
   const handleRemoveTeacher = async () => {
+    if (!removeTeacherId) return
     setRemoving(true)
     try {
-      await subjectService.removeTeacher(id)
+      await subjectService.removeTeacher(id, removeTeacherId)
       toast.success('Teacher removed from subject')
-      setRemoveOpen(false)
+      setRemoveTeacherId(null)
       await fetchSubject()
     } catch {
       toast.error('Failed to remove teacher')
@@ -120,20 +121,21 @@ export default function SubjectDetailPage() {
     return <div className="text-center py-12 text-gray-500">Subject not found</div>
   }
 
-  const teacher = typeof subject.teacher === 'object' ? subject.teacher : null
-  const teacherUser = teacher?.user && typeof teacher.user === 'object' ? teacher.user : null
-  const cls = typeof subject.class === 'object' ? subject.class : null
+  const subjectTeachers = (subject.teachers || []) as any[]
+
+  // Get existing teacher IDs to filter in assign modal
+  const existingTeacherIds = subjectTeachers.map((t: any) => typeof t === 'object' ? t._id : t)
 
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Subjects', href: '/subjects' }, { label: subject.name }]} />
 
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Subject Details</h1>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => navigate('/subjects')}>Back</Button>
-          {can('write_subjects') && <Button variant="primary" onClick={() => navigate(`/subjects/${id}/edit`)}>Edit</Button>}
-          {can('delete_subjects') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => navigate('/subjects')}>Back</Button>
+          {can('write_subjects') && <Button variant="primary" size="sm" onClick={() => navigate(`/subjects/${id}/edit`)}>Edit</Button>}
+          {can('delete_subjects') && <Button variant="danger" size="sm" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
 
@@ -168,43 +170,43 @@ export default function SubjectDetailPage() {
         </div>
       </Card>
 
-      <Card title="Assignment">
-        <div className="grid sm:grid-cols-2 gap-6">
-          <div>
-            <label className="text-sm text-gray-500">Class</label>
-            <p className="font-medium">
-              {cls ? `${cls.name}${cls.section ? ` - ${cls.section}` : ''}` : 'Not assigned'}
-            </p>
-          </div>
-          <div>
-            <label className="text-sm text-gray-500">Teacher</label>
-            {teacherUser ? (
-              <div className="flex items-center gap-3 mt-1">
-                <div
-                  className="flex-1 cursor-pointer hover:text-blue-600 transition"
-                  onClick={() => navigate(`/teachers/${teacher._id}`)}
-                >
-                  <p className="font-medium">{teacherUser.firstName} {teacherUser.lastName}</p>
-                  {teacherUser.email && <p className="text-sm text-gray-500">{teacherUser.email}</p>}
-                </div>
-                {can('write_subjects') && (
-                  <div className="flex gap-2 shrink-0">
-                    <Button variant="outline" size="sm" onClick={openAssignModal}>Change</Button>
-                    <Button variant="danger" size="sm" onClick={() => setRemoveOpen(true)}>Remove</Button>
+      {/* Teachers */}
+      <Card title="Assigned Teachers">
+        <div className="space-y-3">
+          {subjectTeachers.length === 0 ? (
+            <p className="text-gray-400 text-sm">No teachers assigned to this subject.</p>
+          ) : (
+            subjectTeachers.map((t: any, i: number) => {
+              const tUser = t?.user && typeof t.user === 'object' ? t.user : null
+              return (
+                <div key={i} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 border border-gray-100 rounded-lg">
+                  <div
+                    className="cursor-pointer hover:text-blue-600 transition"
+                    onClick={() => navigate(`/teachers/${t._id}`)}
+                  >
+                    <p className="font-medium text-sm">
+                      {tUser ? `${tUser.firstName} ${tUser.lastName}` : 'Unknown'}
+                    </p>
+                    {tUser?.email && <p className="text-xs text-gray-500">{tUser.email}</p>}
                   </div>
-                )}
-              </div>
-            ) : (
-              <div className="mt-1">
-                <p className="text-gray-400">Not assigned</p>
-                {can('write_subjects') && (
-                  <Button variant="outline" size="sm" className="mt-2" onClick={openAssignModal}>
-                    + Assign Teacher
-                  </Button>
-                )}
-              </div>
-            )}
-          </div>
+                  {can('write_subjects') && (
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => setRemoveTeacherId(t._id)}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+              )
+            })
+          )}
+          {can('write_subjects') && (
+            <Button variant="outline" size="sm" onClick={openAssignModal}>
+              + Assign Teacher
+            </Button>
+          )}
         </div>
       </Card>
 
@@ -245,12 +247,12 @@ export default function SubjectDetailPage() {
                   {teachers.map((t) => {
                     const tUser = t.user && typeof t.user === 'object' ? t.user : null
                     if (!tUser) return null
-                    const isCurrentTeacher = teacher?._id === t._id
+                    const isAlreadyAssigned = existingTeacherIds.includes(t._id)
                     return (
                       <label
                         key={t._id}
                         className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
-                          selectedTeacher === t._id ? 'border-blue-300 bg-blue-50' : isCurrentTeacher ? 'border-gray-200 bg-gray-50 opacity-50' : 'border-gray-200 hover:bg-gray-50'
+                          selectedTeacher === t._id ? 'border-blue-300 bg-blue-50' : isAlreadyAssigned ? 'border-gray-200 bg-gray-50 opacity-50' : 'border-gray-200 hover:bg-gray-50'
                         }`}
                       >
                         <input
@@ -258,13 +260,13 @@ export default function SubjectDetailPage() {
                           name="assignTeacher"
                           checked={selectedTeacher === t._id}
                           onChange={() => setSelectedTeacher(t._id)}
-                          disabled={isCurrentTeacher}
+                          disabled={isAlreadyAssigned}
                           className="text-blue-600 focus:ring-blue-500 shrink-0"
                         />
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">
                             {tUser.firstName} {tUser.lastName}
-                            {isCurrentTeacher && <span className="text-xs text-gray-400 ml-2">(current)</span>}
+                            {isAlreadyAssigned && <span className="text-xs text-gray-400 ml-2">(already assigned)</span>}
                           </p>
                           {tUser.email && <p className="text-xs text-gray-500">{tUser.email}</p>}
                         </div>
@@ -293,11 +295,11 @@ export default function SubjectDetailPage() {
 
       {/* Remove Teacher Confirmation */}
       <ConfirmDialog
-        open={removeOpen}
-        onClose={() => setRemoveOpen(false)}
+        open={!!removeTeacherId}
+        onClose={() => setRemoveTeacherId(null)}
         onConfirm={handleRemoveTeacher}
         title="Remove Teacher"
-        message={`Remove ${teacherUser ? `${teacherUser.firstName} ${teacherUser.lastName}` : 'this teacher'} from ${subject.name}?`}
+        message={`Remove this teacher from ${subject.name}?`}
         loading={removing}
       />
 

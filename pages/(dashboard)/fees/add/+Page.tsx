@@ -22,7 +22,7 @@ interface TermFee {
 }
 
 export default function AddFeePage() {
-  const { termsPerSession, formatCurrency, currencySymbol } = useAppConfig()
+  const { termsPerSession, formatCurrency, currencySymbol, paymentCategories } = useAppConfig()
 
   const [form, setForm] = useState({
     classId: '',
@@ -148,7 +148,7 @@ export default function AddFeePage() {
     <div>
       <Breadcrumbs items={[{ label: 'Fees', href: '/fees' }, { label: 'Add Fee Structure' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Create Fee Structure</h1>
           <p className="text-sm text-gray-500 mt-1">Define fees for a class and academic session</p>
@@ -289,8 +289,38 @@ export default function AddFeePage() {
                             </button>
                           </div>
 
+                          {paymentCategories.length > 0 && (
+                            <div className="mb-3">
+                              <p className="text-xs text-gray-500 mb-1.5">Quick add:</p>
+                              <div className="flex flex-wrap gap-1.5">
+                                {paymentCategories.map((cat) => {
+                                  const alreadyAdded = term.breakdowns.some((b) => b.item.toLowerCase() === cat.toLowerCase())
+                                  return (
+                                    <button
+                                      key={cat}
+                                      type="button"
+                                      disabled={alreadyAdded}
+                                      onClick={() => {
+                                        const updated = [...terms]
+                                        updated[termIndex].breakdowns.push({ item: cat.charAt(0).toUpperCase() + cat.slice(1), amount: 0 })
+                                        setTerms(updated)
+                                      }}
+                                      className={`px-2.5 py-1 text-xs rounded-full border transition ${
+                                        alreadyAdded
+                                          ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
+                                          : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-50 hover:border-blue-300'
+                                      }`}
+                                    >
+                                      {cat.charAt(0).toUpperCase() + cat.slice(1)}
+                                    </button>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+
                           {term.breakdowns.length === 0 ? (
-                            <p className="text-sm text-gray-500 italic py-2">No breakdown items. Click "Add Item" to itemize fees.</p>
+                            <p className="text-sm text-gray-500 italic py-2">No breakdown items. Use the presets above or click "Add Item" to itemize fees.</p>
                           ) : (
                             <div className="space-y-2">
                               {term.breakdowns.map((breakdown, breakdownIndex) => (
@@ -364,9 +394,21 @@ export default function AddFeePage() {
 
                 <div className="border-t pt-4 space-y-3">
                   {terms.map((term) => (
-                    <div key={term.term} className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Term {term.term}</span>
-                      <span className="font-medium">{formatCurrency(term.amount)}</span>
+                    <div key={term.term}>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-700">Term {term.term}</span>
+                        <span className="font-medium">{formatCurrency(term.amount)}</span>
+                      </div>
+                      {term.breakdowns.length > 0 && (
+                        <div className="ml-3 mt-1 space-y-0.5">
+                          {term.breakdowns.filter((b) => b.item).map((b, i) => (
+                            <div key={i} className="flex items-center justify-between text-xs text-gray-500">
+                              <span>{b.item}</span>
+                              <span>{formatCurrency(b.amount)}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>

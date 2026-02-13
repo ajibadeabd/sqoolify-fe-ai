@@ -7,24 +7,10 @@ import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
 import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
-
-const VISIBILITY_OPTIONS = [
-  { value: 'everyone', label: 'Everyone', icon: '🌐' },
-  { value: 'staff', label: 'Staff Only', icon: '👨‍🏫' },
-  { value: 'teacher', label: 'Teachers', icon: '📚' },
-  { value: 'student', label: 'Students', icon: '🎓' },
-  { value: 'parent', label: 'Parents', icon: '👪' },
-]
-
-const NOTIFICATION_TYPES = [
-  { value: 'general', label: 'General', color: 'bg-gray-100 text-gray-700 border-gray-200', icon: '📢' },
-  { value: 'info', label: 'Information', color: 'bg-blue-100 text-blue-700 border-blue-200', icon: 'ℹ️' },
-  { value: 'academic', label: 'Academic', color: 'bg-purple-100 text-purple-700 border-purple-200', icon: '📚' },
-  { value: 'event', label: 'Event', color: 'bg-green-100 text-green-700 border-green-200', icon: '📅' },
-  { value: 'emergency', label: 'Emergency', color: 'bg-red-100 text-red-700 border-red-200', icon: '🚨' },
-]
+import { useAppConfig } from '../../../../../lib/use-app-config'
 
 export default function EditNoticePage() {
+  const { noticeVisibility: visibilityOptions, noticeTypes } = useAppConfig()
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
 
@@ -119,7 +105,7 @@ export default function EditNoticePage() {
     <div>
       <Breadcrumbs items={[{ label: 'Notices', href: '/notices' }, { label: 'Edit Notice' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edit Notice</h1>
           <p className="text-sm text-gray-500 mt-1">Update this announcement</p>
@@ -154,20 +140,19 @@ export default function EditNoticePage() {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Notification Type</label>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  {NOTIFICATION_TYPES.map((type) => (
+                <div className="flex flex-wrap gap-3">
+                  {noticeTypes.map((type) => (
                     <button
-                      key={type.value}
+                      key={type}
                       type="button"
-                      onClick={() => update('notificationType', type.value)}
-                      className={`p-3 rounded-lg border-2 transition-all ${
-                        form.notificationType === type.value
-                          ? `${type.color} border-current`
-                          : 'bg-white border-gray-200 hover:border-gray-300'
+                      onClick={() => update('notificationType', type)}
+                      className={`px-4 py-2.5 rounded-lg border-2 font-medium transition-all capitalize ${
+                        form.notificationType === type
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                       }`}
                     >
-                      <span className="text-xl mb-1 block">{type.icon}</span>
-                      <span className="text-sm font-medium">{type.label}</span>
+                      {type}
                     </button>
                   ))}
                 </div>
@@ -176,19 +161,18 @@ export default function EditNoticePage() {
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Visible To</label>
                 <div className="flex flex-wrap gap-2">
-                  {VISIBILITY_OPTIONS.map((opt) => (
+                  {visibilityOptions.map((opt) => (
                     <button
-                      key={opt.value}
+                      key={opt}
                       type="button"
-                      onClick={() => toggleVisibility(opt.value)}
-                      className={`px-4 py-2 rounded-full border transition-all flex items-center gap-2 ${
-                        visibility.includes(opt.value)
+                      onClick={() => toggleVisibility(opt)}
+                      className={`px-4 py-2 rounded-full border transition-all capitalize ${
+                        visibility.includes(opt)
                           ? 'bg-blue-600 text-white border-blue-600'
                           : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
                       }`}
                     >
-                      <span>{opt.icon}</span>
-                      <span className="text-sm font-medium">{opt.label}</span>
+                      <span className="text-sm font-medium">{opt}</span>
                     </button>
                   ))}
                 </div>
@@ -236,9 +220,7 @@ export default function EditNoticePage() {
         <div className="lg:col-span-1">
           <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Preview</h3>
-            <div className={`rounded-lg border-2 p-4 ${
-              NOTIFICATION_TYPES.find((t) => t.value === form.notificationType)?.color || 'bg-gray-50'
-            }`}>
+            <div className="rounded-lg border-2 p-4 bg-gray-50 border-gray-200">
               <div className="flex items-start justify-between gap-2 mb-2">
                 <h4 className="font-semibold text-gray-900">
                   {form.title || 'Notice Title'}

@@ -1,4 +1,4 @@
-import { Notice, Session, AdminDashboardStats } from '../../lib/types';
+import { Notice, Session, AdminDashboardStats, AttendanceBreakdown, ClassAttendance } from '../../lib/types';
 import { useAppConfig } from '../../lib/use-app-config';
 import StatsCard from '../ui/StatsCard';
 
@@ -7,9 +7,10 @@ interface AdminDashboardProps {
   notices: Notice[];
   currentSession: Session | null;
   userName: string;
+  chatRooms?: any[];
 }
 
-export default function AdminDashboard({ stats, notices, currentSession, userName }: AdminDashboardProps) {
+export default function AdminDashboard({ stats, notices, currentSession, userName, chatRooms = [] }: AdminDashboardProps) {
   const { formatCurrency } = useAppConfig();
 
   const formatPercent = (value?: number) => {
@@ -43,35 +44,105 @@ export default function AdminDashboard({ stats, notices, currentSession, userNam
         <StatsCard title="Outstanding Fees" value={formatCurrency(stats?.outstandingFees)} icon="alert" color="red" />
       </div>
 
-      {/* Attendance Rate */}
-      {stats?.attendanceRate !== undefined && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-8">
-          <div className="flex items-center justify-between">
+      {/* Attendance Charts */}
+      <div className="grid lg:grid-cols-2 gap-6 mb-8">
+        {/* Pie/Donut Chart - Status Breakdown */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
             <div>
-              <p className="text-sm font-medium text-gray-500">Overall Attendance Rate</p>
-              <p className="text-3xl font-bold text-gray-900 mt-1">{formatPercent(stats.attendanceRate)}</p>
-            </div>
-            <div className="w-24 h-24">
-              <svg viewBox="0 0 36 36" className="w-full h-full">
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#e5e7eb"
-                  strokeWidth="3"
-                />
-                <path
-                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                  fill="none"
-                  stroke="#22c55e"
-                  strokeWidth="3"
-                  strokeDasharray={`${stats.attendanceRate}, 100`}
-                  strokeLinecap="round"
-                />
-              </svg>
+              <h3 className="text-lg font-semibold text-gray-900">Attendance Overview</h3>
+              <p className="text-sm text-gray-500">Overall rate: {formatPercent(stats?.attendanceRate)}</p>
             </div>
           </div>
+          {(() => {
+            const bd = stats?.attendanceBreakdown || { present: 0, absent: 0, late: 0, excused: 0 };
+            const total = bd.present + bd.absent + bd.late + bd.excused;
+            if (total === 0) return <p className="text-gray-400 text-sm">No attendance data yet.</p>;
+
+            const segments = [
+              { label: 'Present', value: bd.present, color: '#22c55e' },
+              { label: 'Absent', value: bd.absent, color: '#ef4444' },
+              { label: 'Late', value: bd.late, color: '#f59e0b' },
+              { label: 'Excused', value: bd.excused, color: '#3b82f6' },
+            ].filter(s => s.value > 0);
+
+            let cumulativePercent = 0;
+            const radius = 15.9155;
+            const circumference = 2 * Math.PI * radius;
+
+            return (
+              <div className="flex items-center gap-6">
+                <div className="w-40 h-40 flex-shrink-0">
+                  <svg viewBox="0 0 36 36" className="w-full h-full">
+                    {segments.map((seg, i) => {
+                      const percent = (seg.value / total) * 100;
+                      const dashArray = `${(percent / 100) * circumference} ${circumference}`;
+                      const rotation = (cumulativePercent / 100) * 360 - 90;
+                      cumulativePercent += percent;
+                      return (
+                        <circle
+                          key={i}
+                          cx="18" cy="18" r={radius}
+                          fill="none"
+                          stroke={seg.color}
+                          strokeWidth="4"
+                          strokeDasharray={dashArray}
+                          transform={`rotate(${rotation} 18 18)`}
+                        />
+                      );
+                    })}
+                    <text x="18" y="17" textAnchor="middle" className="text-[5px] font-bold fill-gray-900">
+                      {total}
+                    </text>
+                    <text x="18" y="21" textAnchor="middle" className="text-[2.5px] fill-gray-500">
+                      records
+                    </text>
+                  </svg>
+                </div>
+                <div className="flex flex-col gap-2">
+                  {segments.map((seg, i) => (
+                    <div key={i} className="flex items-center gap-2">
+                      <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+                      <span className="text-sm text-gray-700">
+                        {seg.label}: <span className="font-medium">{seg.value}</span>
+                        <span className="text-gray-400 ml-1">({((seg.value / total) * 100).toFixed(1)}%)</span>
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
         </div>
-      )}
+
+        {/* Bar Chart - Attendance by Class */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance by Class</h3>
+          {(!stats?.attendanceByClass || stats.attendanceByClass.length === 0) ? (
+            <p className="text-gray-400 text-sm">No attendance data yet.</p>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {stats.attendanceByClass.map((cls, i) => (
+                <div key={i}>
+                  <div className="flex items-center justify-between text-sm mb-1">
+                    <span className="text-gray-700 font-medium truncate mr-2">{cls.className}</span>
+                    <span className="text-gray-500 flex-shrink-0">{cls.attendanceRate}%</span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-2.5">
+                    <div
+                      className="h-2.5 rounded-full transition-all"
+                      style={{
+                        width: `${cls.attendanceRate}%`,
+                        backgroundColor: cls.attendanceRate >= 80 ? '#22c55e' : cls.attendanceRate >= 60 ? '#f59e0b' : '#ef4444',
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
         {/* Recent Notices */}
@@ -164,6 +235,35 @@ export default function AdminDashboard({ stats, notices, currentSession, userNam
           </div>
         </div>
       </div>
+
+      {/* Chat Rooms */}
+      {chatRooms.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Chat Rooms</h3>
+            <a href="/chat-rooms" className="text-sm text-blue-600 hover:text-blue-800">View all</a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            {chatRooms.slice(0, 6).map((room: any) => (
+              <a
+                key={room._id}
+                href={`/chat-rooms/${room._id}`}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{room.name}{room.section ? ` - ${room.section}` : ''}</p>
+                  <p className="text-xs text-gray-500">{room.students?.length || 0} students</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

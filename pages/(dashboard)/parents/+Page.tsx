@@ -73,27 +73,39 @@ export default function ParentsPage() {
     {
       key: 'name',
       header: 'Name',
-      render: (item) => item.user ? `${item.user.firstName} ${item.user.lastName}` : '-',
+      render: (item) => { const u = typeof item.user === 'object' ? item.user : null; return u ? `${u.firstName} ${u.lastName}` : '-' },
     },
     {
       key: 'email',
       header: 'Email',
-      render: (item) => item.user?.email || '-',
+      render: (item) => {
+        const user = typeof item.user === 'object' ? item.user : null;
+        return user?.email ? <span className="text-sm text-gray-500">{user.email}</span> : '-';
+      },
     },
     {
       key: 'phone',
       header: 'Phone',
-      render: (item) => item.user?.phone || '-',
+      render: (item) => { const u = typeof item.user === 'object' ? item.user : null; return u?.phone || '-' },
     },
     {
       key: 'occupation',
       header: 'Occupation',
-      render: (item) => item.occupation || '-',
+      render: (item) => item.occupation ? <span className="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded-full">{item.occupation}</span> : '-',
     },
     {
       key: 'relationship',
       header: 'Relationship',
-      render: (item) => <span className="capitalize">{item.relationship || '-'}</span>,
+      render: (item) => {
+        if (!item.relationship) return '-';
+        const colorMap: Record<string, string> = {
+          father: 'bg-blue-100 text-blue-700',
+          mother: 'bg-pink-100 text-pink-700',
+          guardian: 'bg-orange-100 text-orange-700',
+        };
+        const colors = colorMap[item.relationship] || 'bg-gray-100 text-gray-600';
+        return <span className={`px-2 py-0.5 text-xs rounded-full capitalize ${colors}`}>{item.relationship}</span>;
+      },
     },
     {
       key: 'children',
@@ -123,7 +135,7 @@ export default function ParentsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Parents' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Parents</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total parents</p>
@@ -164,7 +176,7 @@ export default function ParentsPage() {
         onRowClick={(item) => navigate(`/parents/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
 
       <CsvImportModal
         open={showImport}

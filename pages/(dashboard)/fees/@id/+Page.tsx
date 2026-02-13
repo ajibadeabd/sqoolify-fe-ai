@@ -21,6 +21,7 @@ export default function FeeDetailPage() {
   const [loading, setLoading] = useState(true)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [assigning, setAssigning] = useState(false)
 
   useEffect(() => {
     const fetchFee = async () => {
@@ -35,6 +36,23 @@ export default function FeeDetailPage() {
     }
     if (id) fetchFee()
   }, [id])
+
+  const handleBulkAssign = async () => {
+    setAssigning(true)
+    try {
+      const res = await feeService.bulkAssign(id)
+      const { assigned, skipped } = res.data
+      if (assigned > 0) {
+        toast.success(`Assigned to ${assigned} student${assigned > 1 ? 's' : ''}${skipped > 0 ? `, ${skipped} already assigned` : ''}`)
+      } else {
+        toast.info('All students in this class are already assigned')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to assign fee')
+    } finally {
+      setAssigning(false)
+    }
+  }
 
   const handleDelete = async () => {
     setDeleting(true)
@@ -73,6 +91,7 @@ export default function FeeDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Fee Structure Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/fees')}>Back</Button>
+          {can('write_fees') && <Button variant="secondary" onClick={handleBulkAssign} loading={assigning}>Assign to Students</Button>}
           {can('write_fees') && <Button variant="primary" onClick={() => navigate(`/fees/${id}/edit`)}>Edit</Button>}
           {can('delete_fees') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>

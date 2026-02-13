@@ -2,7 +2,7 @@ import { useState, useEffect, type ReactNode } from 'react'
 import { navigate } from 'vike/client/router'
 import { useAuth } from '../../lib/auth-context'
 import { getRoutePermissions } from '../../lib/route-permissions'
-import { hasAllPermissions } from '../../lib/permissions'
+import { hasAnyPermission } from '../../lib/permissions'
 import Sidebar from '../../components/layout/Sidebar'
 import Topbar from '../../components/layout/Topbar'
 
@@ -26,7 +26,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       // If route requires specific permissions, check them
       if (requiredPermissions && requiredPermissions.length > 0) {
         const userPermissions = user?.permissions || []
-        const hasAccess = hasAllPermissions(userPermissions, requiredPermissions)
+        const hasAccess = hasAnyPermission(userPermissions, requiredPermissions)
 
         if (!hasAccess) {
           // Redirect to dashboard if user lacks permissions
@@ -51,10 +51,15 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen relative">
+      <div className="fixed inset-0 pointer-events-none z-0">
+        <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 -left-16 w-72 h-72 bg-blue-100/25 rounded-full blur-2xl" />
+        <div className="absolute bottom-10 right-1/4 w-64 h-64 bg-purple-100/20 rounded-full blur-3xl" />
+      </div>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
       <div
-        className={`transition-all duration-300 ${
+        className={`relative z-1 transition-all duration-300 ${
           collapsed ? 'ml-16' : 'ml-64'
         }`}
       >

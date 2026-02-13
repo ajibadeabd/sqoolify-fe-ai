@@ -136,6 +136,30 @@ export default function ExamsPage() {
       render: (item) => formatDate(item.date),
     },
     {
+      key: 'approvalStatus' as any,
+      header: 'Status',
+      render: (item) => {
+        const status = item.approvalStatus || 'draft'
+        const colors: Record<string, string> = {
+          draft: 'bg-gray-100 text-gray-700',
+          pending_approval: 'bg-yellow-100 text-yellow-700',
+          approved: 'bg-green-100 text-green-700',
+          rejected: 'bg-red-100 text-red-700',
+        }
+        const labels: Record<string, string> = {
+          draft: 'Draft',
+          pending_approval: 'Pending',
+          approved: 'Approved',
+          rejected: 'Rejected',
+        }
+        return (
+          <span className={`px-2 py-1 text-xs rounded-full ${colors[status] || 'bg-gray-100 text-gray-700'}`}>
+            {labels[status] || status}
+          </span>
+        )
+      },
+    },
+    {
       key: 'actions',
       header: '',
       render: (item) => (
@@ -152,12 +176,12 @@ export default function ExamsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Exams' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Exams</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total exams</p>
         </div>
-        <Button onClick={() => navigate('/exams/add')}>+ Add Exam</Button>
+        {can('write_exams') && <Button onClick={() => navigate('/exams/add')}>+ Add Exam</Button>}
       </div>
 
       {error && (
@@ -223,7 +247,7 @@ export default function ExamsPage() {
         onRowClick={(item) => navigate(`/exams/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   );
 }

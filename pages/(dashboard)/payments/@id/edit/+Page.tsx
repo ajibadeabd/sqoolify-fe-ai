@@ -3,7 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { paymentService } from '../../../../../lib/api-services'
-import { Payment } from '../../../../../lib/types'
+import type { Payment } from '../../../../../lib/types'
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import Card from '../../../../../components/ui/Card'
 import Button from '../../../../../components/ui/Button'
@@ -12,7 +12,7 @@ import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
 export default function EditPaymentPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
-  const { currencySymbol } = useAppConfig()
+  const { currencySymbol, paymentCategories, paymentTypes, paymentMethods } = useAppConfig()
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -22,7 +22,6 @@ export default function EditPaymentPage() {
     paymentType: '',
     paymentMethod: '',
     paymentStatus: '',
-    reference: '',
     term: '',
   })
 
@@ -38,7 +37,6 @@ export default function EditPaymentPage() {
             paymentType: p.paymentType || '',
             paymentMethod: p.paymentMethod || '',
             paymentStatus: p.paymentStatus || '',
-            reference: p.reference || '',
             term: p.term ? String(p.term) : '',
           })
         }
@@ -62,7 +60,6 @@ export default function EditPaymentPage() {
         paymentStatus: form.paymentStatus,
       }
       if (form.paymentMethod) data.paymentMethod = form.paymentMethod
-      if (form.reference) data.reference = form.reference
       if (form.term) data.term = parseInt(form.term)
 
       await paymentService.update(id, data)
@@ -93,7 +90,7 @@ export default function EditPaymentPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Payments', href: '/payments' }, { label: 'Edit Payment' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edit Payment</h1>
           <p className="text-sm text-gray-500 mt-1">Update payment details</p>
@@ -118,15 +115,6 @@ export default function EditPaymentPage() {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Reference</label>
-              <input
-                type="text"
-                value={form.reference}
-                onChange={(e) => setForm({ ...form, reference: e.target.value })}
-                className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
-            </div>
-            <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
               <select
                 value={form.paymentCategory}
@@ -135,9 +123,9 @@ export default function EditPaymentPage() {
                 required
               >
                 <option value="">Select category</option>
-                <option value="school_fee">School Fee</option>
-                <option value="registration">Registration</option>
-                <option value="other">Other</option>
+                {paymentCategories.map((cat) => (
+                  <option key={cat} value={cat}>{cat.replace('_', ' ')}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -149,10 +137,9 @@ export default function EditPaymentPage() {
                 required
               >
                 <option value="">Select type</option>
-                <option value="offline">Offline</option>
-                <option value="online">Online</option>
-                <option value="bank_transfer">Bank Transfer</option>
-                <option value="cash">Cash</option>
+                {paymentTypes.map((type) => (
+                  <option key={type} value={type}>{type.replace('_', ' ')}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -172,13 +159,16 @@ export default function EditPaymentPage() {
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
-              <input
-                type="text"
+              <select
                 value={form.paymentMethod}
                 onChange={(e) => setForm({ ...form, paymentMethod: e.target.value })}
-                placeholder="e.g. POS, Mobile Transfer"
                 className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-              />
+              >
+                <option value="">Select method</option>
+                {paymentMethods.filter(m => m !== 'paystack').map((method) => (
+                  <option key={method} value={method}>{method.replace('_', ' ')}</option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">Term</label>

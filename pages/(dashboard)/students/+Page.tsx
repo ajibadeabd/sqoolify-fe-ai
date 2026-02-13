@@ -84,33 +84,58 @@ export default function StudentsPage() {
     }
   };
 
+  const getStatusBadge = (status?: string) => {
+    const s = status || 'active';
+    const map: Record<string, string> = {
+      active: 'bg-green-100 text-green-700',
+      inactive: 'bg-gray-100 text-gray-600',
+      graduated: 'bg-blue-100 text-blue-700',
+      transferred: 'bg-yellow-100 text-yellow-700',
+      suspended: 'bg-red-100 text-red-700',
+    };
+    return map[s] || 'bg-gray-100 text-gray-600';
+  };
+
   const columns: Column<Student>[] = [
     { key: 'admissionNo', header: 'Admission No' },
     {
       key: 'name',
       header: 'Name',
-      render: (item) => item.user ? `${item.user.firstName} ${item.user.lastName}` : '-',
+      render: (item) => { const u = typeof item.user === 'object' ? item.user : null; return u ? `${u.firstName} ${u.lastName}` : '-' },
     },
     {
       key: 'gender',
       header: 'Gender',
-      render: (item) => <span className="capitalize">{item.gender || '-'}</span>,
+      render: (item) => {
+        const g = item.gender?.toLowerCase();
+        if (!g) return <span className="text-gray-400">-</span>;
+        const cls = g === 'male' ? 'bg-sky-100 text-sky-700' : g === 'female' ? 'bg-pink-100 text-pink-700' : 'bg-gray-100 text-gray-600';
+        return (
+          <span className={`px-2 py-0.5 text-xs font-medium rounded-full capitalize ${cls}`}>
+            {g}
+          </span>
+        );
+      },
     },
     {
       key: 'class',
       header: 'Class',
-      render: (item) => (item.class as any)?.name || '-',
+      render: (item) => {
+        const name = (item.class as any)?.name;
+        if (!name) return <span className="text-gray-400">-</span>;
+        return (
+          <span className="px-2 py-0.5 text-xs font-medium bg-blue-100 text-blue-700 rounded-full">
+            {name}
+          </span>
+        );
+      },
     },
     {
       key: 'status',
       header: 'Status',
       render: (item) => (
         <span
-          className={`px-2 py-1 text-xs rounded-full ${
-            item.status === 'active'
-              ? 'bg-green-100 text-green-700'
-              : 'bg-gray-100 text-gray-700'
-          }`}
+          className={`px-2 py-1 text-xs font-medium rounded-full capitalize ${getStatusBadge(item.status)}`}
         >
           {item.status || 'active'}
         </span>
@@ -132,7 +157,7 @@ export default function StudentsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Students' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Students</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total students</p>
@@ -190,7 +215,7 @@ export default function StudentsPage() {
         onRowClick={(item) => navigate(`/students/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
 
       <CsvImportModal
         open={showImport}

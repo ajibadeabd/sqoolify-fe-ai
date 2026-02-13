@@ -24,7 +24,7 @@ export default function ExamReviewPage() {
 
         // Start exam returns attempt + answers for already-submitted exams too
         const startRes = await examService.startExam(id)
-        const data = startRes.data
+        const data = startRes.data as any
         setAttempt(data.attempt)
         setAnswers(data.answers || [])
       } catch (err: any) {

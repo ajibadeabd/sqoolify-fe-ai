@@ -11,12 +11,6 @@ import type { SchoolClass, Subject, Session, ExamMode } from '../../../../../lib
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import { getTermOptions } from '../../../../../lib/term-utils'
 
-const EXAM_TYPES = [
-  { value: 'CA1', label: 'CA 1', description: 'First Continuous Assessment', icon: '📝' },
-  { value: 'CA2', label: 'CA 2', description: 'Second Continuous Assessment', icon: '📋' },
-  { value: 'Exam', label: 'Examination', description: 'End of Term Examination', icon: '📄' },
-]
-
 const EXAM_MODES: { value: ExamMode; label: string; description: string; icon: string }[] = [
   { value: 'traditional', label: 'Traditional', description: 'Enter scores manually', icon: '📊' },
   { value: 'cbt', label: 'CBT', description: 'Online questions & auto-grading', icon: '💻' },
@@ -27,7 +21,7 @@ const EXAM_MODES: { value: ExamMode; label: string; description: string; icon: s
 export default function EditExamPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
-  const { termsPerSession } = useAppConfig()
+  const { termsPerSession, examTypes } = useAppConfig()
   const termOptions = getTermOptions(termsPerSession)
 
   const [form, setForm] = useState({
@@ -162,7 +156,7 @@ export default function EditExamPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Exams', href: '/exams' }, { label: form.name || 'Exam' }, { label: 'Edit' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Edit Exam</h1>
           <p className="text-sm text-gray-500 mt-1">Update exam details</p>
@@ -199,21 +193,19 @@ export default function EditExamPage() {
               {/* Exam Type */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-3">Exam Type *</label>
-                <div className="grid grid-cols-3 gap-3">
-                  {EXAM_TYPES.map((type) => (
+                <div className="flex flex-wrap gap-3">
+                  {examTypes.map((type) => (
                     <button
-                      key={type.value}
+                      key={type}
                       type="button"
-                      onClick={() => update('type', type.value)}
-                      className={`p-4 rounded-xl border-2 transition-all text-left ${
-                        form.type === type.value
-                          ? 'border-blue-500 bg-blue-50 shadow-sm'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      onClick={() => update('type', type)}
+                      className={`px-5 py-2.5 rounded-lg border-2 font-medium transition-all ${
+                        form.type === type
+                          ? 'border-blue-500 bg-blue-50 text-blue-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 bg-white'
                       }`}
                     >
-                      <span className="text-2xl mb-2 block">{type.icon}</span>
-                      <span className="font-semibold text-gray-900 block">{type.label}</span>
-                      <span className="text-xs text-gray-500">{type.description}</span>
+                      {type}
                     </button>
                   ))}
                 </div>
@@ -390,12 +382,9 @@ export default function EditExamPage() {
 
             <div className="space-y-4">
               <div className="p-4 bg-gray-50 rounded-lg">
-                <div className="flex items-center gap-2 mb-3">
-                  <span className="text-2xl">{EXAM_TYPES.find(t => t.value === form.type)?.icon}</span>
-                  <div>
-                    <p className="font-semibold text-gray-900">{form.name || 'Exam Name'}</p>
-                    <p className="text-xs text-gray-500">{EXAM_TYPES.find(t => t.value === form.type)?.label}</p>
-                  </div>
+                <div className="mb-3">
+                  <p className="font-semibold text-gray-900">{form.name || 'Exam Name'}</p>
+                  <p className="text-xs text-gray-500">{form.type}</p>
                 </div>
 
                 <div className="space-y-2 text-sm">

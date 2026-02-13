@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { api } from './api';
+import { authService } from './api-services';
 import { User, School, AuthResponse, LoginCredentials, RegisterData } from './types';
 
 interface AuthContextType {
@@ -50,6 +51,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       } catch (e) {
         localStorage.removeItem(USER_KEY);
       }
+
+      // Fetch fresh user data (including updated permissions) from backend
+      authService.getProfile()
+        .then((response) => {
+          const freshUser = response.data;
+          if (freshUser) {
+            saveUser(freshUser);
+          }
+        })
+        .catch(() => {
+          // Silently ignore — user stays on cached data
+        });
     }
     setIsLoading(false);
   }, []);

@@ -22,6 +22,9 @@ export default function ExamDetailPage() {
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [publishing, setPublishing] = useState(false)
+  const [approving, setApproving] = useState(false)
+  const [rejectOpen, setRejectOpen] = useState(false)
+  const [rejectReason, setRejectReason] = useState('')
 
   const isCbt = exam?.examMode === 'cbt' || exam?.examMode === 'hybrid'
   const isFileUpload = exam?.examMode === 'file-upload' || exam?.examMode === 'hybrid'
@@ -97,6 +100,51 @@ export default function ExamDetailPage() {
     }
   }
 
+  const handleSubmitForApproval = async () => {
+    setApproving(true)
+    try {
+      await examService.submitForApproval(id)
+      toast.success('Exam submitted for approval')
+      setExam((prev: any) => ({ ...prev, approvalStatus: 'pending_approval' }))
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to submit for approval')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const handleApprove = async () => {
+    setApproving(true)
+    try {
+      await examService.approveExam(id)
+      toast.success('Exam approved')
+      setExam((prev: any) => ({ ...prev, approvalStatus: 'approved' }))
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to approve exam')
+    } finally {
+      setApproving(false)
+    }
+  }
+
+  const handleReject = async () => {
+    if (!rejectReason.trim()) {
+      toast.error('Please provide a reason for rejection')
+      return
+    }
+    setApproving(true)
+    try {
+      await examService.rejectExam(id, rejectReason)
+      toast.success('Exam rejected')
+      setExam((prev: any) => ({ ...prev, approvalStatus: 'rejected', rejectionReason: rejectReason }))
+      setRejectOpen(false)
+      setRejectReason('')
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to reject exam')
+    } finally {
+      setApproving(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="animate-pulse space-y-4">
@@ -147,36 +195,74 @@ export default function ExamDetailPage() {
     hybrid: 'bg-violet-100 text-violet-700',
   }
 
+  const approvalLabels: Record<string, string> = {
+    draft: 'Draft',
+    pending_approval: 'Pending Approval',
+    approved: 'Approved',
+    rejected: 'Rejected',
+  }
+
+  const approvalColors: Record<string, string> = {
+    draft: 'bg-gray-100 text-gray-700',
+    pending_approval: 'bg-yellow-100 text-yellow-700',
+    approved: 'bg-green-100 text-green-700',
+    rejected: 'bg-red-100 text-red-700',
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Exams', href: '/exams' }, { label: exam.name }]} />
 
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-2xl font-bold text-gray-900">Exam Details</h1>
           <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${modeColors[exam.examMode || 'traditional']}`}>
             {modeLabels[exam.examMode || 'traditional']}
           </span>
-          {isCbt && (
-            <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${exam.published ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
-              {exam.published ? 'Published' : 'Draft'}
+          <span className={`px-2.5 py-1 text-xs font-medium rounded-full ${approvalColors[exam.approvalStatus || 'draft']}`}>
+            {approvalLabels[exam.approvalStatus || 'draft']}
+          </span>
+          {isCbt && exam.published && (
+            <span className="px-2.5 py-1 text-xs font-medium rounded-full bg-green-100 text-green-700">
+              Published
             </span>
           )}
         </div>
         <div className="flex gap-3 flex-wrap">
           <Button variant="outline" onClick={() => navigate('/exams')}>Back</Button>
           {canWrite('exams') && !exam.published && <Button variant="primary" onClick={() => navigate(`/exams/${id}/edit`)}>Edit</Button>}
-          {  canWrite('exams') && (
+          {canWrite('exams') && (
             <Button variant="outline" onClick={() => navigate(`/exams/${id}/questions`)}>
               Manage Questions
             </Button>
           )}
-          {isCbt && can('write_exams') && !exam.published && (
+
+          {/* Submit for Approval — teachers/creators can submit draft or rejected exams */}
+          {can('write_exams') && !exam.published && (exam.approvalStatus === 'draft' || exam.approvalStatus === 'rejected') && (
+            <Button onClick={handleSubmitForApproval} disabled={approving}>
+              {approving ? 'Submitting...' : 'Submit for Approval'}
+            </Button>
+          )}
+
+          {/* Approve / Reject — only users with approve_exams permission */}
+          {can('approve_exams') && exam.approvalStatus === 'pending_approval' && (
+            <>
+              <Button onClick={handleApprove} disabled={approving}>
+                {approving ? 'Approving...' : 'Approve'}
+              </Button>
+              <Button variant="danger" onClick={() => setRejectOpen(true)} disabled={approving}>
+                Reject
+              </Button>
+            </>
+          )}
+
+          {/* Publish — only after approval, requires approve_exams */}
+          {isCbt && can('approve_exams') && !exam.published && exam.approvalStatus === 'approved' && (
             <Button onClick={handlePublish} disabled={publishing}>
               {publishing ? 'Publishing...' : 'Publish'}
             </Button>
           )}
-          {isCbt && can('write_exams') && exam.published && submissions.length === 0 && (
+          {isCbt && can('approve_exams') && exam.published && submissions.length === 0 && (
             <Button variant="outline" onClick={handleUnpublish} disabled={publishing}>
               {publishing ? 'Unpublishing...' : 'Unpublish'}
             </Button>
@@ -190,6 +276,13 @@ export default function ExamDetailPage() {
           {can('delete_exams') && <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>}
         </div>
       </div>
+
+      {/* Rejection Reason Banner */}
+      {exam.approvalStatus === 'rejected' && exam.rejectionReason && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          <span className="font-medium">Rejection reason:</span> {exam.rejectionReason}
+        </div>
+      )}
 
       {/* Exam Info */}
       <Card title="Exam Information">
@@ -441,6 +534,31 @@ export default function ExamDetailPage() {
         message={`Are you sure you want to delete "${exam.name}"? All associated scores will also be removed. This action cannot be undone.`}
         loading={deleting}
       />
+
+      {/* Reject Exam Dialog */}
+      {rejectOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Reject Exam</h3>
+            <p className="text-sm text-gray-600 mb-4">Please provide a reason for rejecting this exam.</p>
+            <textarea
+              value={rejectReason}
+              onChange={(e) => setRejectReason(e.target.value)}
+              rows={3}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none mb-4"
+              placeholder="Reason for rejection..."
+            />
+            <div className="flex gap-3 justify-end">
+              <Button variant="outline" onClick={() => { setRejectOpen(false); setRejectReason('') }} disabled={approving}>
+                Cancel
+              </Button>
+              <Button variant="danger" onClick={handleReject} disabled={approving || !rejectReason.trim()}>
+                {approving ? 'Rejecting...' : 'Reject Exam'}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

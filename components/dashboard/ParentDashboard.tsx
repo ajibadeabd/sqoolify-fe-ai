@@ -1,6 +1,7 @@
-import { Notice, Session, ParentDashboardStats } from '../../lib/types';
+import { Notice, Session, ParentDashboardStats, ChildAttendanceSummary, ParentUpcomingFee, ParentRecentResult, ParentRecentPayment } from '../../lib/types';
 import { useAppConfig } from '../../lib/use-app-config';
 import StatsCard from '../ui/StatsCard';
+import Badge from '../ui/Badge';
 
 interface ParentDashboardProps {
   stats: ParentDashboardStats;
@@ -9,8 +10,92 @@ interface ParentDashboardProps {
   userName: string;
 }
 
+function AttendanceDonut({ data }: { data: ChildAttendanceSummary }) {
+  const segments = [
+    { label: 'Present', value: data.present, color: '#22c55e' },
+    { label: 'Absent', value: data.absent, color: '#ef4444' },
+    { label: 'Late', value: data.late, color: '#f59e0b' },
+    { label: 'Excused', value: data.excused, color: '#3b82f6' },
+  ].filter(s => s.value > 0);
+
+  const total = data.total;
+
+  if (total === 0) {
+    return <p className="text-gray-400 text-sm py-4">No attendance data yet.</p>;
+  }
+
+  let cumulativePercent = 0;
+  const radius = 15.9155;
+  const circumference = 2 * Math.PI * radius;
+
+  return (
+    <div className="flex items-center gap-6">
+      <div className="w-36 h-36 flex-shrink-0">
+        <svg viewBox="0 0 36 36" className="w-full h-full">
+          {segments.map((seg, i) => {
+            const percent = (seg.value / total) * 100;
+            const dashArray = `${(percent / 100) * circumference} ${circumference}`;
+            const rotation = (cumulativePercent / 100) * 360 - 90;
+            cumulativePercent += percent;
+            return (
+              <circle
+                key={i}
+                cx="18" cy="18" r={radius}
+                fill="none"
+                stroke={seg.color}
+                strokeWidth="4"
+                strokeDasharray={dashArray}
+                transform={`rotate(${rotation} 18 18)`}
+              />
+            );
+          })}
+          <text x="18" y="17" textAnchor="middle" className="text-[5px] font-bold fill-gray-900">
+            {data.attendanceRate}%
+          </text>
+          <text x="18" y="21" textAnchor="middle" className="text-[2.5px] fill-gray-500">
+            rate
+          </text>
+        </svg>
+      </div>
+      <div className="flex flex-col gap-2">
+        {segments.map((seg, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="w-3 h-3 rounded-full flex-shrink-0" style={{ backgroundColor: seg.color }} />
+            <span className="text-sm text-gray-700">
+              {seg.label}: <span className="font-medium">{seg.value}</span>
+              <span className="text-gray-400 ml-1">({((seg.value / total) * 100).toFixed(1)}%)</span>
+            </span>
+          </div>
+        ))}
+        <div className="text-xs text-gray-400 mt-1">Total: {total} days</div>
+      </div>
+    </div>
+  );
+}
+
+const feeStatusVariant: Record<string, 'danger' | 'warning' | 'success'> = {
+  unpaid: 'danger',
+  partial: 'warning',
+  paid: 'success',
+};
+
+const paymentStatusVariant: Record<string, 'success' | 'warning' | 'danger' | 'default'> = {
+  completed: 'success',
+  pending: 'warning',
+  failed: 'danger',
+};
+
+function formatDate(date: string | null) {
+  if (!date) return '-';
+  return new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
 export default function ParentDashboard({ stats, notices, currentSession, userName }: ParentDashboardProps) {
   const { formatCurrency } = useAppConfig();
+  const childrenAttendance = stats?.childrenAttendance || [];
+  const upcomingFees = stats?.upcomingFees || [];
+  const recentResults = stats?.recentResults || [];
+  const recentPayments = stats?.recentPayments || [];
 
   return (
     <div>
@@ -24,12 +109,29 @@ export default function ParentDashboard({ stats, notices, currentSession, userNa
       </div>
 
       {/* Parent Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
         <StatsCard title="My Children" value={stats?.children || 0} icon="users" color="blue" />
-        <StatsCard title="Total Pending Fees" value={formatCurrency(stats?.totalPendingFees)} icon="alert" color="red" />
+        <StatsCard title="Total Fees" value={formatCurrency(stats?.totalFees)} icon="currency" color="purple" />
+        <StatsCard title="Amount Paid" value={formatCurrency(stats?.totalPaid)} icon="clipboard" color="green" />
+        <StatsCard title="Outstanding Balance" value={formatCurrency(stats?.totalPendingFees)} icon="alert" color="red" />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
+        {/* Attendance per child */}
+        {childrenAttendance.length > 0 ? (
+          childrenAttendance.map((child) => (
+            <div key={child._id} className="bg-white rounded-xl border border-gray-200 p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-4">{child.name}</h3>
+              <AttendanceDonut data={child} />
+            </div>
+          ))
+        ) : (
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Attendance Overview</h3>
+            <p className="text-gray-400 text-sm">No attendance data yet.</p>
+          </div>
+        )}
+
         {/* Recent Notices */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
           <div className="flex items-center justify-between mb-4">
@@ -67,66 +169,100 @@ export default function ParentDashboard({ stats, notices, currentSession, userNa
             </div>
           )}
         </div>
+      </div>
 
-        {/* Quick Actions */}
+      {/* Upcoming Fees, Recent Results, Recent Payments */}
+      <div className="grid lg:grid-cols-3 gap-6 mt-6">
+        {/* Upcoming Fees */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
-          <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
-          <div className="space-y-3">
-            <a
-              href="/students"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 text-sm font-medium hover:bg-blue-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 0 0 2.625.372 9.337 9.337 0 0 0 4.121-.952 4.125 4.125 0 0 0-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 0 1 8.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0 1 11.964-3.07M12 6.375a3.375 3.375 0 1 1-6.75 0 3.375 3.375 0 0 1 6.75 0Zm8.25 2.25a2.625 2.625 0 1 1-5.25 0 2.625 2.625 0 0 1 5.25 0Z" />
-              </svg>
-              View My Children
-            </a>
-            <a
-              href="/fees"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-orange-50 text-orange-600 text-sm font-medium hover:bg-orange-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 18.75a60.07 60.07 0 0 1 15.797 2.101c.727.198 1.453-.342 1.453-1.096V18.75M3.75 4.5v.75A.75.75 0 0 1 3 6h-.75m0 0v-.375c0-.621.504-1.125 1.125-1.125H20.25M2.25 6v9m18-10.5v.75c0 .414.336.75.75.75h.75m-1.5-1.5h.375c.621 0 1.125.504 1.125 1.125v9.75c0 .621-.504 1.125-1.125 1.125h-.375m1.5-1.5H21a.75.75 0 0 0-.75.75v.75m0 0H3.75m0 0h-.375a1.125 1.125 0 0 1-1.125-1.125V15m1.5 1.5v-.75A.75.75 0 0 0 3 15h-.75M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm3 0h.008v.008H18V10.5Zm-12 0h.008v.008H6V10.5Z" />
-              </svg>
-              Fees & Payments
-            </a>
-            <a
-              href="/attendance"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-600 text-sm font-medium hover:bg-green-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-              </svg>
-              Children's Attendance
-            </a>
-            <a
-              href="/report-cards"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-purple-50 text-purple-600 text-sm font-medium hover:bg-purple-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
-              </svg>
-              Report Cards
-            </a>
-            <a
-              href="/payments"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-medium hover:bg-emerald-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
-              </svg>
-              Payment History
-            </a>
-            <a
-              href="/notices"
-              className="flex items-center gap-3 px-4 py-3 rounded-lg bg-indigo-50 text-indigo-600 text-sm font-medium hover:bg-indigo-100 transition"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 1 1 0-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 0 1-1.44-4.282m3.102.069a18.03 18.03 0 0 1-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 0 1 8.835 2.535M10.34 6.66a23.847 23.847 0 0 0 8.835-2.535m0 0A23.74 23.74 0 0 0 18.795 3m.38 1.125a23.91 23.91 0 0 1 1.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 0 0 1.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 0 1 0 3.46" />
-              </svg>
-              All Notices
-            </a>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Upcoming Fees</h3>
+            <a href="/my-fees" className="text-sm text-blue-600 hover:text-blue-800">View all</a>
           </div>
+          {upcomingFees.length === 0 ? (
+            <p className="text-gray-400 text-sm">No outstanding fees.</p>
+          ) : (
+            <div className="space-y-3">
+              {upcomingFees.map((fee) => (
+                <div key={fee._id} className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-gray-900">{fee.childName}</p>
+                    <Badge variant={feeStatusVariant[fee.status] || 'default'}>{fee.status}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-gray-500">
+                      Balance: <span className="font-medium text-gray-700">{formatCurrency(fee.balance)}</span>
+                    </p>
+                    {fee.dueDate && (
+                      <p className="text-xs text-gray-400">Due {formatDate(fee.dueDate)}</p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Results */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Results</h3>
+          </div>
+          {recentResults.length === 0 ? (
+            <p className="text-gray-400 text-sm">No exam results yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {recentResults.map((result) => (
+                <div key={result._id} className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-gray-900">{result.childName}</p>
+                    {result.grade && (
+                      <Badge variant={result.grade === 'A' ? 'success' : result.grade === 'F' ? 'danger' : 'default'}>
+                        {result.grade}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700">{result.subject} — {result.examName}</p>
+                  <div className="flex items-center justify-between mt-1">
+                    <p className="text-sm text-gray-500">
+                      Score: <span className="font-medium text-gray-700">{result.score}</span>
+                      {result.maxScore != null && <span className="text-gray-400">/{result.maxScore}</span>}
+                    </p>
+                    <p className="text-xs text-gray-400">{formatDate(result.date)}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Recent Payments */}
+        <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Recent Payments</h3>
+            <a href="/my-fees" className="text-sm text-blue-600 hover:text-blue-800">View all</a>
+          </div>
+          {recentPayments.length === 0 ? (
+            <p className="text-gray-400 text-sm">No payments yet.</p>
+          ) : (
+            <div className="space-y-3">
+              {recentPayments.map((payment) => (
+                <div key={payment._id} className="p-3 rounded-lg border border-gray-100 bg-gray-50">
+                  <div className="flex items-center justify-between mb-1">
+                    <p className="text-sm font-medium text-gray-900">{payment.childName}</p>
+                    <Badge variant={paymentStatusVariant[payment.status] || 'default'}>{payment.status}</Badge>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-gray-700">{formatCurrency(payment.amount)}</p>
+                    <p className="text-xs text-gray-400">{formatDate(payment.date)}</p>
+                  </div>
+                  {payment.reference && (
+                    <p className="text-xs text-gray-400 mt-1">Ref: {payment.reference}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>

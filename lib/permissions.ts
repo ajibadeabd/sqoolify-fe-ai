@@ -107,6 +107,24 @@ export const PERMISSIONS = {
   READ_PLANS: 'read_plans',
   WRITE_PLANS: 'write_plans',
   DELETE_PLANS: 'delete_plans',
+
+  // Parent Portal
+  VIEW_CHILDREN: 'view_children',
+  VIEW_CHILDREN_FEES: 'view_children_fees',
+  MAKE_PAYMENTS: 'make_payments',
+  VIEW_PAYMENT_HISTORY: 'view_payment_history',
+  VIEW_CHILDREN_RESULTS: 'view_children_results',
+  VIEW_CHILDREN_REPORT_CARDS: 'view_children_report_cards',
+  VIEW_CHILDREN_ATTENDANCE: 'view_children_attendance',
+
+  // Student Portal
+  VIEW_MY_RESULTS: 'view_my_results',
+  VIEW_MY_REPORT_CARD: 'view_my_report_card',
+  VIEW_MY_ATTENDANCE: 'view_my_attendance',
+  TAKE_EXAMS: 'take_exams',
+
+  // Chat
+  ACCESS_CHAT: 'access_chat',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];

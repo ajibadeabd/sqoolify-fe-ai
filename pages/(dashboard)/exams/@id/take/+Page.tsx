@@ -44,7 +44,7 @@ export default function TakeExamPage() {
   const startExam = async () => {
     try {
       const res = await examService.startExam(id)
-      const data = res.data
+      const data = res.data as any
       setQuestions(data.questions || [])
       setStarted(true)
       // Calculate remaining time from server data
@@ -102,7 +102,7 @@ export default function TakeExamPage() {
       if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
       saveTimerRef.current = setTimeout(async () => {
         try {
-          await examService.saveAnswer(id, { questionId, answer })
+          await examService.saveAnswer(id, questionId, answer)
         } catch {
           // Silent fail for auto-save
         }
@@ -126,7 +126,7 @@ export default function TakeExamPage() {
     try {
       // Save all current answers before submitting
       const savePromises = Object.entries(answers).map(([questionId, answer]) =>
-        examService.saveAnswer(id, { questionId, answer }).catch(() => {})
+        examService.saveAnswer(id, questionId, answer).catch(() => {})
       )
       await Promise.all(savePromises)
       await examService.submitExam(id)

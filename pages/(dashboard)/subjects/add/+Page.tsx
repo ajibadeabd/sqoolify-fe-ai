@@ -1,40 +1,34 @@
 import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { subjectService, classService, teacherService } from '../../../../lib/api-services'
+import { subjectService, teacherService } from '../../../../lib/api-services'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
-import type { SchoolClass, Teacher } from '../../../../lib/types'
+import type { Teacher } from '../../../../lib/types'
 
 export default function AddSubjectPage() {
   const [form, setForm] = useState({
     name: '',
     code: '',
     isCore: false,
-    classId: '',
-    teacherId: '',
+    teacherIds: [] as string[],
     description: '',
     isActive: true,
   })
   const [loading, setLoading] = useState(false)
-  const [classes, setClasses] = useState<SchoolClass[]>([])
   const [teachers, setTeachers] = useState<Teacher[]>([])
   const [dataLoading, setDataLoading] = useState(true)
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classesRes, teachersRes] = await Promise.all([
-          classService.getAll({ limit: 100 }),
-          teacherService.getAll({ limit: 100 }),
-        ])
-        setClasses(classesRes.data || [])
+        const teachersRes = await teacherService.getAll({ limit: 100 })
         setTeachers(teachersRes.data || [])
       } catch (err) {
         console.error('Failed to fetch data:', err)
-        toast.error('Failed to load classes and teachers')
+        toast.error('Failed to load teachers')
       } finally {
         setDataLoading(false)
       }
@@ -42,7 +36,16 @@ export default function AddSubjectPage() {
     fetchData()
   }, [])
 
-  const update = (key: string, value: string | boolean) => setForm({ ...form, [key]: value })
+  const update = (key: string, value: string | boolean | string[]) => setForm({ ...form, [key]: value })
+
+  const toggleArrayItem = (key: 'teacherIds', id: string) => {
+    const current = form[key]
+    if (current.includes(id)) {
+      update(key, current.filter((v) => v !== id))
+    } else {
+      update(key, [...current, id])
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,8 +56,7 @@ export default function AddSubjectPage() {
         name: form.name,
         code: form.code,
         isCore: form.isCore,
-        classId: form.classId || undefined,
-        teacherId: form.teacherId || undefined,
+        teacherIds: form.teacherIds.length ? form.teacherIds : undefined,
         description: form.description || undefined,
         isActive: form.isActive,
       })
@@ -71,7 +73,7 @@ export default function AddSubjectPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Subjects', href: '/subjects' }, { label: 'Add Subject' }]} />
-      <h1 className="text-2xl font-bold text-gray-900 mb-6">Add Subject</h1>
+      <h1 className="text-xl sm:text-2xl font-bold text-gray-900 mb-6">Add Subject</h1>
 
       <Card>
         {dataLoading ? (
@@ -139,44 +141,34 @@ export default function AddSubjectPage() {
               </div>
             </div>
 
-            <h3 className="text-lg font-medium text-gray-900 border-b pb-2 pt-4">Assign To (Optional)</h3>
+            <h3 className="text-lg font-medium text-gray-900 border-b pb-2 pt-4">Assign Teachers (Optional)</h3>
 
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                <select
-                  value={form.classId}
-                  onChange={(e) => update('classId', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                >
-                  <option value="">Select class</option>
-                  {classes.map((cls) => (
-                    <option key={cls._id} value={cls._id}>
-                      {cls.name}{cls.section ? ` - ${cls.section}` : ''}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Teacher</label>
-                <select
-                  value={form.teacherId}
-                  onChange={(e) => update('teacherId', e.target.value)}
-                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
-                >
-                  <option value="">Select teacher</option>
-                  {teachers.map((teacher) => {
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Teachers</label>
+              <div className="border border-gray-300 rounded-lg p-3 max-h-48 overflow-y-auto space-y-1">
+                {teachers.length === 0 ? (
+                  <p className="text-sm text-gray-400">No teachers available</p>
+                ) : (
+                  teachers.map((teacher) => {
                     const user = typeof teacher.user === 'object' ? teacher.user : null
                     const name = user ? `${user.firstName} ${user.lastName}` : 'Unknown'
                     return (
-                      <option key={teacher._id} value={teacher._id}>
-                        {name}
-                      </option>
+                      <label key={teacher._id} className="flex items-center gap-2 px-2 py-1.5 rounded hover:bg-gray-50 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={form.teacherIds.includes(teacher._id)}
+                          onChange={() => toggleArrayItem('teacherIds', teacher._id)}
+                          className="h-4 w-4 text-blue-600 rounded border-gray-300"
+                        />
+                        <span className="text-sm text-gray-700">{name}</span>
+                      </label>
                     )
-                  })}
-                </select>
+                  })
+                )}
               </div>
+              {form.teacherIds.length > 0 && (
+                <p className="text-xs text-gray-500 mt-1">{form.teacherIds.length} teacher(s) selected</p>
+              )}
             </div>
 
             <div className="flex gap-3 pt-2">

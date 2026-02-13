@@ -111,7 +111,7 @@ export default function AddSessionPage() {
     <div>
       <Breadcrumbs items={[{ label: 'Sessions', href: '/sessions' }, { label: 'Add Session' }]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Create Academic Session</h1>
           <p className="text-sm text-gray-500 mt-1">Set up a new academic year with terms</p>

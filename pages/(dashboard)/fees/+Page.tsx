@@ -21,7 +21,7 @@ export default function FeesPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<{ totalCollected: number; totalOutstanding: number } | null>(null);
+  const [summary, setSummary] = useState<{ totalFees?: number; totalCollected: number; totalOutstanding: number } | null>(null);
 
   // Filters
   const [filterClass, setFilterClass] = useState('');
@@ -125,7 +125,7 @@ export default function FeesPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Fees' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Fee Management</h1>
           <p className="text-sm text-gray-500 mt-1">{total} fee structures</p>
@@ -135,7 +135,11 @@ export default function FeesPage() {
 
       {/* Summary Cards */}
       {summary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6">
+            <p className="text-sm text-blue-600 mb-1">Total Fees</p>
+            <p className="text-2xl font-bold text-blue-700">{formatCurrency(summary.totalFees)}</p>
+          </div>
           <div className="bg-green-50 rounded-xl border border-green-200 p-6">
             <p className="text-sm text-green-600 mb-1">Total Collected</p>
             <p className="text-2xl font-bold text-green-700">{formatCurrency(summary.totalCollected)}</p>
@@ -188,7 +192,7 @@ export default function FeesPage() {
         onRowClick={(item) => navigate(`/fees/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   );
 }

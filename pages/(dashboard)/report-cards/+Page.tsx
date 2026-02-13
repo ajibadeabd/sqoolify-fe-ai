@@ -137,7 +137,7 @@ export default function ReportCardsPage() {
   return (
     <div>
       <Breadcrumbs items={[{ label: 'Report Cards' }]} />
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Report Cards</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total report cards</p>
@@ -198,7 +198,7 @@ export default function ReportCardsPage() {
         onRowClick={(item) => navigate(`/report-cards/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
     </div>
   );
 }

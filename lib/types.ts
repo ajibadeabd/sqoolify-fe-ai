@@ -61,6 +61,7 @@ export interface User {
   isVerify: boolean;
   schools: { schoolId: string; roles: string[] }[];
   permissions: string[];
+  currentSchool?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -86,6 +87,7 @@ export interface School {
   country?: string;
   type?: 'small' | 'medium' | 'large';
   size?: number;
+  schoolCode?: string;
   schoolInformation?: SchoolInformation;
   schoolSetup?: SchoolSetup;
   ownerInformation?: OwnerInformation;
@@ -99,6 +101,8 @@ export interface SchoolInformation {
   description: string;
   name: string;
   schoolType: string;
+  email?: string;
+  phone?: string;
   address: {
     schoolAddress: string;
     localGovernment: string;
@@ -193,8 +197,6 @@ export interface Teacher {
   isActive?: boolean;
   classes: (SchoolClass | string)[];
   subjects: (Subject | string)[];
-  isClassTeacher: boolean;
-  assignedClass?: SchoolClass | string;
   school: string;
   createdAt?: string;
   updatedAt?: string;
@@ -247,7 +249,11 @@ export interface SchoolClass {
   name: string;
   section?: string;
   classTeacher?: Teacher | string;
+  level?: string;
+  room?: string;
+  description?: string;
   students: (Student | string)[];
+  subjects?: { subject: Subject | string; teachers: (Teacher | string)[] }[];
   capacity: number;
   session?: Session | string;
   school: string;
@@ -259,6 +265,9 @@ export interface CreateClassData {
   name: string;
   section?: string;
   capacity?: number;
+  level?: string;
+  room?: string;
+  description?: string;
   classTeacherId?: string;
   sessionId?: string;
 }
@@ -271,8 +280,7 @@ export interface Subject {
   isCore?: boolean;
   description?: string;
   isActive?: boolean;
-  class?: SchoolClass | string;
-  teacher?: Teacher | string;
+  teachers?: (Teacher | string)[];
   school: string;
   createdAt?: string;
   updatedAt?: string;
@@ -282,8 +290,7 @@ export interface CreateSubjectData {
   name: string;
   code: string;
   isCore?: boolean;
-  classId?: string;
-  teacherId?: string;
+  teacherIds?: string[];
   description?: string;
   isActive?: boolean;
 }
@@ -328,7 +335,7 @@ export interface ExamAttachment {
 export interface Exam {
   _id: string;
   name: string;
-  type: 'CA1' | 'CA2' | 'Exam';
+  type: string;
   class: SchoolClass | string;
   subject: Subject | string;
   session: Session | string;
@@ -339,6 +346,10 @@ export interface Exam {
   duration?: number;
   attachments?: ExamAttachment[];
   published?: boolean;
+  approvalStatus?: 'draft' | 'pending_approval' | 'approved' | 'rejected';
+  rejectionReason?: string;
+  submittedBy?: string;
+  approvedBy?: string;
   startTime?: string;
   endTime?: string;
   school: string;
@@ -348,7 +359,7 @@ export interface Exam {
 
 export interface CreateExamData {
   name: string;
-  type: 'CA1' | 'CA2' | 'Exam';
+  type: string;
   classId: string;
   subjectId: string;
   sessionId: string;
@@ -448,12 +459,14 @@ export interface CreateScoreData {
 export interface ReportCard {
   _id: string;
   student: Student | string;
+  class?: SchoolClass | string;
   session: Session | string;
   term: 'First' | 'Second' | 'Third';
   scores: (Score | string)[];
   totalScore?: number;
   average?: number;
   position?: number;
+  status?: 'draft' | 'published';
   teacherRemark?: string;
   principalRemark?: string;
   school: string;
@@ -598,7 +611,7 @@ export interface FeeBreakdown {
 export interface FeeTerm {
   term: number;
   amount: number;
-  breakdowns: FeeBreakdown[];
+  breakdowns?: FeeBreakdown[];
   dueDate?: string;
 }
 
@@ -625,6 +638,7 @@ export interface FeePaymentRecord {
   date: string;
   paymentRef?: string;
   method?: string;
+  term?: number;
 }
 
 export interface StudentFee {
@@ -665,7 +679,6 @@ export interface CreatePaymentData {
   paymentCategory?: string;
   paymentType: string;
   paymentMethod?: string;
-  reference?: string;
   sessionId?: string;
   term?: number;
   studentFeeId?: string;
@@ -731,6 +744,11 @@ export interface AssessmentConfig {
 }
 
 // App Config
+export interface ClassLevel {
+  name: string;
+  shortCode: string;
+}
+
 export interface ConfigSettings {
   currency: string;
   timezone: string;
@@ -740,6 +758,15 @@ export interface ConfigSettings {
   feesEnabled: boolean;
   notificationsEnabled: boolean;
   termsPerSession: number;
+  classLevels: ClassLevel[];
+  sectionPresets: string[];
+  examTypes: string[];
+  paymentCategories: string[];
+  paymentTypes: string[];
+  paymentMethods: string[];
+  studentStatuses: string[];
+  noticeVisibility: string[];
+  noticeTypes: string[];
 }
 
 export interface AppConfig {
@@ -751,6 +778,20 @@ export interface AppConfig {
 }
 
 // Dashboard
+export interface AttendanceBreakdown {
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+}
+
+export interface ClassAttendance {
+  className: string;
+  attendanceRate: number;
+  present: number;
+  total: number;
+}
+
 export interface AdminDashboardStats {
   role: 'admin';
   totalStudents: number;
@@ -761,6 +802,8 @@ export interface AdminDashboardStats {
   totalRevenue: number;
   outstandingFees: number;
   attendanceRate: number;
+  attendanceBreakdown?: AttendanceBreakdown;
+  attendanceByClass?: ClassAttendance[];
 }
 
 export interface TeacherDashboardStats {
@@ -777,13 +820,71 @@ export interface StudentDashboardStats {
   pendingFees: number;
 }
 
+export interface ChildAttendanceSummary {
+  _id: string;
+  name: string;
+  total: number;
+  present: number;
+  absent: number;
+  late: number;
+  excused: number;
+  attendanceRate: number;
+}
+
+export interface ParentUpcomingFee {
+  _id: string;
+  childName: string;
+  balance: number;
+  amountPaid: number;
+  status: string;
+  dueDate: string | null;
+}
+
+export interface ParentRecentResult {
+  _id: string;
+  childName: string;
+  examName: string;
+  examType: string;
+  subject: string;
+  score: number;
+  maxScore?: number;
+  grade: string | null;
+  date: string;
+}
+
+export interface ParentRecentPayment {
+  _id: string;
+  childName: string;
+  amount: number;
+  status: string;
+  method: string | null;
+  reference: string | null;
+  date: string;
+}
+
 export interface ParentDashboardStats {
   role: 'parent';
   children: number;
+  totalFees: number;
+  totalPaid: number;
   totalPendingFees: number;
+  childrenAttendance?: ChildAttendanceSummary[];
+  upcomingFees?: ParentUpcomingFee[];
+  recentResults?: ParentRecentResult[];
+  recentPayments?: ParentRecentPayment[];
 }
 
 export type DashboardStats = AdminDashboardStats | TeacherDashboardStats | StudentDashboardStats | ParentDashboardStats;
+
+// Chat
+export interface ChatMessage {
+  _id: string;
+  sender: { _id: string; firstName: string; lastName: string } | string;
+  room: string;
+  content: string;
+  school: string;
+  createdAt?: string;
+}
 
 // File Upload
 export interface UploadResponse {

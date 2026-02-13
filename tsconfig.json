@@ -14,5 +14,5 @@
       "@lib/*": ["lib/*"]
     }
   },
-  "include": ["pages/**/*", "server/**/*", "components/**/*", "lib/**/*"]
+  "include": ["pages/**/*", "server/**/*", "components/**/*", "lib/**/*", "vite-env.d.ts"]
 }

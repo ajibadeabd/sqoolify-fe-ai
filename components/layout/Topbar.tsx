@@ -42,12 +42,14 @@ export default function Topbar() {
             >
               Profile
             </a>
-            <a
-              href="/settings"
-              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-            >
-              Settings
-            </a>
+            {userRole === 'admin' && (
+              <a
+                href="/settings"
+                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+              >
+                Settings
+              </a>
+            )}
             <hr className="my-1" />
             <button
               onClick={logout}

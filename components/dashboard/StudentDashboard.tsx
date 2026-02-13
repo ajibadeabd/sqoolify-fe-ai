@@ -7,9 +7,10 @@ interface StudentDashboardProps {
   notices: Notice[];
   currentSession: Session | null;
   userName: string;
+  chatRooms?: any[];
 }
 
-export default function StudentDashboard({ stats, notices, currentSession, userName }: StudentDashboardProps) {
+export default function StudentDashboard({ stats, notices, currentSession, userName, chatRooms = [] }: StudentDashboardProps) {
   const { formatCurrency } = useAppConfig();
 
   const formatPercent = (value?: number) => {
@@ -104,7 +105,7 @@ export default function StudentDashboard({ stats, notices, currentSession, userN
           <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
           <div className="space-y-3">
             <a
-              href="/exams"
+              href="/my-exams"
               className="flex items-center gap-3 px-4 py-3 rounded-lg bg-purple-50 text-purple-600 text-sm font-medium hover:bg-purple-100 transition"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -113,7 +114,7 @@ export default function StudentDashboard({ stats, notices, currentSession, userN
               My Exams
             </a>
             <a
-              href="/attendance"
+              href="/my-attendance"
               className="flex items-center gap-3 px-4 py-3 rounded-lg bg-blue-50 text-blue-600 text-sm font-medium hover:bg-blue-100 transition"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -122,7 +123,7 @@ export default function StudentDashboard({ stats, notices, currentSession, userN
               My Attendance
             </a>
             <a
-              href="/fees"
+              href="/my-fees"
               className="flex items-center gap-3 px-4 py-3 rounded-lg bg-orange-50 text-orange-600 text-sm font-medium hover:bg-orange-100 transition"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -131,7 +132,7 @@ export default function StudentDashboard({ stats, notices, currentSession, userN
               My Fees
             </a>
             <a
-              href="/report-cards"
+              href="/my-report-card"
               className="flex items-center gap-3 px-4 py-3 rounded-lg bg-green-50 text-green-600 text-sm font-medium hover:bg-green-100 transition"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
@@ -151,6 +152,35 @@ export default function StudentDashboard({ stats, notices, currentSession, userN
           </div>
         </div>
       </div>
+
+      {/* Chat Rooms */}
+      {chatRooms.length > 0 && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mt-6">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold">Chat Rooms</h3>
+            <a href="/chat-rooms" className="text-sm text-blue-600 hover:text-blue-800">View all</a>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {chatRooms.slice(0, 4).map((room: any) => (
+              <a
+                key={room._id}
+                href={`/chat-rooms/${room._id}`}
+                className="flex items-center gap-3 p-3 rounded-lg border border-gray-100 hover:bg-gray-50 transition"
+              >
+                <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center shrink-0">
+                  <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" strokeWidth={1.5} viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+                  </svg>
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-gray-900 truncate">{room.name}{room.section ? ` - ${room.section}` : ''}</p>
+                  <p className="text-xs text-gray-500">{room.students?.length || 0} students</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

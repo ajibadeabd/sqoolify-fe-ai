@@ -47,7 +47,7 @@ export default function GradingPage() {
     setLoadingAnswers(true)
     try {
       const res = await examService.getStudentSubmission(id, studentId)
-      const ans: StudentAnswer[] = res.data || []
+      const ans: StudentAnswer[] = res.data.answers || []
       setAnswers(ans)
       // Initialize grade inputs from existing data
       const initial: Record<string, { score: string; feedback: string }> = {}

@@ -23,10 +23,11 @@ export default function ScoreEntryPage() {
         setExam(examRes.data)
 
         // Fetch students for the exam's class
-        if (examRes.data?.class?._id) {
+        const examClass = typeof examRes.data?.class === 'object' ? examRes.data.class : null
+        if (examClass?._id) {
           const studentsRes = await studentService.getAll({
             // @ts-ignore - class filter not in type but works
-            class: examRes.data.class._id,
+            class: examClass._id,
             limit: 100
           })
           setStudents(studentsRes.data || [])
@@ -89,7 +90,7 @@ export default function ScoreEntryPage() {
         { label: 'Scores' },
       ]} />
 
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Enter Scores</h1>
           <p className="text-gray-500 mt-1">

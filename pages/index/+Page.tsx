@@ -156,30 +156,37 @@ export default function HomePage() {
       </nav>
 
       {/* Hero */}
-      <section className="px-6 py-24 lg:py-32 bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="max-w-5xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 bg-blue-100 text-blue-700 px-4 py-1.5 rounded-full text-sm font-medium mb-8">
-            <span className="w-2 h-2 bg-blue-600 rounded-full animate-pulse" />
+      <section className="relative px-6 py-24 lg:py-32 bg-gradient-to-br from-blue-500 to-blue-700 overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-16 -left-16 w-64 h-64 bg-blue-400/20 rounded-full" />
+          <div className="absolute top-1/3 -right-12 w-80 h-80 bg-blue-400/15 rounded-full" />
+          <div className="absolute bottom-10 left-1/4 w-48 h-48 bg-blue-300/15 rounded-full" />
+          <div className="absolute top-20 right-1/3 w-32 h-32 bg-blue-300/10 rounded-full" />
+        </div>
+        <div className="max-w-5xl mx-auto text-center relative z-10">
+          <div className="inline-flex items-center gap-2 bg-white/15 text-white px-4 py-1.5 rounded-full text-sm font-medium mb-8">
+            <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
             The complete school management platform
           </div>
-          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-6 leading-tight">
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
             Run Your Entire School<br />
-            From <span className="text-blue-600">One Platform</span>
+            From <span className="text-blue-200">One Platform</span>
           </h1>
-          <p className="text-lg lg:text-xl text-gray-600 mb-10 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-lg lg:text-xl text-blue-100 mb-10 max-w-3xl mx-auto leading-relaxed">
             Manage students, teachers, exams, fees, attendance, report cards, and more.
             Built for Nigerian schools that want to go digital without the headache.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
               href="/register"
-              className="bg-blue-600 text-white px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-blue-700 transition shadow-lg shadow-blue-600/20"
+              className="bg-white text-blue-600 px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-blue-50 transition shadow-lg"
             >
               Start Free Today
             </a>
             <a
               href="#features"
-              className="border border-gray-300 text-gray-700 px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-gray-50 transition"
+              className="border border-white/30 text-white px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-white/10 transition"
             >
               Explore Features
             </a>
@@ -189,8 +196,8 @@ export default function HomePage() {
           <div className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-6 max-w-2xl mx-auto">
             {stats.map((stat) => (
               <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{stat.value}</div>
-                <div className="text-sm text-gray-500">{stat.label}</div>
+                <div className="text-2xl font-bold text-white">{stat.value}</div>
+                <div className="text-sm text-blue-200">{stat.label}</div>
               </div>
             ))}
           </div>
@@ -198,9 +205,14 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section id="features" className="px-6 py-20 bg-white">
-        <div className="max-w-6xl mx-auto">
+      <section id="features" className="relative px-6 py-20 bg-white overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-10 -right-20 w-72 h-72 bg-blue-50 rounded-full" />
+          <div className="absolute bottom-20 -left-16 w-56 h-56 bg-blue-50 rounded-full" />
+        </div>
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-16">
+            <span className="inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-medium mb-4">Features</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Everything Your School Needs</h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
               From enrollment to graduation — Sqoolify handles academics, finance, communication, and administration.
@@ -211,7 +223,7 @@ export default function HomePage() {
             {features.map((group, gi) => (
               <div key={group.category}>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                  <div className="w-10 h-10 bg-blue-600 text-white rounded-lg flex items-center justify-center">
                     <CategoryIcon name={group.icon} />
                   </div>
                   <h3 className="text-xl font-bold text-gray-900">{group.category}</h3>
@@ -220,9 +232,9 @@ export default function HomePage() {
                   {group.items.map((feature) => (
                     <div
                       key={feature.title}
-                      className="bg-gray-50 rounded-xl p-6 hover:shadow-md hover:bg-white border border-transparent hover:border-gray-200 transition-all"
+                      className="bg-white rounded-xl p-6 hover:shadow-lg border border-gray-100 hover:border-blue-100 transition-all group"
                     >
-                      <h4 className="text-base font-semibold text-gray-900 mb-2">{feature.title}</h4>
+                      <h4 className="text-base font-semibold text-gray-900 mb-2 group-hover:text-blue-600 transition">{feature.title}</h4>
                       <p className="text-gray-600 text-sm leading-relaxed">{feature.desc}</p>
                     </div>
                   ))}
@@ -234,9 +246,14 @@ export default function HomePage() {
       </section>
 
       {/* Roles */}
-      <section id="roles" className="px-6 py-20 bg-gray-50">
-        <div className="max-w-6xl mx-auto">
+      <section id="roles" className="relative px-6 py-20 bg-gradient-to-br from-gray-50 to-blue-50/50 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-10 right-1/4 w-48 h-48 bg-blue-100/40 rounded-full" />
+          <div className="absolute bottom-0 -left-10 w-40 h-40 bg-purple-100/30 rounded-full" />
+        </div>
+        <div className="max-w-6xl mx-auto relative z-10">
           <div className="text-center mb-16">
+            <span className="inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-medium mb-4">Who It's For</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Built for Everyone in the School</h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
               Four dedicated portals — each role sees exactly what they need, nothing more.
@@ -247,7 +264,7 @@ export default function HomePage() {
             {roles.map((role) => {
               const c = colorMap[role.color]
               return (
-                <div key={role.name} className={`bg-white rounded-xl p-6 border ${c.border} hover:shadow-lg transition-all`}>
+                <div key={role.name} className={`bg-white rounded-xl p-6 border ${c.border} hover:shadow-lg hover:-translate-y-1 transition-all`}>
                   <div className={`w-12 h-12 ${c.light} rounded-xl flex items-center justify-center mb-4`}>
                     <span className={`text-lg font-bold ${c.text}`}>{role.name[0]}</span>
                   </div>
@@ -271,16 +288,20 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="px-6 py-20 bg-white">
-        <div className="max-w-4xl mx-auto">
+      <section id="how-it-works" className="relative px-6 py-20 bg-white overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-1/2 -right-16 w-56 h-56 bg-blue-50 rounded-full" />
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10">
           <div className="text-center mb-16">
+            <span className="inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-medium mb-4">How It Works</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Get Started in 4 Steps</h2>
             <p className="text-gray-600 text-lg">From signup to full operation in under an hour.</p>
           </div>
-          <div className="space-y-8">
+          <div className="space-y-6">
             {howItWorks.map((item, i) => (
-              <div key={item.step} className="flex gap-6 items-start">
-                <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shrink-0">
+              <div key={item.step} className="flex gap-6 items-start bg-gray-50 rounded-xl p-6 hover:bg-blue-50/50 transition-all">
+                <div className="w-12 h-12 bg-blue-600 text-white rounded-xl flex items-center justify-center font-bold text-lg shrink-0 shadow-lg shadow-blue-600/20">
                   {item.step}
                 </div>
                 <div className="pt-1">
@@ -294,8 +315,12 @@ export default function HomePage() {
       </section>
 
       {/* Highlights bar */}
-      <section className="px-6 py-12 bg-gray-900">
-        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className="relative px-6 py-14 bg-gradient-to-r from-blue-600 to-blue-700 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-6 left-1/4 w-32 h-32 bg-blue-400/20 rounded-full" />
+          <div className="absolute -bottom-8 right-1/3 w-40 h-40 bg-blue-400/15 rounded-full" />
+        </div>
+        <div className="max-w-6xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-8 text-center relative z-10">
           {[
             { icon: '🔒', label: 'Secure & Private' },
             { icon: '📱', label: 'Mobile Friendly' },
@@ -303,17 +328,22 @@ export default function HomePage() {
             { icon: '🇳🇬', label: 'Built for Nigeria' },
           ].map((item) => (
             <div key={item.label} className="text-white">
-              <div className="text-2xl mb-2">{item.icon}</div>
-              <div className="text-sm font-medium text-gray-300">{item.label}</div>
+              <div className="text-3xl mb-2">{item.icon}</div>
+              <div className="text-sm font-medium text-blue-100">{item.label}</div>
             </div>
           ))}
         </div>
       </section>
 
       {/* FAQ */}
-      <section id="faq" className="px-6 py-20 bg-white">
-        <div className="max-w-3xl mx-auto">
+      <section id="faq" className="relative px-6 py-20 bg-gray-50 overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-12 -left-12 w-48 h-48 bg-blue-100/30 rounded-full" />
+          <div className="absolute bottom-10 -right-10 w-40 h-40 bg-blue-100/20 rounded-full" />
+        </div>
+        <div className="max-w-3xl mx-auto relative z-10">
           <div className="text-center mb-12">
+            <span className="inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-medium mb-4">FAQ</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Frequently Asked Questions</h2>
           </div>
           <div className="space-y-3">
@@ -343,8 +373,14 @@ export default function HomePage() {
       </section>
 
       {/* CTA */}
-      <section className="px-6 py-20 bg-gradient-to-br from-blue-600 to-blue-700 text-white text-center">
-        <div className="max-w-3xl mx-auto">
+      <section className="relative px-6 py-20 bg-gradient-to-br from-blue-600 to-blue-700 text-white text-center overflow-hidden">
+        {/* Decorative circles */}
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute -top-10 -right-10 w-48 h-48 bg-blue-400/20 rounded-full" />
+          <div className="absolute bottom-0 -left-8 w-56 h-56 bg-blue-400/15 rounded-full" />
+          <div className="absolute top-1/2 right-1/4 w-32 h-32 bg-blue-300/15 rounded-full" />
+        </div>
+        <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">Ready to Digitize Your School?</h2>
           <p className="text-blue-100 mb-8 text-lg max-w-xl mx-auto">
             Join schools already using Sqoolify to manage students, grades, fees, and more — all from one platform.

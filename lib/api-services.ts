@@ -11,6 +11,7 @@ import {
   ExamResult, CreateExamResultData, AssessmentConfig, AppConfig, ConfigSettings,
   DashboardStats, UploadResponse,
   Question, CreateQuestionData, StudentAnswer, ExamAttempt, ExamAttachment,
+  PeriodConfig, TimetableEntry, CreateTimetableEntryData, BulkTimetableData, CreatePeriodConfigData,
 } from './types';
 
 // Helper to get auth options
@@ -659,4 +660,34 @@ export const chatService = {
 
   getMessages: (roomId: string, params?: { page?: number; limit?: number }) =>
     api.get<ApiResponse<any[]>>(`/chat/rooms/${roomId}/messages${buildQuery(params || {})}`, authOptions()),
+};
+
+// ============ TIMETABLE ============
+export const timetableService = {
+  getClassTimetable: (classId: string, params?: { sessionId?: string }) =>
+    api.get<ApiResponse<TimetableEntry[]>>(`/timetable/class/${classId}${buildQuery(params || {})}`, authOptions()),
+
+  getTeacherTimetable: (teacherId: string, params?: { sessionId?: string }) =>
+    api.get<ApiResponse<TimetableEntry[]>>(`/timetable/teacher/${teacherId}${buildQuery(params || {})}`, authOptions()),
+
+  getMyTimetable: (params?: { sessionId?: string }) =>
+    api.get<ApiResponse<TimetableEntry[]>>(`/timetable/my-timetable${buildQuery(params || {})}`, authOptions()),
+
+  createEntry: (data: CreateTimetableEntryData) =>
+    api.post<ApiResponse<TimetableEntry>>('/timetable', data, authOptions()),
+
+  bulkSave: (data: BulkTimetableData) =>
+    api.post<ApiResponse<TimetableEntry[]>>('/timetable/bulk', data, authOptions()),
+
+  updateEntry: (id: string, data: Partial<CreateTimetableEntryData>) =>
+    api.patch<ApiResponse<TimetableEntry>>(`/timetable/${id}`, data, authOptions()),
+
+  deleteEntry: (id: string) =>
+    api.delete<ApiResponse<void>>(`/timetable/${id}`, authOptions()),
+
+  getPeriodConfig: (params?: { sessionId?: string }) =>
+    api.get<ApiResponse<PeriodConfig>>(`/timetable/periods${buildQuery(params || {})}`, authOptions()),
+
+  savePeriodConfig: (data: CreatePeriodConfigData) =>
+    api.post<ApiResponse<PeriodConfig>>('/timetable/periods', data, authOptions()),
 };

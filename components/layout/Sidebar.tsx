@@ -40,6 +40,7 @@ const navSections: NavSection[] = [
       { label: 'Exams', href: '/exams', icon: 'clipboard', permissions: ['read_exams'] },
       { label: 'Report Cards', href: '/report-cards', icon: 'award', permissions: ['read_report_cards'] },
       { label: 'Attendance', href: '/attendance', icon: 'check-circle', permissions: ['read_attendance'] },
+      { label: 'Timetable', href: '/timetable', icon: 'calendar', permissions: ['read_timetable'] },
     ],
   },
   {
@@ -63,6 +64,7 @@ const navSections: NavSection[] = [
       { label: 'My Classes', href: '/my-classes', icon: 'book-open', roles: ['teacher'] },
       { label: 'My Subjects', href: '/my-subjects', icon: 'file-text', roles: ['teacher'] },
       { label: 'Enter Scores', href: '/enter-scores', icon: 'edit', roles: ['teacher'] },
+      { label: 'My Timetable', href: '/my-timetable', icon: 'calendar', roles: ['teacher'] },
     ],
   },
   {
@@ -80,6 +82,7 @@ const navSections: NavSection[] = [
       { label: 'My Attendance', href: '/my-attendance', icon: 'check-circle', roles: ['student'], permissions: ['view_my_attendance'] },
       { label: 'My Fees', href: '/my-fees', icon: 'dollar', roles: ['student'], permissions: ['view_my_results'] },
       { label: 'My Report Card', href: '/my-report-card', icon: 'award', roles: ['student'], permissions: ['view_my_report_card'] },
+      { label: 'My Timetable', href: '/my-timetable', icon: 'calendar', roles: ['student'], permissions: ['view_my_timetable'] },
     ],
   },
   {

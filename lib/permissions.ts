@@ -123,6 +123,12 @@ export const PERMISSIONS = {
   VIEW_MY_ATTENDANCE: 'view_my_attendance',
   TAKE_EXAMS: 'take_exams',
 
+  // Timetable
+  READ_TIMETABLE: 'read_timetable',
+  WRITE_TIMETABLE: 'write_timetable',
+  DELETE_TIMETABLE: 'delete_timetable',
+  VIEW_MY_TIMETABLE: 'view_my_timetable',
+
   // Chat
   ACCESS_CHAT: 'access_chat',
 } as const;

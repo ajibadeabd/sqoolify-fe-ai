@@ -1,6 +1,7 @@
 import { Notice, Session, AdminDashboardStats, AttendanceBreakdown, ClassAttendance } from '../../lib/types';
 import { useAppConfig } from '../../lib/use-app-config';
 import StatsCard from '../ui/StatsCard';
+import OnboardingChecklist from './OnboardingChecklist';
 
 interface AdminDashboardProps {
   stats: AdminDashboardStats;
@@ -28,6 +29,8 @@ export default function AdminDashboard({ stats, notices, currentSession, userNam
           </p>
         )}
       </div>
+
+      <OnboardingChecklist stats={stats} currentSession={currentSession} />
 
       {/* Primary Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">

@@ -891,3 +891,58 @@ export interface UploadResponse {
   url: string;
   publicId: string;
 }
+
+// Timetable
+export interface PeriodSlot {
+  order: number;
+  label: string;
+  startTime: string;
+  endTime: string;
+  isBreak: boolean;
+}
+
+export interface PeriodConfig {
+  _id: string;
+  school: string;
+  session?: string;
+  periods: PeriodSlot[];
+  days: string[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface TimetableEntry {
+  _id: string;
+  class: SchoolClass | string;
+  subject: Subject | string;
+  teacher: Teacher | string;
+  day: string;
+  periodOrder: number;
+  room?: string;
+  session: Session | string;
+  school: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateTimetableEntryData {
+  classId: string;
+  subjectId: string;
+  teacherId: string;
+  day: string;
+  periodOrder: number;
+  room?: string;
+  sessionId: string;
+}
+
+export interface BulkTimetableData {
+  classId: string;
+  sessionId: string;
+  entries: CreateTimetableEntryData[];
+}
+
+export interface CreatePeriodConfigData {
+  sessionId?: string;
+  periods: PeriodSlot[];
+  days?: string[];
+}

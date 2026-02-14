@@ -44,6 +44,8 @@ export default function AttendancePage() {
       ]);
       setClasses(classRes.data || []);
       setSessions(sessionRes.data || []);
+      if ((sessionRes.data || []).length > 0 && !selectedSession) setSelectedSession(sessionRes.data[0]._id);
+      if ((classRes.data || []).length > 0 && !selectedClass) setSelectedClass(classRes.data[0]._id);
     } catch (err: any) {
       setError(err.message || 'Failed to load data');
     } finally {

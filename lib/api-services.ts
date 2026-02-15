@@ -371,6 +371,9 @@ export const examService = {
   submitExam: (examId: string) =>
     api.post<ApiResponse<ExamAttempt>>(`/exams/${examId}/submit`, {}, authOptions()),
 
+  reportViolation: (examId: string) =>
+    api.post<ApiResponse<ExamAttempt>>(`/exams/${examId}/report-violation`, {}, authOptions()),
+
   // Teacher grading (CBT)
   getSubmissions: (examId: string) =>
     api.get<ApiResponse<ExamAttempt[]>>(`/exams/${examId}/submissions`, authOptions()),

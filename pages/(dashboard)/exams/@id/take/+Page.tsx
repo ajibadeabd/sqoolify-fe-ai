@@ -20,8 +20,11 @@ export default function TakeExamPage() {
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
+  const [tabViolations, setTabViolations] = useState(0)
+  const [showViolationWarning, setShowViolationWarning] = useState(false)
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const violationRef = useRef(0)
 
   useEffect(() => {
     const fetchExam = async () => {
@@ -95,6 +98,72 @@ export default function TakeExamPage() {
       handleSubmit(true)
     }
   }, [timeLeft])
+
+  // Anti-cheat: detect tab switches, prevent copy/paste/right-click
+  useEffect(() => {
+    if (!started) return
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        violationRef.current += 1
+        setTabViolations(violationRef.current)
+        setShowViolationWarning(true)
+        toast.error(`Warning: You left the exam tab! (${violationRef.current} violation${violationRef.current > 1 ? 's' : ''})`)
+        examService.reportViolation(id).catch(() => {})
+        if (violationRef.current >= 3) {
+          toast.error('Too many violations — exam will be auto-submitted')
+          handleSubmit(true)
+        }
+      }
+    }
+
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      e.preventDefault()
+      e.returnValue = ''
+    }
+
+    const preventCopy = (e: Event) => {
+      e.preventDefault()
+      toast.warning('Copy/paste is disabled during exams')
+    }
+
+    const preventContextMenu = (e: Event) => {
+      e.preventDefault()
+    }
+
+    const preventKeyShortcuts = (e: KeyboardEvent) => {
+      // Block Ctrl+C, Ctrl+V, Ctrl+A, Ctrl+U (view source), F12
+      if ((e.ctrlKey || e.metaKey) && ['c', 'v', 'a', 'u'].includes(e.key.toLowerCase())) {
+        // Allow Ctrl+A and Ctrl+V in textareas for essay/short answer
+        const tag = (e.target as HTMLElement)?.tagName?.toLowerCase()
+        if ((e.key.toLowerCase() === 'a' || e.key.toLowerCase() === 'v') && (tag === 'textarea' || tag === 'input')) {
+          return
+        }
+        e.preventDefault()
+      }
+      if (e.key === 'F12') {
+        e.preventDefault()
+      }
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    document.addEventListener('copy', preventCopy)
+    document.addEventListener('cut', preventCopy)
+    document.addEventListener('paste', preventCopy)
+    document.addEventListener('contextmenu', preventContextMenu)
+    document.addEventListener('keydown', preventKeyShortcuts)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+      document.removeEventListener('copy', preventCopy)
+      document.removeEventListener('cut', preventCopy)
+      document.removeEventListener('paste', preventCopy)
+      document.removeEventListener('contextmenu', preventContextMenu)
+      document.removeEventListener('keydown', preventKeyShortcuts)
+    }
+  }, [started])
 
   // Debounced auto-save
   const saveAnswer = useCallback(
@@ -189,6 +258,9 @@ export default function TakeExamPage() {
                 <li>Your answers are auto-saved periodically</li>
                 <li>The exam will auto-submit when time expires</li>
                 <li>You can navigate freely between questions</li>
+                <li>Do NOT switch tabs or leave this page — violations are tracked</li>
+                <li>Copy, paste, and right-click are disabled during the exam</li>
+                <li>3 tab violations will auto-submit your exam</li>
               </ul>
             </div>
             <Button size="lg" onClick={startExam}>Start Exam</Button>
@@ -215,6 +287,11 @@ export default function TakeExamPage() {
             <span className="text-sm text-gray-500">
               {answeredCount}/{questions.length} answered
             </span>
+            {tabViolations > 0 && (
+              <span className="text-xs font-medium text-red-600 bg-red-50 px-2 py-0.5 rounded-full">
+                {tabViolations} violation{tabViolations > 1 ? 's' : ''}
+              </span>
+            )}
           </div>
           <div className="flex items-center gap-4">
             {timeLeft != null && (
@@ -255,6 +332,24 @@ export default function TakeExamPage() {
           })}
         </div>
       </div>
+
+      {/* Violation Warning */}
+      {showViolationWarning && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-sm text-red-700">
+            <svg className="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+            </svg>
+            <span className="font-medium">
+              {tabViolations} tab violation{tabViolations > 1 ? 's' : ''} detected.
+              {tabViolations >= 2 ? ' One more will auto-submit your exam!' : ' Stay on this page.'}
+            </span>
+          </div>
+          <button onClick={() => setShowViolationWarning(false)} className="text-red-400 hover:text-red-600 text-xs">
+            Dismiss
+          </button>
+        </div>
+      )}
 
       {/* Question Display */}
       {currentQuestion && (

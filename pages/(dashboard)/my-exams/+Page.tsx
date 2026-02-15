@@ -35,16 +35,32 @@ export default function MyExamsPage() {
     return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
   }
 
-  const statusVariants: Record<string, 'success' | 'warning' | 'danger' | 'info' | 'default'> = {
-    published: 'success',
-    draft: 'default',
-    pending: 'warning',
-    completed: 'info',
+  const modeLabels: Record<string, string> = {
+    traditional: 'Traditional',
+    cbt: 'CBT',
+    'file-upload': 'File Upload',
+    hybrid: 'Hybrid',
+  }
+
+  const modeColors: Record<string, string> = {
+    traditional: 'bg-gray-100 text-gray-700',
+    cbt: 'bg-green-100 text-green-700',
+    'file-upload': 'bg-orange-100 text-orange-700',
+    hybrid: 'bg-violet-100 text-violet-700',
   }
 
   const columns: Column<any>[] = [
     { key: 'name', header: 'Exam', render: (item) => item.name || '-' },
     { key: 'subject', header: 'Subject', render: (item) => item.subject?.name || '-' },
+    {
+      key: 'type',
+      header: 'Type',
+      render: (item) => (
+        <span className={`px-2 py-1 text-xs rounded-full ${modeColors[item.examMode || 'traditional']}`}>
+          {modeLabels[item.examMode || 'traditional']}
+        </span>
+      ),
+    },
     {
       key: 'date',
       header: 'Date',
@@ -57,18 +73,9 @@ export default function MyExamsPage() {
     },
     { key: 'maxScore', header: 'Max Score', render: (item) => item.maxScore ?? '-' },
     {
-      key: 'status',
-      header: 'Status',
-      render: (item) => (
-        <Badge variant={statusVariants[item.status] || 'default'}>
-          {item.status || 'N/A'}
-        </Badge>
-      ),
-    },
-    {
       key: 'action',
       header: '',
-      render: (item) => item.examType === 'cbt' && item.status === 'published' ? (
+      render: (item) => (item.examMode === 'cbt' || item.examMode === 'hybrid') ? (
         <a
           href={`/exams/${item._id}/take`}
           className="px-3 py-1.5 bg-blue-600 text-white text-xs rounded-lg hover:bg-blue-700 transition font-medium"

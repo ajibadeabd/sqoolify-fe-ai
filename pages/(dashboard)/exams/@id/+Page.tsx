@@ -410,6 +410,7 @@ export default function ExamDetailPage() {
                     <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Status</th>
                     <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Score</th>
                     <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Time Spent</th>
+                    <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Violations</th>
                     <th className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3">Submitted</th>
                   </tr>
                 </thead>
@@ -446,6 +447,13 @@ export default function ExamDetailPage() {
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {timeMinutes != null ? `${timeMinutes} min` : '-'}
+                        </td>
+                        <td className="px-6 py-4 text-sm">
+                          {(sub as any).tabViolations > 0 ? (
+                            <span className="text-red-600 font-medium">{(sub as any).tabViolations}</span>
+                          ) : (
+                            <span className="text-green-600">0</span>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-600">
                           {sub.submittedAt ? formatDateTime(sub.submittedAt) : '-'}

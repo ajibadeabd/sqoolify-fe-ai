@@ -34,6 +34,7 @@ export interface RegisterData {
   password: string;
   schoolName: string;
   phone?: string;
+  slug?: string;
 }
 
 export interface AuthResponse {
@@ -60,6 +61,8 @@ export interface User {
   isActive: boolean;
   isVerify: boolean;
   schools: { schoolId: string; roles: string[] }[];
+  school?: string;
+  role?: string;
   permissions: string[];
   currentSchool?: string;
   createdAt?: string;

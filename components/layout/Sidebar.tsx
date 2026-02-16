@@ -1,6 +1,7 @@
 import { usePageContext } from 'vike-react/usePageContext';
 import { useAuth } from '../../lib/auth-context';
 import { usePermission } from '../../lib/use-permission';
+import { useSchool } from '../../lib/school-context';
 
 interface NavItem {
   label: string;
@@ -124,9 +125,10 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
   // Handle SSR - useAuth returns safe defaults during server rendering
   const auth = useAuth();
   const { canAny, permissions } = usePermission();
+  const { school: currentSchool } = useSchool();
 
-  // Get user's role from first school (for backwards compatibility)
-  const userRole = auth?.user?.schools?.[0]?.roles?.[0] || 'admin';
+  const userRole = auth?.user?.role || '';
+  const schoolName = currentSchool?.name || 'Sqoolify';
 
   // Wait for auth to load before filtering (prevents showing all tabs on initial load)
   if (auth.isLoading || !auth.user) {
@@ -166,7 +168,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
       {/* Logo */}
       <div className="h-16 flex items-center justify-between px-4 border-b border-blue-400/30 relative z-10">
-        {!collapsed && <span className="text-xl font-bold text-white">Sqoolify</span>}
+        {!collapsed && <span className="text-xl font-bold text-white">{schoolName}</span>}
         <button
           onClick={onToggle}
           className="p-1.5 rounded-lg hover:bg-white/10 text-blue-100"

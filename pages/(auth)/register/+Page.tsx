@@ -1,8 +1,8 @@
-import { useState } from 'react'
-import { navigate } from 'vike/client/router'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../../lib/auth-context'
+import { buildSchoolUrl } from '../../../lib/subdomain'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -13,14 +13,39 @@ export default function RegisterPage() {
     confirmPassword: '',
     schoolName: '',
     phone: '',
+    slug: '',
   })
+  const [slugTouched, setSlugTouched] = useState(false)
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const { register } = useAuth()
 
+  // Auto-generate slug from school name (unless user manually edited it)
+  useEffect(() => {
+    if (!slugTouched && formData.schoolName) {
+      const autoSlug = formData.schoolName
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '')
+      setFormData(prev => ({ ...prev, slug: autoSlug }))
+    }
+  }, [formData.schoolName, slugTouched])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleSlugChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSlugTouched(true)
+    const value = e.target.value
+      .toLowerCase()
+      .replace(/[^a-z0-9-]/g, '')
+      .replace(/-+/g, '-')
+    setFormData({ ...formData, slug: value })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -46,10 +71,12 @@ export default function RegisterPage() {
         password: formData.password,
         schoolName: formData.schoolName,
         phone: formData.phone || undefined,
+        slug: formData.slug || undefined,
       })
 
-      toast.success('Account created successfully!')
-      await navigate('/dashboard')
+      toast.success('Account created successfully! Redirecting to your school...')
+      const schoolUrl = buildSchoolUrl(formData.slug)
+      window.location.href = `${schoolUrl}/dashboard`
     } catch (err: any) {
       toast.error(err.message || 'Registration failed')
     } finally {
@@ -204,6 +231,32 @@ export default function RegisterPage() {
                   className={inputClass}
                   placeholder="Bright Future Academy"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="slug" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Your School URL
+                </label>
+                <div className="flex items-center gap-0">
+                  <input
+                    id="slug"
+                    name="slug"
+                    type="text"
+                    value={formData.slug}
+                    onChange={handleSlugChange}
+                    required
+                    className="flex-1 px-4 py-3 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+                    placeholder="bright-future-academy"
+                  />
+                  <span className="px-3 py-3 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-500 whitespace-nowrap">
+                    .sqoolify.com
+                  </span>
+                </div>
+                {formData.slug && (
+                  <p className="text-xs text-gray-400 mt-1">
+                    Your school will be at <span className="font-medium text-blue-600">{formData.slug}.sqoolify.com</span>
+                  </p>
+                )}
               </div>
             </div>
 

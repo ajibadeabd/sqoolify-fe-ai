@@ -5,7 +5,7 @@ export default function Topbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { user, logout } = useAuth()
 
-  const userRole = user?.schools?.[0]?.roles?.[0] || 'User'
+  const userRole = user?.role || ''
 
   return (
     <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">

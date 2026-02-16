@@ -1,1 +1,1 @@
-export default 'Chat Room | Sqoolify'
+export default 'Chat Room | .'

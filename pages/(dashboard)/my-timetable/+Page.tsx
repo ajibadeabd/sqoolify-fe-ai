@@ -21,7 +21,7 @@ function getClassName(cls: any): string {
 
 export default function MyTimetablePage() {
   const { user } = useAuth();
-  const userRole = user?.schools?.[0]?.roles?.[0] || '';
+  const userRole = user?.role || '';
 
   const [sessions, setSessions] = useState<Session[]>([]);
   const [periodConfig, setPeriodConfig] = useState<PeriodConfig | null>(null);
@@ -33,6 +33,10 @@ export default function MyTimetablePage() {
     try {
       const res = await sessionService.getAll({ limit: 10 });
       setSessions(res.data || []);
+      if ((res.data || []).length > 0 && !selectedSession) {
+        const current = (res.data || []).find((s: Session) => s.isCurrent);
+        if (current) setSelectedSession(current._id);
+      }
     } catch {
       // ignore
     }

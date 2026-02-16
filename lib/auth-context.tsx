@@ -8,10 +8,9 @@ interface AuthContextType {
   token: string | null;
   refreshToken: string | null;
   currentSchool: School | null;
-  schools: { schoolId: string; roles: string[] }[];
   isLoading: boolean;
   isAuthenticated: boolean;
-  login: (credentials: LoginCredentials) => Promise<{ requiresSchoolSelection?: boolean; schools?: any[] }>;
+  login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => void;
   selectSchool: (schoolId: string) => Promise<void>;
@@ -30,7 +29,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState<string | null>(null);
   const [currentSchool, setCurrentSchool] = useState<School | null>(null);
-  const [schools, setSchools] = useState<{ schoolId: string; roles: string[] }[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
 
@@ -45,9 +43,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         const parsedUser = JSON.parse(savedUser);
         setUser(parsedUser);
-        if (parsedUser.schools?.length > 0) {
-          setSchools(parsedUser.schools);
-        }
       } catch (e) {
         localStorage.removeItem(USER_KEY);
       }
@@ -77,9 +72,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const saveUser = (userData: User) => {
     setUser(userData);
     localStorage.setItem(USER_KEY, JSON.stringify(userData));
-    if (userData.schools?.length > 0) {
-      setSchools(userData.schools);
-    }
   };
 
   const clearAuth = () => {
@@ -87,7 +79,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setToken(null);
     setRefreshToken(null);
     setCurrentSchool(null);
-    setSchools([]);
     setPendingUserId(null);
     localStorage.removeItem(TOKEN_KEY);
     localStorage.removeItem(REFRESH_TOKEN_KEY);
@@ -97,19 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const login = async (credentials: LoginCredentials) => {
     const response = await api.post<AuthResponse>('/auth/login', credentials);
 
-    if (response.data.requiresSchoolSelection) {
-      setPendingUserId(response.data.userId!);
-      setRefreshToken(response.data.refreshToken!);
-      localStorage.setItem(REFRESH_TOKEN_KEY, response.data.refreshToken!);
-      return {
-        requiresSchoolSelection: true,
-        schools: response.data.schools
-      };
-    }
-
     saveTokens(response.data.accessToken!, response.data.refreshToken!);
     saveUser(response.data.user!);
-    return {};
   };
 
   const register = async (data: RegisterData) => {
@@ -169,7 +149,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         token,
         refreshToken,
         currentSchool,
-        schools,
         isLoading,
         isAuthenticated: !!token && !!user,
         login,
@@ -195,10 +174,9 @@ export function useAuth(): AuthContextType {
         token: null,
         refreshToken: null,
         currentSchool: null,
-        schools: [],
         isLoading: true,
         isAuthenticated: false,
-        login: async () => ({}),
+        login: async () => {},
         register: async () => {},
         logout: () => {},
         selectSchool: async () => {},

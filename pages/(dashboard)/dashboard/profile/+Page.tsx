@@ -4,12 +4,11 @@ import Badge from '../../../../components/ui/Badge'
 import { useAuth } from '../../../../lib/auth-context'
 
 export default function ProfilePage() {
-  const { user, currentSchool } = useAuth()
+  const { user } = useAuth()
 
   if (!user) return null
 
-  const currentSchoolEntry = user.schools?.find(s => s.schoolId === currentSchool?._id) || user.schools?.[0]
-  const roles = currentSchoolEntry?.roles || []
+  const userRole = user.role || ''
 
   return (
     <div className="space-y-6">
@@ -23,7 +22,7 @@ export default function ProfilePage() {
           </div>
           <div>
             <h2 className="text-2xl font-bold">{user.firstName} {user.lastName}</h2>
-            <p className="text-indigo-100 capitalize">{roles[0]?.replace('_', ' ') || 'Member'}</p>
+            <p className="text-indigo-100 capitalize">{userRole.replace('_', ' ') || 'Member'}</p>
           </div>
           <div className="ml-auto">
             <Badge variant={user.isActive ? 'success' : 'danger'}>
@@ -45,7 +44,7 @@ export default function ProfilePage() {
         </div>
         <div className="p-4 bg-purple-50 rounded-xl border border-purple-100">
           <p className="text-xs text-purple-600 mb-1">Role</p>
-          <p className="font-medium text-purple-700 text-sm capitalize">{roles[0]?.replace('_', ' ') || 'Member'}</p>
+          <p className="font-medium text-purple-700 text-sm capitalize">{userRole.replace('_', ' ') || 'Member'}</p>
         </div>
         <div className="p-4 bg-orange-50 rounded-xl border border-orange-100">
           <p className="text-xs text-orange-600 mb-1">Verification</p>
@@ -75,26 +74,20 @@ export default function ProfilePage() {
         </div>
       </Card>
 
-      {/* Schools */}
-      {user.schools && user.schools.length > 0 && (
-        <Card title="Schools">
-          <div className="space-y-3">
-            {user.schools.map((school: any, i: number) => (
-              <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-900">
-                    {school.schoolId?.name || school.schoolId || 'School'}
-                  </p>
-                  <div className="flex gap-2 mt-1">
-                    {school.roles?.map((role: string) => (
-                      <span key={role} className="px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full capitalize">
-                        {role.replace('_', ' ')}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            ))}
+      {/* School */}
+      {user.school && (
+        <Card title="School">
+          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+            <div>
+              <p className="font-medium text-gray-900">
+                {user.school || 'School'}
+              </p>
+              {userRole && (
+                <span className="mt-1 inline-block px-2 py-0.5 bg-indigo-100 text-indigo-700 text-xs rounded-full capitalize">
+                  {userRole.replace('_', ' ')}
+                </span>
+              )}
+            </div>
           </div>
         </Card>
       )}

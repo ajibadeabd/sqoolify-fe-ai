@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useSchool } from '../../lib/school-context'
 
 const features = [
   {
@@ -108,13 +109,15 @@ const colorMap: Record<string, { bg: string; text: string; border: string; light
 export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const { school } = useSchool()
+  const brandName = school?.name || 'Sqoolify'
 
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}
       <nav className="bg-white/80 backdrop-blur-md border-b border-gray-200 px-6 py-4 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <a href="/" className="text-2xl font-bold text-blue-600">Sqoolify</a>
+          <a href="/" className="text-2xl font-bold text-blue-600">{brandName}</a>
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-gray-600 hover:text-gray-900 transition">Features</a>
             <a href="#roles" className="text-sm text-gray-600 hover:text-gray-900 transition">Who It's For</a>
@@ -215,7 +218,7 @@ export default function HomePage() {
             <span className="inline-block bg-blue-100 text-blue-700 px-4 py-1 rounded-full text-sm font-medium mb-4">Features</span>
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">Everything Your School Needs</h2>
             <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-              From enrollment to graduation — Sqoolify handles academics, finance, communication, and administration.
+              From enrollment to graduation — {brandName} handles academics, finance, communication, and administration.
             </p>
           </div>
 
@@ -383,7 +386,7 @@ export default function HomePage() {
         <div className="max-w-3xl mx-auto relative z-10">
           <h2 className="text-3xl lg:text-4xl font-bold mb-4">Ready to Digitize Your School?</h2>
           <p className="text-blue-100 mb-8 text-lg max-w-xl mx-auto">
-            Join schools already using Sqoolify to manage students, grades, fees, and more — all from one platform.
+            Join schools already using {brandName} to manage students, grades, fees, and more — all from one platform.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a
@@ -407,7 +410,7 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div className="md:col-span-2">
-              <a href="/" className="text-xl font-bold text-white">Sqoolify</a>
+              <a href="/" className="text-xl font-bold text-white">{brandName}</a>
               <p className="mt-3 text-sm text-gray-500 max-w-sm">
                 The complete school management platform. Manage students, teachers, exams, fees, attendance, and report cards — all in one place.
               </p>
@@ -430,7 +433,7 @@ export default function HomePage() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-sm">&copy; {new Date().getFullYear()} Sqoolify. All rights reserved.</p>
+            <p className="text-sm">&copy; {new Date().getFullYear()} {brandName}. All rights reserved.</p>
             <div className="flex gap-6 text-sm">
               <a href="#" className="hover:text-white transition">Privacy Policy</a>
               <a href="#" className="hover:text-white transition">Terms of Service</a>

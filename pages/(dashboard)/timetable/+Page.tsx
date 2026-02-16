@@ -75,7 +75,10 @@ export default function TimetablePage() {
       ]);
       setClasses(classRes.data || []);
       setSessions(sessionRes.data || []);
-      if ((sessionRes.data || []).length > 0 && !selectedSession) setSelectedSession(sessionRes.data[0]._id);
+      if ((sessionRes.data || []).length > 0 && !selectedSession) {
+        const current = (sessionRes.data || []).find((s: Session) => s.isCurrent);
+        setSelectedSession(current ? current._id : sessionRes.data[0]._id);
+      }
       if ((classRes.data || []).length > 0 && !selectedClass) setSelectedClass(classRes.data[0]._id);
     } catch (err: any) {
       toast.error(err.message || 'Failed to load data');

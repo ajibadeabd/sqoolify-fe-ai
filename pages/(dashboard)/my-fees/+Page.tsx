@@ -12,7 +12,7 @@ import PaymentModal from '../../../components/fees/PaymentModal'
 export default function MyFeesPage() {
   const { can } = usePermission()
   const { user } = useAuth()
-  const isStudent = user?.schools?.[0]?.roles?.includes('student')
+  const isStudent = user?.role === 'student'
   const [, setChildren] = useState<any[]>([])
   const [studentFees, setStudentFees] = useState<any[]>([])
   const [payments, setPayments] = useState<Payment[]>([])

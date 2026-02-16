@@ -1,8 +1,11 @@
 import { useState } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { authService } from '../../../lib/api-services'
+import { useSchool } from '../../../lib/school-context'
 
 export default function ResetPasswordPage() {
+  const { school } = useSchool()
+  const schoolName = school?.name || 'Sqoolify'
   const pageContext = usePageContext()
   const token = (pageContext.urlParsed as any)?.search?.token || ''
 
@@ -47,7 +50,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="text-3xl font-bold text-blue-600">Sqoolify</a>
+          <a href="/" className="text-3xl font-bold text-blue-600">{schoolName}</a>
           <p className="text-gray-600 mt-2">Set your new password</p>
         </div>
 

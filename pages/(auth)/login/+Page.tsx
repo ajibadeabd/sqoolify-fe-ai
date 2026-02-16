@@ -3,6 +3,7 @@ import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../../lib/auth-context'
+import { useSchool } from '../../../lib/school-context'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -10,19 +11,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const { login } = useAuth()
+  const { school } = useSchool()
+
+  const schoolName = school?.name || 'Sqoolify'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const result = await login({ email, password })
-
-      if (result.requiresSchoolSelection) {
-        await navigate('/select-school')
-      } else {
-        await navigate('/dashboard')
-      }
+      await login({ email, password })
+      await navigate('/dashboard')
     } catch (err: any) {
       toast.error(err.message || 'Login failed')
     } finally {
@@ -41,7 +40,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10">
-          <a href="/" className="text-3xl font-bold">Sqoolify</a>
+          <span className="text-3xl font-bold">{schoolName}</span>
         </div>
 
         <div className="relative z-10 space-y-8">
@@ -70,7 +69,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10">
-          <p className="text-blue-200 text-sm">&copy; {new Date().getFullYear()} Sqoolify. All rights reserved.</p>
+          <p className="text-blue-200 text-sm">&copy; {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
         </div>
       </div>
 
@@ -78,7 +77,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
-            <a href="/" className="text-3xl font-bold text-blue-600">Sqoolify</a>
+            <span className="text-3xl font-bold text-blue-600">{schoolName}</span>
           </div>
 
           <div className="mb-8">
@@ -156,7 +155,7 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-gray-500">
               Don't have an account?{' '}
-              <a href="/register" className="text-blue-600 font-medium hover:text-blue-700">Create your school</a>
+              <a href={school ? 'https://sqoolify.com/register' : '/register'} className="text-blue-600 font-medium hover:text-blue-700">Create your school</a>
             </p>
           </form>
         </div>

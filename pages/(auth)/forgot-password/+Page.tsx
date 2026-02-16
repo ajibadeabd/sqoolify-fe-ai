@@ -1,7 +1,10 @@
 import { useState } from 'react'
 import { authService } from '../../../lib/api-services'
+import { useSchool } from '../../../lib/school-context'
 
 export default function ForgotPasswordPage() {
+  const { school } = useSchool()
+  const schoolName = school?.name || 'Sqoolify'
   const [email, setEmail] = useState('')
   const [sent, setSent] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -26,7 +29,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="text-3xl font-bold text-blue-600">Sqoolify</a>
+          <a href="/" className="text-3xl font-bold text-blue-600">{schoolName}</a>
           <p className="text-gray-600 mt-2">Reset your password</p>
         </div>
 

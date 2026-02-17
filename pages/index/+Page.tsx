@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'
@@ -117,6 +117,16 @@ export default function HomePage() {
   const { school } = useSchool()
   const { homePage } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
+
+  useEffect(() => {
+    if (school && homePage) {
+      document.title = homePage.description
+        ? `${homePage.title} | ${school.name} — ${homePage.description}`
+        : `${homePage.title} | ${school.name}`
+    } else if (school) {
+      document.title = `Welcome | ${school.name}`
+    }
+  }, [school, homePage])
 
   // Subdomain with custom home page → render school site
   if (school && homePage) {

@@ -15,6 +15,14 @@ export default function DynamicSitePage() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
+    if (page && school) {
+      document.title = page.description
+        ? `${page.title} | ${school.name} — ${page.description}`
+        : `${page.title} | ${school.name}`
+    }
+  }, [page, school])
+
+  useEffect(() => {
     if (!school || !pageSlug) {
       setLoading(false)
       setError(true)

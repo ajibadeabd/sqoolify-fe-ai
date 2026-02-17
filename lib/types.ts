@@ -218,6 +218,7 @@ export interface School {
   schoolUsers?: string[];
   isActive: boolean;
   siteConfig?: SiteConfig;
+  customDomains?: { domain: string; verified: boolean }[];
   createdAt?: string;
   updatedAt?: string;
 }

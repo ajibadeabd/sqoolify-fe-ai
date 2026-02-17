@@ -20,6 +20,17 @@ function extractSlugFromHost(hostname: string): string | null {
   return null
 }
 
+function isSchoolHost(hostname: string): boolean {
+  // Known main domains — NOT a school
+  const mainDomains = ['localhost', 'sqoolify.com', 'www.sqoolify.com']
+  if (mainDomains.includes(hostname)) return false
+  // Has a subdomain on sqoolify.com or localhost → school
+  if (extractSlugFromHost(hostname)) return true
+  // Any other domain → could be a custom domain
+  if (hostname.includes('.')) return true
+  return false
+}
+
 export async function data(pageContext: PageContextServer): Promise<Data> {
   const headers = (pageContext as any).headers as Record<string, string> | undefined
   if (!headers?.host) {
@@ -27,11 +38,11 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
   }
 
   const hostname = headers.host.split(':')[0]
-  const slug = extractSlugFromHost(hostname)
-  if (!slug) {
+  if (!isSchoolHost(hostname)) {
     return { school: null, slug: null, homePage: null, navPages: [] }
   }
 
+  const slug = extractSlugFromHost(hostname)
   const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1'
 
   try {
@@ -43,7 +54,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
 
     return {
       school: school || null,
-      slug,
+      slug: slug || school?.slug || null,
       homePage: homePage || null,
       navPages: navPages || [],
     }

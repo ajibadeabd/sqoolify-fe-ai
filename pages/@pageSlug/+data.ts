@@ -19,14 +19,22 @@ function extractSlugFromHost(hostname: string): string | null {
   return null
 }
 
+function isSchoolHost(hostname: string): boolean {
+  const mainDomains = ['localhost', 'sqoolify.com', 'www.sqoolify.com']
+  if (mainDomains.includes(hostname)) return false
+  if (extractSlugFromHost(hostname)) return true
+  if (hostname.includes('.')) return true
+  return false
+}
+
 export async function data(pageContext: PageContextServer): Promise<Data> {
   const headers = (pageContext as any).headers as Record<string, string> | undefined
   if (!headers?.host) return { school: null, slug: null, homePage: null, sitePage: null, navPages: [] }
 
   const hostname = headers.host.split(':')[0]
-  const slug = extractSlugFromHost(hostname)
-  if (!slug) return { school: null, slug: null, homePage: null, sitePage: null, navPages: [] }
+  if (!isSchoolHost(hostname)) return { school: null, slug: null, homePage: null, sitePage: null, navPages: [] }
 
+  const slug = extractSlugFromHost(hostname)
   const pageSlug = (pageContext.routeParams as any)?.pageSlug
   if (!pageSlug) return { school: null, slug, homePage: null, sitePage: null, navPages: [] }
 
@@ -41,7 +49,7 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
 
     return {
       school: school || null,
-      slug,
+      slug: slug || school?.slug || null,
       homePage: null,
       sitePage: sitePage || null,
       navPages: navPages || [],

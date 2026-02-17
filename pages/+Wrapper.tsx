@@ -5,6 +5,14 @@ import { SchoolProvider } from '../lib/school-context';
 import { useAuthStore } from '../lib/stores/auth-store';
 import type { Data } from './+data';
 
+function isSchoolHost(): boolean {
+  if (typeof window === 'undefined') return false
+  const hostname = window.location.hostname
+  const mainDomains = ['localhost', 'sqoolify.com', 'www.sqoolify.com']
+  if (mainDomains.includes(hostname)) return false
+  return hostname.includes('.')
+}
+
 export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
 
@@ -12,7 +20,7 @@ export default function Wrapper({ children }: { children: ReactNode }) {
     useAuthStore.getState()._hydrate()
   }, [])
 
-  if (slug && !school) {
+  if ((slug || isSchoolHost()) && !school) {
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex flex-col">
         {/* Header */}
@@ -45,7 +53,7 @@ export default function Wrapper({ children }: { children: ReactNode }) {
               We couldn't find a school registered at
             </p>
             <p className="inline-block bg-gray-100 text-gray-700 font-mono text-sm px-4 py-2 rounded-lg mb-8">
-              {slug}.sqoolify.com
+              {slug ? `${slug}.sqoolify.com` : (typeof window !== 'undefined' ? window.location.hostname : '')}
             </p>
 
             <div className="space-y-3">

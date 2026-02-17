@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { JSX, useState } from 'react'
 import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'

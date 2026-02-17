@@ -32,6 +32,10 @@ export default function SettingsPage() {
     noticeTypes: [] as string[],
   });
 
+  const [customDomains, setCustomDomains] = useState<{ domain: string; verified: boolean }[]>([]);
+  const [newDomain, setNewDomain] = useState('');
+  const [savingDomains, setSavingDomains] = useState(false);
+
   // Temp state for adding new items
   const [newLevel, setNewLevel] = useState({ name: '', shortCode: '' });
   const [newPreset, setNewPreset] = useState('');
@@ -50,7 +54,9 @@ export default function SettingsPage() {
     try {
       const [configRes, schoolRes] = await Promise.all([
         configService.get().catch(() => ({ data: null })),
-        user?.currentSchool ? schoolService.getById(user.currentSchool).catch(() => ({ data: null })) : Promise.resolve({ data: null }),
+        (user?.currentSchool || user?.school)
+          ? schoolService.getById((user.currentSchool || user.school)!).catch(() => ({ data: null }))
+          : Promise.resolve({ data: null }),
       ]);
       if (configRes.data) {
         if (configRes.data.settings) {
@@ -76,13 +82,19 @@ export default function SettingsPage() {
           });
         }
       }
+      console.log('[settings] schoolRes:', schoolRes);
+      console.log('[settings] school data:', schoolRes.data);
+      console.log('[settings] currentSchool:', user?.currentSchool);
       setSchool(schoolRes.data);
+      if (schoolRes.data?.customDomains) {
+        setCustomDomains(schoolRes.data.customDomains);
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to load settings');
     } finally {
       setLoading(false);
     }
-  }, [user?.currentSchool]);
+  }, [user?.currentSchool, user?.school]);
 
   useEffect(() => {
     fetchData();
@@ -176,6 +188,45 @@ export default function SettingsPage() {
     });
   };
 
+  const addDomain = async () => {
+    const domain = newDomain.trim().toLowerCase();
+    if (!domain) return;
+    if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$/.test(domain)) {
+      toast.error('Enter a valid domain (e.g. myschool.com)');
+      return;
+    }
+    if (customDomains.some((d) => d.domain === domain)) {
+      toast.error('This domain is already added');
+      return;
+    }
+    const updated = [...customDomains, { domain, verified: false }];
+    setSavingDomains(true);
+    try {
+      await schoolService.update(school!._id, { customDomains: updated } as any);
+      setCustomDomains(updated);
+      setNewDomain('');
+      toast.success('Domain added');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to add domain');
+    } finally {
+      setSavingDomains(false);
+    }
+  };
+
+  const removeDomain = async (index: number) => {
+    const updated = customDomains.filter((_, i) => i !== index);
+    setSavingDomains(true);
+    try {
+      await schoolService.update(school!._id, { customDomains: updated } as any);
+      setCustomDomains(updated);
+      toast.success('Domain removed');
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to remove domain');
+    } finally {
+      setSavingDomains(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -217,6 +268,81 @@ export default function SettingsPage() {
                 <p className="font-medium">{school.schoolInformation.phone}</p>
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Custom Domains */}
+      {school && (
+        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+          <div className="mb-4">
+            <h2 className="text-lg font-semibold">Custom Domains</h2>
+            <p className="text-sm text-gray-500">
+              Connect your own domain to your school's public site. Point your domain's CNAME record to <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">cname.sqoolify.com</code>
+            </p>
+          </div>
+
+          {customDomains.length > 0 ? (
+            <div className="space-y-3 mb-4">
+              {customDomains.map((d, index) => (
+                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm">{d.domain}</span>
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                      d.verified
+                        ? 'bg-green-50 text-green-700'
+                        : 'bg-yellow-50 text-yellow-700'
+                    }`}>
+                      {d.verified ? (
+                        <>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                          Verified
+                        </>
+                      ) : (
+                        <>
+                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" /></svg>
+                          Pending DNS
+                        </>
+                      )}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeDomain(index)}
+                    disabled={savingDomains}
+                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                    title="Remove domain"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 mb-4">
+              <p className="text-sm text-gray-500">No custom domains configured</p>
+            </div>
+          )}
+
+          <div className="flex gap-3">
+            <input
+              type="text"
+              value={newDomain}
+              onChange={(e) => setNewDomain(e.target.value)}
+              placeholder="e.g. myschool.com"
+              className="flex-1 max-w-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDomain())}
+            />
+            <button
+              type="button"
+              onClick={addDomain}
+              disabled={savingDomains}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+            >
+              {savingDomains ? 'Adding...' : 'Add Domain'}
+            </button>
           </div>
         </div>
       )}

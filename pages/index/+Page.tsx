@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'
@@ -115,24 +115,14 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { school } = useSchool()
-  const { homePage } = useData<Data>() || {}
+  const { homePage, navPages } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
-
-  useEffect(() => {
-    if (school && homePage) {
-      document.title = homePage.description
-        ? `${homePage.title} | ${school.name} — ${homePage.description}`
-        : `${homePage.title} | ${school.name}`
-    } else if (school) {
-      document.title = `Welcome | ${school.name}`
-    }
-  }, [school, homePage])
 
   // Subdomain with custom home page → render school site
   if (school && homePage) {
     const visibleSections = homePage.sections.filter((s) => s.isVisible !== false)
     return (
-      <PublicSiteLayout school={school as PublicSchool}>
+      <PublicSiteLayout school={school as PublicSchool} navPages={navPages}>
         <div className="min-h-screen">
           {visibleSections.length > 0 ? (
             visibleSections.map((section, i) => (
@@ -155,7 +145,7 @@ export default function HomePage() {
   // Subdomain but no custom home page → show simple school welcome
   if (school) {
     return (
-      <PublicSiteLayout school={school as PublicSchool}>
+      <PublicSiteLayout school={school as PublicSchool} navPages={navPages}>
         <section className="px-6 py-24 text-center" style={{ background: `linear-gradient(135deg, ${school.siteConfig?.primaryColor || '#3B82F6'} 0%, #1E40AF 100%)` }}>
           <div className="max-w-3xl mx-auto text-white">
             {school.logo && (

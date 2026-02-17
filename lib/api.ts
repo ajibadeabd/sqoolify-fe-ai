@@ -1,3 +1,5 @@
+import { useAuthStore } from './stores/auth-store'
+
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4000/api/v1'
 
 interface ApiOptions {
@@ -26,19 +28,11 @@ async function refreshAccessToken(): Promise<string | null> {
     if (!res.ok) return null
 
     const data = await res.json()
-    localStorage.setItem('sqoolify_token', data.data.accessToken)
-    localStorage.setItem('sqoolify_refresh_token', data.data.refreshToken)
+    useAuthStore.getState().setTokens(data.data.accessToken, data.data.refreshToken)
     return data.data.accessToken
   } catch {
     return null
   }
-}
-
-async function getValidToken(): Promise<string | null> {
-  if (isRefreshing && refreshPromise) {
-    return refreshPromise
-  }
-  return localStorage.getItem('sqoolify_token')
 }
 
 async function request<T>(
@@ -53,7 +47,7 @@ async function request<T>(
   }
 
   // Auto-attach token unless skipAuth is true
-  const token = options.token || (!options.skipAuth ? localStorage.getItem('sqoolify_token') : null)
+  const token = options.token || (!options.skipAuth ? useAuthStore.getState().token || localStorage.getItem('sqoolify_token') : null)
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
@@ -92,9 +86,7 @@ async function request<T>(
       return retryRes.json()
     } else {
       // Refresh failed - clear auth and redirect to login
-      localStorage.removeItem('sqoolify_token')
-      localStorage.removeItem('sqoolify_refresh_token')
-      localStorage.removeItem('sqoolify_user')
+      useAuthStore.getState().clearAuth()
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }

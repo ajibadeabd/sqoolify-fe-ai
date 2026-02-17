@@ -1,6 +1,5 @@
 import { useState, useEffect, type ReactNode, JSX } from 'react';
 import type { PublicSchool, SitePage } from '../../lib/types';
-import { publicSitePageService } from '../../lib/api-services';
 
 const socialIcons: Record<string, JSX.Element> = {
   facebook: (
@@ -33,20 +32,15 @@ const socialIcons: Record<string, JSX.Element> = {
 export default function PublicSiteLayout({
   children,
   school,
+  navPages = [],
 }: {
   children: ReactNode;
   school: PublicSchool;
+  navPages?: SitePage[];
 }) {
-  const [navPages, setNavPages] = useState<SitePage[]>([]);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const primaryColor = school.siteConfig?.primaryColor || '#3B82F6';
-
-  useEffect(() => {
-    publicSitePageService.getPublishedPages(school._id)
-      .then((res) => setNavPages(res.data || []))
-      .catch(() => {});
-  }, [school._id]);
 
   useEffect(() => {
     const handleScroll = () => setScrolled(window.scrollY > 10);

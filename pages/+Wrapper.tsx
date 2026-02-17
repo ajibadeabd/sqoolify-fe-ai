@@ -1,11 +1,16 @@
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { useData } from 'vike-react/useData';
-import { AuthProvider } from '../lib/auth-context';
 import { SchoolProvider } from '../lib/school-context';
+import { useAuthStore } from '../lib/stores/auth-store';
 import type { Data } from './+data';
 
 export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
+
+  useEffect(() => {
+    useAuthStore.getState()._hydrate()
+  }, [])
 
   if (slug && !school) {
     return (
@@ -74,7 +79,7 @@ export default function Wrapper({ children }: { children: ReactNode }) {
 
   return (
     <SchoolProvider school={school ?? null} slug={slug ?? null}>
-      <AuthProvider>{children}</AuthProvider>
+      {children}
     </SchoolProvider>
-  );
+  )
 }

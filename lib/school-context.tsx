@@ -1,44 +1,37 @@
-import { createContext, useContext, ReactNode } from 'react';
-import type { SiteConfig } from './types';
+import { createContext, useContext, useEffect, ReactNode } from 'react'
+import { useSchoolStore } from './stores/school-store'
+import type { PublicSchool } from './types'
 
-export interface SchoolInfo {
-  _id: string;
-  name: string;
-  slug: string;
-  logo?: string;
-  motto?: string;
-  phone?: string;
-  email?: string;
-  address?: string;
-  description?: string;
-  siteConfig?: SiteConfig;
-}
+export type SchoolInfo = PublicSchool
 
 interface SchoolContextType {
-  school: SchoolInfo | null;
-  slug: string | null;
+  school: SchoolInfo | null
+  slug: string | null
 }
 
 const SchoolContext = createContext<SchoolContextType>({
   school: null,
   slug: null,
-});
+})
 
 interface SchoolProviderProps {
-  children: ReactNode;
-  school?: SchoolInfo | null;
-  slug?: string | null;
+  children: ReactNode
+  school?: SchoolInfo | null
+  slug?: string | null
 }
 
 export function SchoolProvider({ children, school = null, slug = null }: SchoolProviderProps) {
+  useEffect(() => {
+    useSchoolStore.getState().setSchool(school, slug)
+  }, [school?._id, slug])
+
   return (
     <SchoolContext.Provider value={{ school, slug }}>
       {children}
     </SchoolContext.Provider>
-  );
+  )
 }
 
 export function useSchool(): SchoolContextType {
-  return useContext(SchoolContext);
+  return useContext(SchoolContext)
 }
-// d3d345a82d354b61.vercel-dns-017.com.

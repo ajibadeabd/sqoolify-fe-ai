@@ -13,6 +13,7 @@ import {
   Question, CreateQuestionData, StudentAnswer, ExamAttempt, ExamAttachment,
   PeriodConfig, TimetableEntry, CreateTimetableEntryData, BulkTimetableData, CreatePeriodConfigData,
   SitePage, SiteConfig,
+  AuthResponse, LoginCredentials, RegisterData,
 } from './types';
 
 // Helper to get auth options
@@ -34,6 +35,18 @@ const buildQuery = (params: Record<string, any>) => {
 
 // ============ AUTH ============
 export const authService = {
+  login: (credentials: LoginCredentials) =>
+    api.post<AuthResponse>('/auth/login', credentials),
+
+  register: (data: RegisterData) =>
+    api.post<AuthResponse>('/auth/register', data),
+
+  selectSchool: (userId: string, schoolId: string, refreshToken: string) =>
+    api.post<AuthResponse>('/auth/select-school', { userId, schoolId, refreshToken }),
+
+  refresh: (userId: string, refreshToken: string) =>
+    api.post<{ data: { accessToken: string; refreshToken: string } }>('/auth/refresh', { userId, refreshToken }),
+
   sendOtp: (phone: string) =>
     api.post<ApiResponse<{ message: string }>>('/auth/send-otp', { phone }),
 
@@ -712,18 +725,6 @@ export const sitePageService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/site-pages/${id}`, authOptions()),
-};
-
-// ============ PUBLIC SITE PAGES ============
-export const publicSitePageService = {
-  getPublishedPages: (schoolId: string) =>
-    api.get<ApiResponse<SitePage[]>>(`/public/site-pages/school/${schoolId}`),
-
-  getPageBySlug: (schoolId: string, slug: string) =>
-    api.get<ApiResponse<SitePage>>(`/public/site-pages/school/${schoolId}/slug/${slug}`),
-
-  getHomePage: (schoolId: string) =>
-    api.get<ApiResponse<SitePage | null>>(`/public/site-pages/school/${schoolId}/home`),
 };
 
 // ============ SITE CONFIG ============

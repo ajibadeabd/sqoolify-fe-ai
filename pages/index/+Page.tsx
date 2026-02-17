@@ -188,7 +188,6 @@ export default function HomePage() {
             <a href="#faq" className="text-sm text-gray-600 hover:text-gray-900 transition">FAQ</a>
           </div>
           <div className="hidden md:flex items-center gap-4">
-            <a href="/login" className="text-sm text-gray-600 hover:text-gray-900 transition">Sign In</a>
             <a href="/register" className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
               Get Started Free
             </a>
@@ -212,7 +211,7 @@ export default function HomePage() {
             <a href="#how-it-works" className="block text-gray-600 hover:text-gray-900">How It Works</a>
             <a href="#faq" className="block text-gray-600 hover:text-gray-900">FAQ</a>
             <div className="pt-3 border-t flex gap-3">
-              <a href="/login" className="text-gray-600 hover:text-gray-900">Sign In</a>
+
               <a href="/register" className="bg-blue-600 text-white px-5 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition">
                 Get Started Free
               </a>

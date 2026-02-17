@@ -42,15 +42,6 @@ export default function PublicSiteLayout({
   const [scrolled, setScrolled] = useState(false);
   const primaryColor = school.siteConfig?.primaryColor || '#3B82F6';
 
-  // Check if we're on a school subdomain (not main host)
-  const isSchoolSubdomain = typeof window !== 'undefined' && (() => {
-    const hostname = window.location.hostname;
-    return hostname !== 'localhost' &&
-      hostname !== 'sqoolify.com' &&
-      hostname !== 'www.sqoolify.com' &&
-      !hostname.match(/^(192\.168|10\.|172\.(1[6-9]|2\d|3[01]))/);
-  })();
-
   useEffect(() => {
     publicSitePageService.getPublishedPages(school._id)
       .then((res) => setNavPages(res.data || []))
@@ -104,6 +95,13 @@ export default function PublicSiteLayout({
                     {page.title}
                   </a>
                 ))}
+              <a
+                href="/login"
+                className="ml-3 px-6 py-2.5 text-white rounded-full text-sm font-medium hover:opacity-90 hover:shadow-lg transition-all duration-300"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Login
+              </a>
             </nav>
 
             <button
@@ -135,6 +133,13 @@ export default function PublicSiteLayout({
                     {page.title}
                   </a>
                 ))}
+              <a
+                href="/login"
+                className="block mx-4 mt-3 px-5 py-2.5 text-white rounded-full text-sm font-medium text-center"
+                style={{ backgroundColor: primaryColor }}
+              >
+                Login
+              </a>
             </div>
           )}
         </div>

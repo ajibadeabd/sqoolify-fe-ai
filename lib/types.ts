@@ -82,6 +82,127 @@ export interface ChangePasswordData {
   newPassword: string;
 }
 
+// Site Builder
+export enum SectionType {
+  HERO = 'hero',
+  TEXT = 'text',
+  FEATURES = 'features',
+  GALLERY = 'gallery',
+  CONTACT = 'contact',
+  CTA = 'cta',
+}
+
+export interface HeroSectionContent {
+  title: string;
+  subtitle?: string;
+  backgroundImage?: string;
+  ctaText?: string;
+  ctaLink?: string;
+}
+
+export interface TextSectionContent {
+  title?: string;
+  content: string;
+  alignment?: 'left' | 'center' | 'right';
+}
+
+export interface FeatureItem {
+  icon?: string;
+  title: string;
+  description: string;
+}
+
+export interface FeaturesSectionContent {
+  title?: string;
+  subtitle?: string;
+  features: FeatureItem[];
+  columns?: number;
+}
+
+export interface GalleryImage {
+  url: string;
+  caption?: string;
+}
+
+export interface GallerySectionContent {
+  title?: string;
+  images: GalleryImage[];
+}
+
+export interface ContactSectionContent {
+  title?: string;
+  contactInfo?: {
+    address?: string;
+    phone?: string;
+    email?: string;
+  };
+}
+
+export interface CTASectionContent {
+  title: string;
+  description?: string;
+  primaryButtonText?: string;
+  primaryButtonLink?: string;
+  secondaryButtonText?: string;
+  secondaryButtonLink?: string;
+  backgroundColor?: string;
+}
+
+export type SectionContent =
+  | HeroSectionContent
+  | TextSectionContent
+  | FeaturesSectionContent
+  | GallerySectionContent
+  | ContactSectionContent
+  | CTASectionContent;
+
+export interface PageSection {
+  type: SectionType;
+  content: SectionContent;
+  isVisible?: boolean;
+}
+
+export interface SitePage {
+  _id: string;
+  title: string;
+  slug: string;
+  description?: string;
+  sections: PageSection[];
+  isPublished: boolean;
+  isHomePage: boolean;
+  order: number;
+  school: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface SocialLinks {
+  facebook?: string;
+  twitter?: string;
+  instagram?: string;
+  linkedin?: string;
+  youtube?: string;
+}
+
+export interface SiteConfig {
+  primaryColor?: string;
+  footerText?: string;
+  socialLinks?: SocialLinks;
+}
+
+export interface PublicSchool {
+  _id: string;
+  name: string;
+  slug: string;
+  logo?: string;
+  motto?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  description?: string;
+  siteConfig?: SiteConfig;
+}
+
 // School
 export interface School {
   _id: string;
@@ -96,6 +217,7 @@ export interface School {
   ownerInformation?: OwnerInformation;
   schoolUsers?: string[];
   isActive: boolean;
+  siteConfig?: SiteConfig;
   createdAt?: string;
   updatedAt?: string;
 }

@@ -91,6 +91,7 @@ const navSections: NavSection[] = [
     items: [
       { label: 'Subscriptions', href: '/subscriptions', icon: 'star', permissions: ['read_subscriptions'] },
       { label: 'Audit Logs', href: '/audit-logs', icon: 'shield', permissions: ['view_audit_logs'] },
+      { label: 'Site Builder', href: '/site-builder', icon: 'globe', permissions: ['write_school_settings'] },
       { label: 'Settings', href: '/settings', icon: 'settings', permissions: ['read_school_settings'] },
     ],
   },
@@ -116,6 +117,7 @@ const iconMap: Record<string, string> = {
   bell: 'M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0',
   star: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
   shield: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z',
+  globe: 'M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zM2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z',
   'message-circle': 'M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z',
 };
 

@@ -1,5 +1,10 @@
 import { useState } from 'react'
+import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
+import type { Data } from '../+data'
+import type { PublicSchool } from '../../lib/types'
+import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
+import SectionRenderer from '../../components/public-site/SectionRenderer'
 
 const features = [
   {
@@ -110,8 +115,66 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { school } = useSchool()
+  const { homePage } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
 
+  // Subdomain with custom home page → render school site
+  if (school && homePage) {
+    const visibleSections = homePage.sections.filter((s) => s.isVisible !== false)
+    return (
+      <PublicSiteLayout school={school as PublicSchool}>
+        <div className="min-h-screen">
+          {visibleSections.length > 0 ? (
+            visibleSections.map((section, i) => (
+              <SectionRenderer key={i} section={section} school={school as PublicSchool} />
+            ))
+          ) : (
+            <div className="py-24 text-center">
+              <h1 className="text-3xl font-bold text-gray-900">{homePage.title}</h1>
+              {homePage.description && (
+                <p className="mt-3 text-lg text-gray-500 max-w-2xl mx-auto">{homePage.description}</p>
+              )}
+              <p className="mt-6 text-sm text-gray-400">This page is being built. Check back soon.</p>
+            </div>
+          )}
+        </div>
+      </PublicSiteLayout>
+    )
+  }
+
+  // Subdomain but no custom home page → show simple school welcome
+  if (school) {
+    return (
+      <PublicSiteLayout school={school as PublicSchool}>
+        <section className="px-6 py-24 text-center" style={{ background: `linear-gradient(135deg, ${school.siteConfig?.primaryColor || '#3B82F6'} 0%, #1E40AF 100%)` }}>
+          <div className="max-w-3xl mx-auto text-white">
+            {school.logo && (
+              <img src={school.logo} alt={school.name} className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
+            )}
+            <h1 className="text-4xl sm:text-5xl font-bold mb-4">Welcome to {school.name}</h1>
+            {school.motto && <p className="text-xl text-white/80 mb-8">{school.motto}</p>}
+            <a
+              href="/login"
+              className="inline-block bg-white px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-gray-100 transition shadow-lg"
+              style={{ color: school.siteConfig?.primaryColor || '#3B82F6' }}
+            >
+              Sign In
+            </a>
+          </div>
+        </section>
+        {school.description && (
+          <section className="px-6 py-16 bg-white">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-2xl font-bold text-gray-900 mb-4">About Us</h2>
+              <p className="text-gray-600 text-lg leading-relaxed">{school.description}</p>
+            </div>
+          </section>
+        )}
+      </PublicSiteLayout>
+    )
+  }
+
+  // Root domain → marketing page
   return (
     <div className="flex flex-col min-h-screen">
       {/* Navbar */}

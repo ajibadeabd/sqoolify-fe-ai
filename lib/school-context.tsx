@@ -1,9 +1,17 @@
 import { createContext, useContext, ReactNode } from 'react';
+import type { SiteConfig } from './types';
 
 export interface SchoolInfo {
   _id: string;
   name: string;
   slug: string;
+  logo?: string;
+  motto?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  description?: string;
+  siteConfig?: SiteConfig;
 }
 
 interface SchoolContextType {
@@ -33,3 +41,4 @@ export function SchoolProvider({ children, school = null, slug = null }: SchoolP
 export function useSchool(): SchoolContextType {
   return useContext(SchoolContext);
 }
+// d3d345a82d354b61.vercel-dns-017.com.

@@ -1,8 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../../lib/auth-context'
 import { buildSchoolUrl } from '../../../lib/subdomain'
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -19,6 +21,8 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle')
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const { register } = useAuth()
 
   // Auto-generate slug from school name (unless user manually edited it)
@@ -34,6 +38,26 @@ export default function RegisterPage() {
       setFormData(prev => ({ ...prev, slug: autoSlug }))
     }
   }, [formData.schoolName, slugTouched])
+
+  // Debounced slug availability check
+  useEffect(() => {
+    if (!formData.slug || formData.slug.length < 2) {
+      setSlugStatus('idle')
+      return
+    }
+    setSlugStatus('checking')
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current)
+    slugTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/check-slug/${formData.slug}`)
+        const json = await res.json()
+        setSlugStatus(json.data?.available ? 'available' : 'taken')
+      } catch {
+        setSlugStatus('idle')
+      }
+    }, 500)
+    return () => { if (slugTimerRef.current) clearTimeout(slugTimerRef.current) }
+  }, [formData.slug])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -58,6 +82,11 @@ export default function RegisterPage() {
 
     if (formData.password.length < 6) {
       toast.error('Password must be at least 6 characters')
+      return
+    }
+
+    if (slugStatus === 'taken') {
+      toast.error('This school URL is already taken. Please choose a different one.')
       return
     }
 
@@ -253,9 +282,36 @@ export default function RegisterPage() {
                   </span>
                 </div>
                 {formData.slug && (
-                  <p className="text-xs text-gray-400 mt-1">
-                    Your school will be at <span className="font-medium text-blue-600">{formData.slug}.sqoolify.com</span>
-                  </p>
+                  <div className="flex items-center gap-2 mt-1.5">
+                    <p className="text-xs text-gray-400">
+                      Your school will be at <span className="font-medium text-blue-600">{formData.slug}.sqoolify.com</span>
+                    </p>
+                    {slugStatus === 'checking' && (
+                      <span className="text-xs text-gray-400 flex items-center gap-1">
+                        <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                        </svg>
+                        Checking...
+                      </span>
+                    )}
+                    {slugStatus === 'available' && (
+                      <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Available
+                      </span>
+                    )}
+                    {slugStatus === 'taken' && (
+                      <span className="text-xs text-red-600 font-medium flex items-center gap-1">
+                        <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                        Taken
+                      </span>
+                    )}
+                  </div>
                 )}
               </div>
             </div>

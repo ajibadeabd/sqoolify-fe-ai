@@ -15,25 +15,23 @@ function extractSlugFromHost(hostname: string): string | null {
 }
 
 const guard: GuardAsync = async (pageContext): Promise<void> => {
-  // Server-side: block root domain
+  // Server-side
   const headers = (pageContext as any).headers as Record<string, string> | null
   if (headers) {
     const host = headers['host'] ?? ''
     const hostname = host.split(':')[0]
-    if (!extractSlugFromHost(hostname)) {
+    const slug = extractSlugFromHost(hostname)
+    if (!slug) {
       throw redirect('/')
     }
     return
   }
 
-  // Client-side: block root domain + require token
+  // Client-side
   if (typeof window !== 'undefined') {
-    if (!extractSlugFromHost(window.location.hostname)) {
+    const slug = extractSlugFromHost(window.location.hostname)
+    if (!slug) {
       throw redirect('/')
-    }
-    const token = localStorage.getItem('sqoolify_token')
-    if (!token) {
-      throw redirect('/login')
     }
   }
 }

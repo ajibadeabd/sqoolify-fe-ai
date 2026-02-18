@@ -3,15 +3,8 @@ import type { ReactNode } from 'react';
 import { useData } from 'vike-react/useData';
 import { SchoolProvider } from '../lib/school-context';
 import { useAuthStore } from '../lib/stores/auth-store';
+import { isSchoolHost } from '../lib/host-utils';
 import type { Data } from './+data';
-
-function isSchoolHost(): boolean {
-  if (typeof window === 'undefined') return false
-  const hostname = window.location.hostname
-  const mainDomains = ['localhost', 'sqoolify.com', 'www.sqoolify.com']
-  if (mainDomains.includes(hostname)) return false
-  return hostname.includes('.')
-}
 
 export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
@@ -20,7 +13,7 @@ export default function Wrapper({ children }: { children: ReactNode }) {
     useAuthStore.getState()._hydrate()
   }, [])
 
-  if ((slug || isSchoolHost()) && !school) {
+  if ((slug || (typeof window !== 'undefined' && isSchoolHost(window.location.hostname))) && !school) {
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex flex-col">
         {/* Header */}

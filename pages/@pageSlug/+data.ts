@@ -1,5 +1,6 @@
 import type { PageContextServer } from 'vike/types'
 import type { PublicSchool, SitePage } from '../../lib/types'
+import { extractSlugFromHost, isSchoolHost } from '../../lib/host-utils'
 
 export type Data = {
   school: PublicSchool | null
@@ -7,24 +8,6 @@ export type Data = {
   homePage: null
   sitePage: SitePage | null
   navPages: SitePage[]
-}
-
-function extractSlugFromHost(hostname: string): string | null {
-  const parts = hostname.split('.')
-  if (parts.length === 2 && parts[1] === 'localhost') return parts[0]
-  if (parts.length >= 3) {
-    const slug = parts[0]
-    if (slug !== 'www' && slug !== 'api') return slug
-  }
-  return null
-}
-
-function isSchoolHost(hostname: string): boolean {
-  const mainDomains = ['localhost', 'sqoolify.com', 'www.sqoolify.com']
-  if (mainDomains.includes(hostname)) return false
-  if (extractSlugFromHost(hostname)) return true
-  if (hostname.includes('.')) return true
-  return false
 }
 
 export async function data(pageContext: PageContextServer): Promise<Data> {

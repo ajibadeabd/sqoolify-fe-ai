@@ -12,6 +12,10 @@ import FeaturesEditor from '../../../../components/site-builder/sections/Feature
 import GalleryEditor from '../../../../components/site-builder/sections/GalleryEditor'
 import ContactEditor from '../../../../components/site-builder/sections/ContactEditor'
 import CTAEditor from '../../../../components/site-builder/sections/CTAEditor'
+import TestimonialsEditor from '../../../../components/site-builder/sections/TestimonialsEditor'
+import StatsEditor from '../../../../components/site-builder/sections/StatsEditor'
+import TeamEditor from '../../../../components/site-builder/sections/TeamEditor'
+import FAQEditor from '../../../../components/site-builder/sections/FAQEditor'
 
 const SECTION_META: Record<SectionType, { label: string; icon: string; color: string; description: string }> = {
   hero: { label: 'Hero Banner', icon: '🖼', color: 'bg-purple-50 text-purple-600 border-purple-200', description: 'Full-width banner with title, subtitle and CTA' },
@@ -20,6 +24,10 @@ const SECTION_META: Record<SectionType, { label: string; icon: string; color: st
   gallery: { label: 'Image Gallery', icon: '📸', color: 'bg-green-50 text-green-600 border-green-200', description: 'Photo gallery with captions' },
   contact: { label: 'Contact Info', icon: '📞', color: 'bg-rose-50 text-rose-600 border-rose-200', description: 'Address, phone and email details' },
   cta: { label: 'Call to Action', icon: '🚀', color: 'bg-indigo-50 text-indigo-600 border-indigo-200', description: 'Colored banner with action buttons' },
+  testimonials: { label: 'Testimonials', icon: '💬', color: 'bg-pink-50 text-pink-600 border-pink-200', description: 'Quotes from parents, students or alumni' },
+  stats: { label: 'Stats / Numbers', icon: '📊', color: 'bg-teal-50 text-teal-600 border-teal-200', description: 'Key numbers and achievements' },
+  team: { label: 'Team / Staff', icon: '👥', color: 'bg-cyan-50 text-cyan-600 border-cyan-200', description: 'Meet the team with photos and bios' },
+  faq: { label: 'FAQ', icon: '❓', color: 'bg-orange-50 text-orange-600 border-orange-200', description: 'Frequently asked questions accordion' },
 }
 
 const DEFAULT_CONTENT: Record<SectionType, any> = {
@@ -29,6 +37,10 @@ const DEFAULT_CONTENT: Record<SectionType, any> = {
   gallery: { images: [] },
   contact: { contactInfo: {} },
   cta: { title: '' },
+  testimonials: { testimonials: [] },
+  stats: { stats: [] },
+  team: { members: [] },
+  faq: { faqs: [], categories: [] },
 }
 
 export default function SitePageEditorPage() {
@@ -199,6 +211,10 @@ export default function SitePageEditorPage() {
       case 'gallery': return <GalleryEditor {...props} />
       case 'contact': return <ContactEditor {...props} />
       case 'cta': return <CTAEditor {...props} />
+      case 'testimonials': return <TestimonialsEditor {...props} />
+      case 'stats': return <StatsEditor {...props} />
+      case 'team': return <TeamEditor {...props} />
+      case 'faq': return <FAQEditor {...props} />
       default: return <p className="text-sm text-gray-500">Unknown section type</p>
     }
   }
@@ -239,6 +255,20 @@ export default function SitePageEditorPage() {
             )}
           </div>
           <div className="flex gap-2">
+            {!isNew && isPublished && slug && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => window.open(`/${slug}`, '_blank')}
+              >
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                  Preview
+                </span>
+              </Button>
+            )}
             <Button variant="outline" size="sm" onClick={() => navigate('/site-builder')}>
               Cancel
             </Button>
@@ -332,8 +362,8 @@ export default function SitePageEditorPage() {
             Add Section
           </button>
           {showAddSection && (
-            <div className="absolute right-0 top-full mt-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-30 py-2 overflow-hidden">
-              <p className="px-4 py-1.5 text-xs font-medium text-gray-400 uppercase tracking-wider">Choose Section Type</p>
+            <div className="absolute right-0 bottom-full mb-2 w-72 bg-white rounded-xl border border-gray-200 shadow-xl z-30 py-2 overflow-y-auto max-h-[60vh]">
+              <p className="px-4 py-1.5 text-xs font-medium text-gray-400 uppercase tracking-wider sticky top-0 bg-white">Choose Section Type</p>
               {(Object.keys(SECTION_META) as SectionType[]).map((type) => {
                 const meta = SECTION_META[type]
                 return (

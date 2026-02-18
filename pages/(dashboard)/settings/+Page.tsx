@@ -35,6 +35,7 @@ export default function SettingsPage() {
   const [customDomains, setCustomDomains] = useState<{ domain: string; verified: boolean }[]>([]);
   const [newDomain, setNewDomain] = useState('');
   const [savingDomains, setSavingDomains] = useState(false);
+  const [activeTab, setActiveTab] = useState<'general' | 'domains'>('general');
 
   // Temp state for adding new items
   const [newLevel, setNewLevel] = useState({ name: '', shortCode: '' });
@@ -82,9 +83,6 @@ export default function SettingsPage() {
           });
         }
       }
-      console.log('[settings] schoolRes:', schoolRes);
-      console.log('[settings] school data:', schoolRes.data);
-      console.log('[settings] currentSchool:', user?.currentSchool);
       setSchool(schoolRes.data);
       if (schoolRes.data?.customDomains) {
         setCustomDomains(schoolRes.data.customDomains);
@@ -243,6 +241,31 @@ export default function SettingsPage() {
         <p className="text-sm text-gray-500 mt-1">Configure your school's preferences</p>
       </div>
 
+      {/* Tab Navigation */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setActiveTab('general')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === 'general'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          General
+        </button>
+        <button
+          onClick={() => setActiveTab('domains')}
+          className={`px-4 py-2 text-sm font-medium rounded-lg transition-colors ${
+            activeTab === 'domains'
+              ? 'bg-blue-600 text-white'
+              : 'text-gray-600 hover:bg-gray-100'
+          }`}
+        >
+          Domains
+        </button>
+      </div>
+
+      {activeTab === 'general' && (<>
       {/* School Info */}
       {school && (
         <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
@@ -268,81 +291,6 @@ export default function SettingsPage() {
                 <p className="font-medium">{school.schoolInformation.phone}</p>
               </div>
             )}
-          </div>
-        </div>
-      )}
-
-      {/* Custom Domains */}
-      {school && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
-          <div className="mb-4">
-            <h2 className="text-lg font-semibold">Custom Domains</h2>
-            <p className="text-sm text-gray-500">
-              Connect your own domain to your school's public site. Point your domain's CNAME record to <code className="bg-gray-100 px-1.5 py-0.5 rounded text-xs font-mono">cname.sqoolify.com</code>
-            </p>
-          </div>
-
-          {customDomains.length > 0 ? (
-            <div className="space-y-3 mb-4">
-              {customDomains.map((d, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-sm">{d.domain}</span>
-                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
-                      d.verified
-                        ? 'bg-green-50 text-green-700'
-                        : 'bg-yellow-50 text-yellow-700'
-                    }`}>
-                      {d.verified ? (
-                        <>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                          Verified
-                        </>
-                      ) : (
-                        <>
-                          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" /></svg>
-                          Pending DNS
-                        </>
-                      )}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeDomain(index)}
-                    disabled={savingDomains}
-                    className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
-                    title="Remove domain"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                    </svg>
-                  </button>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-6 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 mb-4">
-              <p className="text-sm text-gray-500">No custom domains configured</p>
-            </div>
-          )}
-
-          <div className="flex gap-3">
-            <input
-              type="text"
-              value={newDomain}
-              onChange={(e) => setNewDomain(e.target.value)}
-              placeholder="e.g. myschool.com"
-              className="flex-1 max-w-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
-              onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDomain())}
-            />
-            <button
-              type="button"
-              onClick={addDomain}
-              disabled={savingDomains}
-              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
-            >
-              {savingDomains ? 'Adding...' : 'Add Domain'}
-            </button>
           </div>
         </div>
       )}
@@ -791,6 +739,140 @@ export default function SettingsPage() {
           Save Settings
         </Button>
       </div>
+      </>)}
+
+      {activeTab === 'domains' && (
+        <div className="space-y-6">
+          {/* Domain Overview */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <div className="flex items-start justify-between mb-1">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Custom Domains</h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Connect your own domain so parents and students access your school site at your branded URL.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* DNS Setup Guide */}
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+            <h3 className="text-sm font-semibold text-blue-900 mb-3">How to set up your domain</h3>
+            <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
+              <li>Add your domain below (e.g. <code className="bg-blue-100 px-1 py-0.5 rounded text-xs font-mono">myschool.com</code>)</li>
+              <li>Go to your domain registrar (Namecheap, GoDaddy, Cloudflare, etc.)</li>
+              <li>Add a <strong>CNAME</strong> record pointing to <code className="bg-blue-100 px-1 py-0.5 rounded text-xs font-mono">cname.vercel-dns.com</code></li>
+              <li>Wait for DNS propagation (can take up to 48 hours)</li>
+            </ol>
+          </div>
+
+          {/* Domain List */}
+          <div className="bg-white rounded-xl border border-gray-200 p-6">
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Your Domains</h3>
+
+            {customDomains.length > 0 ? (
+              <div className="space-y-4 mb-6">
+                {customDomains.map((d, index) => (
+                  <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
+                    <div className="flex items-center justify-between p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center">
+                          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                          </svg>
+                        </div>
+                        <div>
+                          <p className="font-mono text-sm font-medium text-gray-900">{d.domain}</p>
+                          <span className={`inline-flex items-center gap-1 text-xs font-medium mt-0.5 ${
+                            d.verified ? 'text-green-600' : 'text-yellow-600'
+                          }`}>
+                            {d.verified ? (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                                Verified
+                              </>
+                            ) : (
+                              <>
+                                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01" /></svg>
+                                Pending DNS verification
+                              </>
+                            )}
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => removeDomain(index)}
+                        disabled={savingDomains}
+                        className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
+                        title="Remove domain"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      </button>
+                    </div>
+
+                    {/* DNS Record Instructions per domain */}
+                    {!d.verified && (
+                      <div className="border-t border-gray-100 bg-gray-50 px-4 py-3">
+                        <p className="text-xs font-medium text-gray-500 mb-2">Add this DNS record at your registrar:</p>
+                        <div className="overflow-x-auto">
+                          <table className="text-xs w-full">
+                            <thead>
+                              <tr className="text-left text-gray-500">
+                                <th className="pr-6 pb-1 font-medium">Type</th>
+                                <th className="pr-6 pb-1 font-medium">Host / Name</th>
+                                <th className="pb-1 font-medium">Value / Target</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="text-gray-900">
+                                <td className="pr-6 py-1 font-mono">CNAME</td>
+                                <td className="pr-6 py-1 font-mono">{d.domain.split('.')[0]}</td>
+                                <td className="py-1 font-mono">cname.vercel-dns.com</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">DNS changes can take up to 48 hours to propagate.</p>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-10 bg-gray-50 rounded-lg border-2 border-dashed border-gray-200 mb-6">
+                <svg className="mx-auto w-10 h-10 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                </svg>
+                <p className="text-sm font-medium text-gray-500">No custom domains connected</p>
+                <p className="text-xs text-gray-400 mt-1">Add a domain below to get started</p>
+              </div>
+            )}
+
+            {/* Add Domain Form */}
+            <div className="flex gap-3">
+              <input
+                type="text"
+                value={newDomain}
+                onChange={(e) => setNewDomain(e.target.value)}
+                placeholder="e.g. myschool.com"
+                className="flex-1 max-w-sm px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+                onKeyDown={(e) => e.key === 'Enter' && (e.preventDefault(), addDomain())}
+              />
+              <button
+                type="button"
+                onClick={addDomain}
+                disabled={savingDomains}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+              >
+                {savingDomains ? 'Adding...' : 'Add Domain'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -12,7 +12,7 @@ import {
   DashboardStats, UploadResponse,
   Question, CreateQuestionData, StudentAnswer, ExamAttempt, ExamAttachment,
   PeriodConfig, TimetableEntry, CreateTimetableEntryData, BulkTimetableData, CreatePeriodConfigData,
-  SitePage, SiteConfig,
+  SitePage, SiteConfig, PageTemplate,
   AuthResponse, LoginCredentials, RegisterData,
 } from './types';
 
@@ -725,6 +725,18 @@ export const sitePageService = {
 
   delete: (id: string) =>
     api.delete<ApiResponse<void>>(`/site-pages/${id}`, authOptions()),
+};
+
+// ============ PAGE TEMPLATES ============
+export const pageTemplateService = {
+  getAll: (category?: string) =>
+    api.get<ApiResponse<PageTemplate[]>>(`/page-templates${buildQuery({ category })}`, authOptions()),
+
+  getById: (id: string) =>
+    api.get<ApiResponse<PageTemplate>>(`/page-templates/${id}`, authOptions()),
+
+  import: (id: string) =>
+    api.post<ApiResponse<SitePage>>(`/page-templates/${id}/import`, {}, authOptions()),
 };
 
 // ============ SITE CONFIG ============

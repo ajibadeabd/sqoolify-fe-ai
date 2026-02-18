@@ -2,9 +2,16 @@ import { JSX, useState } from 'react'
 import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'
-import type { PublicSchool } from '../../lib/types'
+import type { PublicSchool, SitePage } from '../../lib/types'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
-import SectionRenderer from '../../components/public-site/SectionRenderer'
+import { getTemplateHome } from '../../components/public-site/templates'
+
+const STATIC_NAV_PAGES = [
+  { _id: 'about', title: 'About Us', slug: 'about', isHomePage: false },
+  { _id: 'admissions', title: 'Admissions', slug: 'admissions', isHomePage: false },
+  { _id: 'faq', title: 'FAQ', slug: 'faq', isHomePage: false },
+  { _id: 'contact', title: 'Contact', slug: 'contact', isHomePage: false },
+] as unknown as SitePage[]
 
 const features = [
   {
@@ -118,58 +125,12 @@ export default function HomePage() {
   const { homePage, navPages } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
 
-  // Subdomain with custom home page → render school site
-  if (school && homePage) {
-    const visibleSections = homePage.sections.filter((s) => s.isVisible !== false)
-    return (
-      <PublicSiteLayout school={school as PublicSchool} navPages={navPages}>
-        <div className="min-h-screen">
-          {visibleSections.length > 0 ? (
-            visibleSections.map((section, i) => (
-              <SectionRenderer key={i} section={section} school={school as PublicSchool} />
-            ))
-          ) : (
-            <div className="py-24 text-center">
-              <h1 className="text-3xl font-bold text-gray-900">{homePage.title}</h1>
-              {homePage.description && (
-                <p className="mt-3 text-lg text-gray-500 max-w-2xl mx-auto">{homePage.description}</p>
-              )}
-              <p className="mt-6 text-sm text-gray-400">This page is being built. Check back soon.</p>
-            </div>
-          )}
-        </div>
-      </PublicSiteLayout>
-    )
-  }
-
-  // Subdomain but no custom home page → show simple school welcome
+  // Subdomain → render static home page
   if (school) {
+    const SchoolHomePage = getTemplateHome(school as PublicSchool)
     return (
-      <PublicSiteLayout school={school as PublicSchool} navPages={navPages}>
-        <section className="px-6 py-24 text-center" style={{ background: `linear-gradient(135deg, ${school.siteConfig?.primaryColor || '#3B82F6'} 0%, #1E40AF 100%)` }}>
-          <div className="max-w-3xl mx-auto text-white">
-            {school.logo && (
-              <img src={school.logo} alt={school.name} className="w-20 h-20 rounded-2xl mx-auto mb-6 shadow-lg" />
-            )}
-            <h1 className="text-4xl sm:text-5xl font-bold mb-4">Welcome to {school.name}</h1>
-            {school.motto && <p className="text-xl text-white/80 mb-8">{school.motto}</p>}
-            <a
-              href="/login"
-              className="inline-block bg-white px-8 py-3.5 rounded-lg text-lg font-medium hover:bg-gray-100 transition shadow-lg"
-              style={{ color: school.siteConfig?.primaryColor || '#3B82F6' }}
-            >
-              Sign In
-            </a>
-          </div>
-        </section>
-        {school.description && (
-          <section className="px-6 py-16 bg-white">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-2xl font-bold text-gray-900 mb-4">About Us</h2>
-              <p className="text-gray-600 text-lg leading-relaxed">{school.description}</p>
-            </div>
-          </section>
-        )}
+      <PublicSiteLayout school={school as PublicSchool} navPages={STATIC_NAV_PAGES}>
+        <SchoolHomePage school={school as PublicSchool} />
       </PublicSiteLayout>
     )
   }

@@ -90,6 +90,10 @@ export enum SectionType {
   GALLERY = 'gallery',
   CONTACT = 'contact',
   CTA = 'cta',
+  TESTIMONIALS = 'testimonials',
+  STATS = 'stats',
+  TEAM = 'team',
+  FAQ = 'faq',
 }
 
 export interface HeroSectionContent {
@@ -148,13 +152,76 @@ export interface CTASectionContent {
   backgroundColor?: string;
 }
 
+export interface TestimonialItem {
+  name: string;
+  role?: string;
+  quote: string;
+  image?: string;
+}
+
+export interface TestimonialsSectionContent {
+  title?: string;
+  subtitle?: string;
+  testimonials: TestimonialItem[];
+}
+
+export interface StatItem {
+  value: string;
+  label: string;
+  icon?: string;
+}
+
+export interface StatsSectionContent {
+  title?: string;
+  subtitle?: string;
+  stats: StatItem[];
+  backgroundColor?: string;
+}
+
+export interface TeamMember {
+  name: string;
+  role: string;
+  image?: string;
+  bio?: string;
+}
+
+export interface TeamSectionContent {
+  title?: string;
+  subtitle?: string;
+  members: TeamMember[];
+}
+
+export interface FAQCategory {
+  name: string;
+  icon?: string;
+  color?: string;
+}
+
+export interface FAQItem {
+  question: string;
+  answer: string;
+  category?: string;
+}
+
+export interface FAQSectionContent {
+  title?: string;
+  subtitle?: string;
+  faqs: FAQItem[];
+  categories?: FAQCategory[];
+  backgroundImage?: string;
+}
+
 export type SectionContent =
   | HeroSectionContent
   | TextSectionContent
   | FeaturesSectionContent
   | GallerySectionContent
   | ContactSectionContent
-  | CTASectionContent;
+  | CTASectionContent
+  | TestimonialsSectionContent
+  | StatsSectionContent
+  | TeamSectionContent
+  | FAQSectionContent;
 
 export interface PageSection {
   type: SectionType;
@@ -184,10 +251,23 @@ export interface SocialLinks {
   youtube?: string;
 }
 
+export interface PageTemplate {
+  _id: string;
+  name: string;
+  description: string;
+  category: string;
+  sections: PageSection[];
+  tags: string[];
+  isActive: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SiteConfig {
   primaryColor?: string;
   footerText?: string;
   socialLinks?: SocialLinks;
+  template?: 'classic' | 'modern' | 'bold';
 }
 
 export interface PublicSchool {

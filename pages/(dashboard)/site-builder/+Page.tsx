@@ -21,18 +21,21 @@ export default function SiteBuilderPage() {
   const fetchData = useCallback(async () => {
     setLoading(true)
     try {
-      const [pagesRes, schoolRes] = await Promise.all([
+      const [pagesRes, schoolRes] = await Promise.allSettled([
         sitePageService.getAll(),
-        user?.currentSchool ? schoolService.getById(user.currentSchool) : Promise.resolve({ data: null }),
+        user?.school ? schoolService.getById(user.school) : Promise.resolve({ data: null }),
       ])
-      setPages(pagesRes.data || [])
-      setSchool(schoolRes.data)
+      if (pagesRes.status === 'fulfilled') setPages(pagesRes.value.data || [])
+      if (schoolRes.status === 'fulfilled') {
+        console.log('schoolRes', schoolRes.value, 'currentSchool:', user?.school)
+        setSchool(schoolRes.value.data)
+      }
     } catch (err: any) {
       toast.error(err.message || 'Failed to load site builder')
     } finally {
       setLoading(false)
     }
-  }, [user?.currentSchool])
+  }, [user?.school])
 
   useEffect(() => {
     fetchData()
@@ -77,13 +80,21 @@ export default function SiteBuilderPage() {
           <p className="text-sm text-gray-500 mt-1">Create and manage your school's public website</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" size="sm" onClick={() => setShowConfigModal(true)}>
+          <Button variant="outline" size="sm" onClick={() => {return  setShowConfigModal(true)}}>
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
               </svg>
               Settings
+            </span>
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate('/site-builder/templates')}>
+            <span className="flex items-center gap-1.5">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
+              </svg>
+              Templates
             </span>
           </Button>
           <Button size="sm" onClick={() => navigate('/site-builder/new')}>
@@ -223,6 +234,43 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
           <p className="text-sm text-gray-500 mt-1">Configure your public site's appearance and branding</p>
         </div>
         <div className="p-6 space-y-6">
+          {/* Template Selector */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-3">Website Template</label>
+            <div className="grid grid-cols-3 gap-3">
+              {([
+                { id: 'classic' as const, name: 'Classic', desc: 'Dark heroes, elegant cards', gradient: 'from-gray-900 via-gray-800 to-gray-700' },
+                { id: 'modern' as const, name: 'Modern', desc: 'Light & airy, soft gradients', gradient: 'from-blue-50 via-white to-purple-50' },
+                { id: 'bold' as const, name: 'Bold', desc: 'Full-bleed, editorial feel', gradient: 'from-black via-gray-900 to-black' },
+              ]).map((t) => {
+                const isActive = (config.template || 'classic') === t.id
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => setConfig({ ...config, template: t.id })}
+                    className={`relative rounded-xl border-2 p-3 text-left transition-all ${
+                      isActive
+                        ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/30'
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className={`h-16 rounded-lg bg-linear-to-br ${t.gradient} mb-2.5`} />
+                    <p className="text-sm font-semibold text-gray-900">{t.name}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
+                    {isActive && (
+                      <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                        <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Primary Color</label>
             <div className="flex items-center gap-3">

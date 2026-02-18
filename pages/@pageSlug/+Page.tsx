@@ -1,13 +1,24 @@
 import { useData } from 'vike-react/useData'
+import { usePageContext } from 'vike-react/usePageContext'
 import { useSchool } from '../../lib/school-context'
-import type { PublicSchool } from '../../lib/types'
+import type { PublicSchool, SitePage } from '../../lib/types'
 import type { Data } from './+data'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
 import SectionRenderer from '../../components/public-site/SectionRenderer'
+import { getTemplatePage, STATIC_SLUGS } from '../../components/public-site/templates'
+
+const STATIC_NAV_PAGES = [
+  { _id: 'about', title: 'About Us', slug: 'about', isHomePage: false },
+  { _id: 'admissions', title: 'Admissions', slug: 'admissions', isHomePage: false },
+  { _id: 'faq', title: 'FAQ', slug: 'faq', isHomePage: false },
+  { _id: 'contact', title: 'Contact', slug: 'contact', isHomePage: false },
+] as unknown as SitePage[]
 
 export default function DynamicSitePage() {
   const { school } = useSchool()
   const { sitePage, navPages } = useData<Data>() || {}
+  const pageContext = usePageContext()
+  const pageSlug = (pageContext.routeParams as any)?.pageSlug || ''
 
   if (!school) {
     return (
@@ -17,6 +28,18 @@ export default function DynamicSitePage() {
     )
   }
 
+  // Check for static pages first
+  const isStaticPage = STATIC_SLUGS.includes(pageSlug)
+  if (isStaticPage) {
+    const StaticComponent = getTemplatePage(school as PublicSchool, pageSlug)
+    return (
+      <PublicSiteLayout school={school as PublicSchool} navPages={STATIC_NAV_PAGES}>
+        <StaticComponent school={school as PublicSchool} />
+      </PublicSiteLayout>
+    )
+  }
+
+  // Fallback to existing SitePage system for non-static slugs
   if (!sitePage) {
     return (
       <PublicSiteLayout school={school as PublicSchool} navPages={navPages}>

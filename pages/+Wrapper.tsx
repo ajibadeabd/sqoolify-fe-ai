@@ -10,6 +10,15 @@ export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
 
   useEffect(() => {
+    // Clean up auth handoff params from URL after hydration
+    const params = new URLSearchParams(window.location.search)
+    if (params.has('_at') || params.has('_rt') || params.has('_u')) {
+      params.delete('_at')
+      params.delete('_rt')
+      params.delete('_u')
+      const newSearch = params.toString()
+      window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''))
+    }
     useAuthStore.getState()._hydrate()
   }, [])
 

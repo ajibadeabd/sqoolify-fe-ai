@@ -30,6 +30,7 @@ export default function AttendancePage() {
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [selectedTerm, setSelectedTerm] = useState('1');
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [takeSearch, setTakeSearch] = useState('');
 
   // View mode
   const [viewMode, setViewMode] = useState<'take' | 'view'>('take');
@@ -47,6 +48,11 @@ export default function AttendancePage() {
   const [viewStudentRecords, setViewStudentRecords] = useState<Attendance[]>([]);
   const [viewLoading, setViewLoading] = useState(false);
   const [expandedDate, setExpandedDate] = useState<string | null>(null);
+  const [expandedSearch, setExpandedSearch] = useState('');
+  const [dailyPage, setDailyPage] = useState(1);
+  const [summarySearch, setSummarySearch] = useState('');
+  const [summarySort, setSummarySort] = useState<'rate-asc' | 'rate-desc' | 'name'>('rate-asc');
+  const DAILY_PAGE_SIZE = 15;
 
   const fetchInitialData = useCallback(async () => {
     setLoading(true);
@@ -150,6 +156,9 @@ export default function AttendancePage() {
       ]);
       setClassRecords((recordsRes.data || []).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       setClassSummary(summaryRes.data || []);
+      setDailyPage(1);
+      setExpandedDate(null);
+      setSummarySearch('');
     } catch (err: any) {
       setError(err.message || 'Failed to load attendance');
     } finally {
@@ -372,91 +381,144 @@ export default function AttendancePage() {
           </div>
 
           {records.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
-              <div className="bg-white rounded-lg border border-gray-200 p-4 text-center">
-                <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-                <p className="text-sm text-gray-500">Total</p>
+            <>
+              {/* Compact stats bar */}
+              <div className="bg-white rounded-xl border border-gray-200 px-5 py-3 mb-4">
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2">
+                  <div className="flex items-center gap-3 flex-1 min-w-48">
+                    <div className="flex-1 bg-gray-100 rounded-full h-2 overflow-hidden">
+                      <div className="h-2 rounded-full bg-green-500 transition-all" style={{ width: `${stats.total > 0 ? (stats.present / stats.total) * 100 : 0}%` }} />
+                    </div>
+                    <span className="text-xs text-gray-500 shrink-0">{stats.total > 0 ? Math.round((stats.present / stats.total) * 100) : 0}%</span>
+                  </div>
+                  <div className="flex gap-4 text-xs font-medium">
+                    <span className="text-green-700">{stats.present} Present</span>
+                    <span className="text-red-700">{stats.absent} Absent</span>
+                    <span className="text-yellow-700">{stats.late} Late</span>
+                    <span className="text-blue-700">{stats.excused} Excused</span>
+                    <span className="text-gray-500">{stats.total} Total</span>
+                  </div>
+                </div>
               </div>
-              <div className="bg-green-50 rounded-lg border border-green-200 p-4 text-center">
-                <p className="text-2xl font-bold text-green-700">{stats.present}</p>
-                <p className="text-sm text-green-600">Present</p>
-              </div>
-              <div className="bg-red-50 rounded-lg border border-red-200 p-4 text-center">
-                <p className="text-2xl font-bold text-red-700">{stats.absent}</p>
-                <p className="text-sm text-red-600">Absent</p>
-              </div>
-              <div className="bg-yellow-50 rounded-lg border border-yellow-200 p-4 text-center">
-                <p className="text-2xl font-bold text-yellow-700">{stats.late}</p>
-                <p className="text-sm text-yellow-600">Late</p>
-              </div>
-              <div className="bg-blue-50 rounded-lg border border-blue-200 p-4 text-center">
-                <p className="text-2xl font-bold text-blue-700">{stats.excused}</p>
-                <p className="text-sm text-blue-600">Excused</p>
-              </div>
-            </div>
-          )}
 
-          {records.length > 0 && (
-            <div className="flex flex-wrap gap-2 mb-4">
-              <button onClick={() => markAllAs('present')} className="px-3 py-1.5 text-sm bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
-                Mark All Present
-              </button>
-              <button onClick={() => markAllAs('absent')} className="px-3 py-1.5 text-sm bg-red-100 text-red-700 rounded-lg hover:bg-red-200">
-                Mark All Absent
-              </button>
-            </div>
-          )}
+              {/* Search + bulk actions toolbar */}
+              {(() => {
+                const filtered = records.filter(r =>
+                  !takeSearch || r.studentName.toLowerCase().includes(takeSearch.toLowerCase())
+                );
+                const rowBorder = (status: AttendanceStatus) => {
+                  switch (status) {
+                    case 'present': return 'border-l-4 border-l-green-400';
+                    case 'absent': return 'border-l-4 border-l-red-400';
+                    case 'late': return 'border-l-4 border-l-yellow-400';
+                    case 'excused': return 'border-l-4 border-l-blue-400';
+                  }
+                };
+                const rowBg = (status: AttendanceStatus) => {
+                  switch (status) {
+                    case 'present': return 'bg-green-50/40';
+                    case 'absent': return 'bg-red-50/60';
+                    case 'late': return 'bg-yellow-50/60';
+                    case 'excused': return 'bg-blue-50/40';
+                  }
+                };
 
-          {selectedClass && records.length > 0 ? (
-            <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student</th>
-                    <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Status</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Remark</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-100">
-                  {records.map((record, index) => (
-                    <tr key={record.studentId} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900">{record.studentName}</td>
-                      <td className="px-4 py-3">
-                        <div className="flex justify-center gap-2">
-                          {(['present', 'absent', 'late', 'excused'] as AttendanceStatus[]).map((status) => (
-                            <button
-                              key={status}
-                              onClick={() => handleStatusChange(record.studentId, status)}
-                              className={`px-3 py-1 text-xs rounded-full border capitalize transition-colors ${
-                                record.status === status
-                                  ? getStatusColor(status)
-                                  : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                              }`}
-                            >
-                              {status}
-                            </button>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3">
+                return (
+                  <>
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <div className="relative flex-1 min-w-48 max-w-64">
                         <input
                           type="text"
-                          value={record.remark || ''}
-                          onChange={(e) => handleRemarkChange(record.studentId, e.target.value)}
-                          placeholder="Optional remark..."
-                          className="w-full px-2 py-1 text-sm border border-gray-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
+                          value={takeSearch}
+                          onChange={(e) => setTakeSearch(e.target.value)}
+                          placeholder="Search student..."
+                          className="w-full pl-8 pr-3 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         />
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          ) : selectedClass ? (
+                        <svg className="absolute left-2.5 top-2 h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      {takeSearch && (
+                        <span className="text-xs text-gray-500">{filtered.length} of {records.length} students</span>
+                      )}
+                      <div className="ml-auto flex gap-2">
+                        <button onClick={() => markAllAs('present')} className="px-3 py-1.5 text-xs font-medium bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition">
+                          ✓ All Present
+                        </button>
+                        <button onClick={() => markAllAs('absent')} className="px-3 py-1.5 text-xs font-medium bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition">
+                          ✗ All Absent
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                      <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 360px)', minHeight: 200 }}>
+                      <table className="w-full">
+                        <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                          <tr>
+                            <th className="pl-5 pr-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase w-8">#</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Student</th>
+                            <th className="px-3 py-2.5 text-center text-xs font-semibold text-gray-500 uppercase">Status</th>
+                            <th className="px-3 py-2.5 text-left text-xs font-semibold text-gray-500 uppercase">Remark</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-gray-100">
+                          {filtered.map((record, index) => (
+                            <tr key={record.studentId} className={`${rowBg(record.status)} ${rowBorder(record.status)} transition-colors`}>
+                              <td className="pl-5 pr-3 py-2 text-xs text-gray-400">{index + 1}</td>
+                              <td className="px-3 py-2 text-sm font-medium text-gray-900">{record.studentName}</td>
+                              <td className="px-3 py-2">
+                                <div className="flex justify-center gap-1.5">
+                                  {(['present', 'absent', 'late', 'excused'] as AttendanceStatus[]).map((status) => (
+                                    <button
+                                      key={status}
+                                      onClick={() => handleStatusChange(record.studentId, status)}
+                                      className={`px-2.5 py-0.5 text-xs rounded-full border capitalize font-medium transition-colors ${
+                                        record.status === status
+                                          ? getStatusColor(status)
+                                          : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400 hover:text-gray-600'
+                                      }`}
+                                    >
+                                      {status === 'present' ? 'P' : status === 'absent' ? 'A' : status === 'late' ? 'L' : 'E'}
+                                    </button>
+                                  ))}
+                                </div>
+                              </td>
+                              <td className="px-3 py-2">
+                                <input
+                                  type="text"
+                                  value={record.remark || ''}
+                                  onChange={(e) => handleRemarkChange(record.studentId, e.target.value)}
+                                  placeholder="Remark..."
+                                  className="w-full px-2 py-0.5 text-xs border border-gray-200 rounded focus:ring-1 focus:ring-blue-500 focus:border-blue-500 bg-white/70"
+                                />
+                              </td>
+                            </tr>
+                          ))}
+                          {filtered.length === 0 && (
+                            <tr><td colSpan={4} className="px-5 py-6 text-center text-sm text-gray-400">No students match "{takeSearch}"</td></tr>
+                          )}
+                        </tbody>
+                      </table>
+                      </div>
+                      {filtered.length > 15 && (
+                        <div className="px-5 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 text-center">
+                          {filtered.length} students · scroll to see all
+                        </div>
+                      )}
+                    </div>
+                  </>
+                );
+              })()}
+            </>
+          )}
+
+          {selectedClass && records.length === 0 && (
             <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
               No students found in this class.
             </div>
-          ) : (
+          )}
+          {!selectedClass && (
             <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">
               Select a class to take attendance.
             </div>
@@ -547,122 +609,269 @@ export default function AttendancePage() {
                   </div>
 
                   {/* Daily Records */}
-                  {classSummaryTab === 'daily' && (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Total</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Present</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Absent</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Late</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Excused</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Rate</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase"></th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {classRecords.map((doc: any, index) => {
-                            const recs = doc.records || [];
-                            const total = recs.length;
-                            const present = countByStatus(recs, 'present');
-                            const absent = countByStatus(recs, 'absent');
-                            const late = countByStatus(recs, 'late');
-                            const excused = countByStatus(recs, 'excused');
-                            const rate = total > 0 ? Math.round((present / total) * 100) : 0;
-                            const dateKey = doc._id;
-                            const isExpanded = expandedDate === dateKey;
+                  {classSummaryTab === 'daily' && (() => {
+                    const totalPages = Math.ceil(classRecords.length / DAILY_PAGE_SIZE);
+                    const pagedRecords = classRecords.slice((dailyPage - 1) * DAILY_PAGE_SIZE, dailyPage * DAILY_PAGE_SIZE);
+                    return (
+                      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        {/* Pagination header */}
+                        {classRecords.length > DAILY_PAGE_SIZE && (
+                          <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50">
+                            <span className="text-xs text-gray-500">
+                              Showing {(dailyPage - 1) * DAILY_PAGE_SIZE + 1}–{Math.min(dailyPage * DAILY_PAGE_SIZE, classRecords.length)} of {classRecords.length} days
+                            </span>
+                            <div className="flex items-center gap-1">
+                              <button
+                                disabled={dailyPage === 1}
+                                onClick={() => { setDailyPage(p => p - 1); setExpandedDate(null); }}
+                                className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                              >← Prev</button>
+                              <span className="px-2 text-xs text-gray-600">{dailyPage} / {totalPages}</span>
+                              <button
+                                disabled={dailyPage >= totalPages}
+                                onClick={() => { setDailyPage(p => p + 1); setExpandedDate(null); }}
+                                className="px-2 py-1 text-xs border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-40 disabled:cursor-not-allowed"
+                              >Next →</button>
+                            </div>
+                          </div>
+                        )}
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Date</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Total</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Present</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Absent</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Late</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Excused</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Rate</th>
+                              <th className="px-4 py-3 w-10"></th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {pagedRecords.map((doc: any) => {
+                              const recs = doc.records || [];
+                              const total = recs.length;
+                              const present = countByStatus(recs, 'present');
+                              const absent = countByStatus(recs, 'absent');
+                              const late = countByStatus(recs, 'late');
+                              const excused = countByStatus(recs, 'excused');
+                              const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+                              const isExpanded = expandedDate === doc._id;
 
-                            return (
-                              <>
-                                <tr key={doc._id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                  <td className="px-4 py-3 text-sm font-medium text-gray-900">{formatDate(doc.date)}</td>
-                                  <td className="px-4 py-3 text-sm text-center text-gray-700">{total}</td>
-                                  <td className="px-4 py-3 text-sm text-center font-medium text-green-700">{present}</td>
-                                  <td className="px-4 py-3 text-sm text-center font-medium text-red-700">{absent}</td>
-                                  <td className="px-4 py-3 text-sm text-center font-medium text-yellow-700">{late}</td>
-                                  <td className="px-4 py-3 text-sm text-center font-medium text-blue-700">{excused}</td>
-                                  <td className="px-4 py-3 text-center">
-                                    <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${rate >= 80 ? 'bg-green-100 text-green-700' : rate >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                      {rate}%
-                                    </span>
-                                  </td>
-                                  <td className="px-4 py-3 text-center">
-                                    <button
-                                      onClick={() => setExpandedDate(isExpanded ? null : dateKey)}
-                                      className="text-xs text-blue-600 hover:underline"
-                                    >
-                                      {isExpanded ? 'Hide' : 'Details'}
-                                    </button>
-                                  </td>
-                                </tr>
-                                {isExpanded && (
-                                  <tr key={`${doc._id}-expanded`}>
-                                    <td colSpan={8} className="px-4 py-3 bg-gray-50 border-t border-gray-100">
-                                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                                        {recs.map((r: any, i: number) => {
-                                          const sid = r.student?._id || r.student;
-                                          const name = getStudentName(sid);
-                                          return (
-                                            <div key={i} className="flex items-center gap-2">
-                                              <span className={`text-xs px-2 py-0.5 rounded-full capitalize ${getStatusBadge(r.status)}`}>{r.status}</span>
-                                              <span className="text-xs text-gray-700 truncate">{name}</span>
-                                            </div>
-                                          );
-                                        })}
+                              const filteredRecs = [...recs]
+                                .sort((a: any, b: any) => {
+                                  const order: Record<string, number> = { absent: 0, late: 1, excused: 2, present: 3 };
+                                  return (order[a.status] ?? 4) - (order[b.status] ?? 4);
+                                })
+                                .filter((r: any) => {
+                                  if (!expandedSearch) return true;
+                                  const sid = r.student?._id || r.student;
+                                  return getStudentName(sid).toLowerCase().includes(expandedSearch.toLowerCase());
+                                });
+
+                              return (
+                                <>
+                                  <tr
+                                    key={doc._id}
+                                    className={`hover:bg-blue-50 transition-colors cursor-pointer ${isExpanded ? 'bg-blue-50' : ''}`}
+                                    onClick={() => { setExpandedDate(isExpanded ? null : doc._id); setExpandedSearch(''); }}
+                                  >
+                                    <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{formatDate(doc.date)}</td>
+                                    <td className="px-4 py-2.5 text-sm text-center text-gray-600">{total}</td>
+                                    <td className="px-4 py-2.5 text-sm text-center font-semibold text-green-700">{present}</td>
+                                    <td className="px-4 py-2.5 text-sm text-center font-semibold text-red-700">{absent}</td>
+                                    <td className="px-4 py-2.5 text-sm text-center font-semibold text-yellow-700">{late}</td>
+                                    <td className="px-4 py-2.5 text-sm text-center font-semibold text-blue-700">{excused}</td>
+                                    <td className="px-4 py-2.5 text-center">
+                                      <div className="flex items-center justify-center gap-2">
+                                        <div className="w-16 bg-gray-200 rounded-full h-1.5">
+                                          <div className={`h-1.5 rounded-full ${rate >= 80 ? 'bg-green-500' : rate >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${rate}%` }} />
+                                        </div>
+                                        <span className={`text-xs font-semibold w-10 text-right ${rate >= 80 ? 'text-green-700' : rate >= 60 ? 'text-yellow-700' : 'text-red-700'}`}>
+                                          {rate}%
+                                        </span>
                                       </div>
                                     </td>
+                                    <td className="px-3 py-2.5 text-center text-gray-400">
+                                      <span className="text-xs">{isExpanded ? '▲' : '▼'}</span>
+                                    </td>
                                   </tr>
-                                )}
-                              </>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                                  {isExpanded && (
+                                    <tr key={`${doc._id}-exp`}>
+                                      <td colSpan={8} className="p-0 border-t border-blue-100">
+                                        <div className="bg-blue-50">
+                                          {recs.length > 8 && (
+                                            <div className="flex items-center gap-3 px-4 py-2 border-b border-blue-100">
+                                              <input
+                                                type="text"
+                                                placeholder="Search student..."
+                                                value={expandedSearch}
+                                                onChange={(e) => { e.stopPropagation(); setExpandedSearch(e.target.value); }}
+                                                onClick={(e) => e.stopPropagation()}
+                                                className="px-2.5 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 w-48"
+                                              />
+                                              <span className="text-xs text-gray-500">{filteredRecs.length} of {recs.length} students</span>
+                                            </div>
+                                          )}
+                                          <div className="max-h-80 overflow-y-auto">
+                                            <table className="w-full text-xs">
+                                              <thead className="bg-blue-100 sticky top-0">
+                                                <tr>
+                                                  <th className="px-4 py-1.5 text-left font-semibold text-blue-700">Student</th>
+                                                  <th className="px-4 py-1.5 text-center font-semibold text-blue-700 w-24">Status</th>
+                                                  <th className="px-4 py-1.5 text-left font-semibold text-blue-700">Remark</th>
+                                                </tr>
+                                              </thead>
+                                              <tbody>
+                                                {filteredRecs.map((r: any, i: number) => {
+                                                  const sid = r.student?._id || r.student;
+                                                  return (
+                                                    <tr key={i} className="border-t border-blue-100 hover:bg-white">
+                                                      <td className="px-4 py-1.5 text-gray-700">{getStudentName(sid)}</td>
+                                                      <td className="px-4 py-1.5 text-center">
+                                                        <span className={`px-2 py-0.5 rounded-full capitalize font-medium ${getStatusBadge(r.status)}`}>{r.status}</span>
+                                                      </td>
+                                                      <td className="px-4 py-1.5 text-gray-400">{r.remark || '—'}</td>
+                                                    </tr>
+                                                  );
+                                                })}
+                                                {filteredRecs.length === 0 && (
+                                                  <tr><td colSpan={3} className="px-4 py-3 text-center text-gray-400">No students match</td></tr>
+                                                )}
+                                              </tbody>
+                                            </table>
+                                          </div>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  )}
+                                </>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                        {/* Bottom pagination */}
+                        {classRecords.length > DAILY_PAGE_SIZE && (
+                          <div className="flex items-center justify-center gap-2 px-4 py-3 border-t border-gray-100">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(p => (
+                              <button
+                                key={p}
+                                onClick={() => { setDailyPage(p); setExpandedDate(null); }}
+                                className={`w-7 h-7 text-xs rounded-full ${p === dailyPage ? 'bg-blue-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}
+                              >
+                                {p}
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
 
                   {/* Student Summary */}
-                  {classSummaryTab === 'summary' && (
-                    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
-                      <table className="w-full">
-                        <thead className="bg-gray-50 border-b border-gray-200">
-                          <tr>
-                            <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Total Days</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Present</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Absent</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Late</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Excused</th>
-                            <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Rate</th>
-                          </tr>
-                        </thead>
-                        <tbody className="divide-y divide-gray-100">
-                          {classSummary.map((row: any, index) => {
-                            const sid = row.student?._id || row._id;
-                            const name = getStudentName(sid) || row.student?.admissionNo || 'Unknown';
-                            const rate = row.total > 0 ? Math.round((row.present / row.total) * 100) : 0;
-                            return (
-                              <tr key={index} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                                <td className="px-4 py-3 text-sm font-medium text-gray-900">{name}</td>
-                                <td className="px-4 py-3 text-sm text-center text-gray-700">{row.total}</td>
-                                <td className="px-4 py-3 text-sm text-center font-medium text-green-700">{row.present}</td>
-                                <td className="px-4 py-3 text-sm text-center font-medium text-red-700">{row.absent}</td>
-                                <td className="px-4 py-3 text-sm text-center font-medium text-yellow-700">{row.late}</td>
-                                <td className="px-4 py-3 text-sm text-center font-medium text-blue-700">{row.excused}</td>
-                                <td className="px-4 py-3 text-center">
-                                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${rate >= 80 ? 'bg-green-100 text-green-700' : rate >= 60 ? 'bg-yellow-100 text-yellow-700' : 'bg-red-100 text-red-700'}`}>
-                                    {rate}%
-                                  </span>
+                  {classSummaryTab === 'summary' && (() => {
+                    const filteredSummary = classSummary
+                      .map((row: any) => {
+                        const sid = row.student?._id || row._id;
+                        const name = getStudentName(sid) || row.student?.admissionNo || 'Unknown';
+                        const rate = row.total > 0 ? Math.round((row.present / row.total) * 100) : 0;
+                        return { ...row, sid, name, rate };
+                      })
+                      .filter(row => !summarySearch || row.name.toLowerCase().includes(summarySearch.toLowerCase()))
+                      .sort((a, b) => {
+                        if (summarySort === 'rate-asc') return a.rate - b.rate;
+                        if (summarySort === 'rate-desc') return b.rate - a.rate;
+                        return a.name.localeCompare(b.name);
+                      });
+
+                    const atRisk = filteredSummary.filter(r => r.rate < 75).length;
+
+                    return (
+                      <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                        {/* Toolbar */}
+                        <div className="flex flex-wrap items-center gap-3 px-4 py-3 border-b border-gray-100 bg-gray-50">
+                          <input
+                            type="text"
+                            placeholder="Search student..."
+                            value={summarySearch}
+                            onChange={(e) => setSummarySearch(e.target.value)}
+                            className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 w-48"
+                          />
+                          <div className="flex gap-1 ml-auto">
+                            {[
+                              { val: 'rate-asc', label: 'Worst first' },
+                              { val: 'rate-desc', label: 'Best first' },
+                              { val: 'name', label: 'A–Z' },
+                            ].map(opt => (
+                              <button
+                                key={opt.val}
+                                onClick={() => setSummarySort(opt.val as any)}
+                                className={`px-2.5 py-1 text-xs rounded-md border transition ${summarySort === opt.val ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-600 border-gray-300 hover:bg-gray-50'}`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                          <span className="text-xs text-gray-500">{filteredSummary.length} students</span>
+                          {atRisk > 0 && (
+                            <span className="text-xs font-semibold px-2 py-0.5 bg-red-100 text-red-700 rounded-full">{atRisk} at risk (&lt;75%)</span>
+                          )}
+                        </div>
+                        <div className="overflow-y-auto" style={{ maxHeight: 'calc(100vh - 380px)', minHeight: 200 }}>
+                        <table className="w-full">
+                          <thead className="bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
+                            <tr>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Student</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Days</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Present</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Absent</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Late</th>
+                              <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Excused</th>
+                              <th className="px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase">Attendance Rate</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {filteredSummary.map((row: any, index) => (
+                              <tr key={index} className={`${row.rate < 75 ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'} transition-colors`}>
+                                <td className="px-4 py-2.5 text-sm font-medium text-gray-900">
+                                  {row.name}
+                                  {row.rate < 75 && <span className="ml-2 text-xs text-red-500 font-normal">at risk</span>}
+                                </td>
+                                <td className="px-4 py-2.5 text-sm text-center text-gray-600">{row.total}</td>
+                                <td className="px-4 py-2.5 text-sm text-center font-semibold text-green-700">{row.present}</td>
+                                <td className="px-4 py-2.5 text-sm text-center font-semibold text-red-700">{row.absent}</td>
+                                <td className="px-4 py-2.5 text-sm text-center font-semibold text-yellow-700">{row.late}</td>
+                                <td className="px-4 py-2.5 text-sm text-center font-semibold text-blue-700">{row.excused}</td>
+                                <td className="px-4 py-2.5">
+                                  <div className="flex items-center gap-2">
+                                    <div className="flex-1 bg-gray-200 rounded-full h-2 max-w-24">
+                                      <div
+                                        className={`h-2 rounded-full transition-all ${row.rate >= 80 ? 'bg-green-500' : row.rate >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`}
+                                        style={{ width: `${row.rate}%` }}
+                                      />
+                                    </div>
+                                    <span className={`text-xs font-semibold w-10 ${row.rate >= 80 ? 'text-green-700' : row.rate >= 60 ? 'text-yellow-700' : 'text-red-700'}`}>
+                                      {row.rate}%
+                                    </span>
+                                  </div>
                                 </td>
                               </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
+                            ))}
+                            {filteredSummary.length === 0 && (
+                              <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">No students match your search</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                        </div>
+                        {filteredSummary.length > 15 && (
+                          <div className="px-5 py-2 border-t border-gray-100 bg-gray-50 text-xs text-gray-400 text-center">
+                            {filteredSummary.length} students · scroll to see all
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </>
               ) : !viewLoading && viewClassId ? (
                 <div className="bg-white rounded-xl border border-gray-200 p-8 text-center text-gray-500">

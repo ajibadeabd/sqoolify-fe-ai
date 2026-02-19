@@ -11,6 +11,7 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
   const name = school.name || 'Our School';
 
   const heroSec = getSection(sitePage, 'hero')
+  const contactSec = getSection(sitePage, 'contact')
   const ctaSec = getSection(sitePage, 'cta')
 
   const _dh = contactHeroContent()
@@ -21,8 +22,18 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
     description: heroSec?.description || heroSec?.subtitle || _dh.description,
   }
 
-  const officeHours = defaultOfficeHours
-  const visitReasons = defaultVisitReasons
+  const officeHours: { day: string; time: string; note?: string }[] = contactSec?.officeHours || defaultOfficeHours
+  const visitReasons: { title: string; desc: string; iconName: string }[] = contactSec?.visitReasons || defaultVisitReasons
+  const officeHoursBadge = contactSec?.officeHoursBadge || 'Office Hours'
+  const officeHoursHeading = contactSec?.officeHoursHeading || 'When to reach us'
+  const responseTimeLabel = contactSec?.responseTimeLabel || 'Average Response Time'
+  const responseTimeValue = contactSec?.responseTimeValue || 'Within 2 business hours'
+  const visitBadge = contactSec?.visitBadge || 'Plan A Visit'
+  const visitHeading = contactSec?.visitHeading || 'Why visit our campus'
+
+  const addressCardLabel = contactSec?.addressCardTitle || 'Visit Us'
+  const phoneCardLabel = contactSec?.phoneCardTitle || 'Call Us'
+  const emailCardLabel = contactSec?.emailCardTitle || 'Email Us'
 
   const _dc = contactCtaContent(name)
   const cta = {
@@ -31,10 +42,14 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
     description: ctaSec?.description || _dc.description,
   };
 
+  const ctaButtons: { text: string; link: string; variant: string }[] = ctaSec?.buttons || [
+    { text: 'Start Application', link: '/admissions', variant: 'primary' },
+  ]
+
   const contactInfo = [
-    ...(school.address ? [{ icon: 'location', label: 'Visit Us', value: school.address }] : []),
-    ...(school.phone ? [{ icon: 'phone', label: 'Call Us', value: school.phone }] : []),
-    ...(school.email ? [{ icon: 'email', label: 'Email Us', value: school.email }] : []),
+    ...(school.address ? [{ icon: 'location', label: addressCardLabel, value: school.address }] : []),
+    ...(school.phone ? [{ icon: 'phone', label: phoneCardLabel, value: school.phone }] : []),
+    ...(school.email ? [{ icon: 'email', label: emailCardLabel, value: school.email }] : []),
   ];
 
   return (
@@ -80,8 +95,8 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
         <div className="max-w-5xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Office Hours</p>
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-8">When to reach us</h2>
+              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{officeHoursBadge}</p>
+              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-8">{officeHoursHeading}</h2>
               <div className="bg-white rounded-2xl overflow-hidden border border-gray-100">
                 {officeHours.map((oh, i) => (
                   <div key={i} className={`flex items-center justify-between px-6 py-5 ${i < officeHours.length - 1 ? 'border-b border-gray-100' : ''}`}>
@@ -100,8 +115,8 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
                     <Icon name="clock" className="w-5 h-5" />
                   </div>
                   <div>
-                    <div className="font-semibold text-gray-900 text-sm">Average Response Time</div>
-                    <div className="text-gray-500 text-sm">Within 2 business hours</div>
+                    <div className="font-semibold text-gray-900 text-sm">{responseTimeLabel}</div>
+                    <div className="text-gray-500 text-sm">{responseTimeValue}</div>
                   </div>
                 </div>
               </div>
@@ -109,8 +124,8 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
 
             {/* Why Visit */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Plan A Visit</p>
-              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-8">Why visit our campus</h2>
+              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{visitBadge}</p>
+              <h2 className="text-3xl font-bold text-gray-900 tracking-tight mb-8">{visitHeading}</h2>
               <div className="space-y-4">
                 {visitReasons.map((r) => (
                   <div key={r.title} className="bg-white rounded-xl p-5 border border-gray-100 flex gap-4">
@@ -139,10 +154,12 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
               </div>
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.15] mb-5 whitespace-pre-line">{cta.headline}</h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed mb-10">{cta.description}</p>
-              <a href="/admissions" className="group inline-flex items-center justify-center gap-2.5 bg-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all" style={{ color: pc }}>
-                Start Application
-                <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-              </a>
+              {ctaButtons.map((btn, i) => (
+                <a key={i} href={btn.link} className={`group inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all ${btn.variant === 'primary' ? 'bg-white' : 'border-2 border-white/20 hover:bg-white/10'}`} style={{ color: btn.variant === 'primary' ? pc : '#fff' }}>
+                  {btn.text}
+                  <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                </a>
+              ))}
             </div>
           </div>
         </div>

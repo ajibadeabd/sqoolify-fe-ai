@@ -6,23 +6,26 @@ import ClassicAbout from './classic/AboutPage';
 import ClassicFAQ from './classic/FAQPage';
 import ClassicAdmissions from './classic/AdmissionsPage';
 import ClassicContact from './classic/ContactPage';
+import ClassicNews from './classic/NewsPage';
 
 import ModernHome from './modern/HomePage';
 import ModernAbout from './modern/AboutPage';
 import ModernFAQ from './modern/FAQPage';
 import ModernAdmissions from './modern/AdmissionsPage';
 import ModernContact from './modern/ContactPage';
+import ModernNews from './modern/NewsPage';
 
 import BoldHome from './bold/HomePage';
 import BoldAbout from './bold/AboutPage';
 import BoldFAQ from './bold/FAQPage';
 import BoldAdmissions from './bold/AdmissionsPage';
 import BoldContact from './bold/ContactPage';
+import BoldNews from './bold/NewsPage';
 
 type PageComponent = ComponentType<{ school: PublicSchool; sitePage?: SitePage }>;
 type TemplateName = 'classic' | 'modern' | 'bold';
 
-export const TEMPLATE_SLUGS = ['home', 'about', 'faq', 'admissions', 'contact'];
+export const TEMPLATE_SLUGS = ['home', 'about', 'faq', 'admissions', 'news', 'contact'];
 
 const templates: Record<TemplateName, Record<string, PageComponent>> = {
   classic: {
@@ -30,6 +33,7 @@ const templates: Record<TemplateName, Record<string, PageComponent>> = {
     about: ClassicAbout,
     faq: ClassicFAQ,
     admissions: ClassicAdmissions,
+    news: ClassicNews,
     contact: ClassicContact,
   },
   modern: {
@@ -37,6 +41,7 @@ const templates: Record<TemplateName, Record<string, PageComponent>> = {
     about: ModernAbout,
     faq: ModernFAQ,
     admissions: ModernAdmissions,
+    news: ModernNews,
     contact: ModernContact,
   },
   bold: {
@@ -44,6 +49,7 @@ const templates: Record<TemplateName, Record<string, PageComponent>> = {
     about: BoldAbout,
     faq: BoldFAQ,
     admissions: BoldAdmissions,
+    news: BoldNews,
     contact: BoldContact,
   },
 };

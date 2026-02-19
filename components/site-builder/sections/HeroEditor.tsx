@@ -3,9 +3,11 @@ import type { HeroSectionContent } from '../../../lib/types'
 export default function HeroEditor({
   content,
   onChange,
+  pageSlug,
 }: {
   content: HeroSectionContent
   onChange: (content: HeroSectionContent) => void
+  pageSlug?: string
 }) {
   const stats = content.stats || []
   const buttons = content.buttons || []
@@ -84,6 +86,32 @@ export default function HeroEditor({
           placeholder="A short description about the school..."
         />
       </div>
+
+      {pageSlug && pageSlug !== 'home' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Hero Background Image URL</label>
+          <input
+            type="text"
+            value={(content as any).heroImage || ''}
+            onChange={(e) => onChange({ ...content, heroImage: e.target.value } as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="https://images.unsplash.com/..."
+          />
+        </div>
+      )}
+
+      {pageSlug === 'contact' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Hero Button Text</label>
+          <input
+            type="text"
+            value={(content as any).buttonText || ''}
+            onChange={(e) => onChange({ ...content, buttonText: e.target.value } as any)}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            placeholder="Send us a message"
+          />
+        </div>
+      )}
 
       {/* Stats */}
       <div>

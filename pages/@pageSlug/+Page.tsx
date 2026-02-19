@@ -11,6 +11,7 @@ const FALLBACK_NAV_PAGES = [
   { _id: 'about', title: 'About Us', slug: 'about', isHomePage: false },
   { _id: 'admissions', title: 'Admissions', slug: 'admissions', isHomePage: false },
   { _id: 'faq', title: 'FAQ', slug: 'faq', isHomePage: false },
+  { _id: 'news', title: 'News & Events', slug: 'news', isHomePage: false },
   { _id: 'contact', title: 'Contact', slug: 'contact', isHomePage: false },
 ] as unknown as SitePage[]
 
@@ -32,7 +33,6 @@ export default function DynamicSitePage() {
 
   // Template pages — render with DB sections (falls back to defaults in component)
   const isTemplatePage = TEMPLATE_SLUGS.includes(pageSlug)
-  console.log(JSON.stringify({isTemplatePage,sitePage}, null, 2))
   if (isTemplatePage) {
     if (!sitePage) {
       return (

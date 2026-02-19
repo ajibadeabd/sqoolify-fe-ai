@@ -199,22 +199,22 @@ export default function SitePageEditorPage() {
   }
 
   const renderSectionEditor = (section: PageSection, index: number) => {
-    const props = {
+    const base = {
       content: section.content as any,
       onChange: (content: any) => updateSectionContent(index, content),
     }
 
     switch (section.type) {
-      case 'hero': return <HeroEditor {...props} />
-      case 'text': return <TextEditor {...props} />
-      case 'features': return <FeaturesEditor {...props} />
-      case 'gallery': return <GalleryEditor {...props} />
-      case 'contact': return <ContactEditor {...props} />
-      case 'cta': return <CTAEditor {...props} />
-      case 'testimonials': return <TestimonialsEditor {...props} />
-      case 'stats': return <StatsEditor {...props} />
-      case 'team': return <TeamEditor {...props} />
-      case 'faq': return <FAQEditor {...props} />
+      case 'hero': return <HeroEditor {...base} pageSlug={slug} />
+      case 'text': return <TextEditor {...base} pageSlug={slug} />
+      case 'features': return <FeaturesEditor {...base} pageSlug={slug} />
+      case 'gallery': return <GalleryEditor {...base} />
+      case 'contact': return <ContactEditor {...base} pageSlug={slug} />
+      case 'cta': return <CTAEditor {...base} />
+      case 'testimonials': return <TestimonialsEditor {...base} />
+      case 'stats': return <StatsEditor {...base} />
+      case 'team': return <TeamEditor {...base} />
+      case 'faq': return <FAQEditor {...base} />
       default: return <p className="text-sm text-gray-500">Unknown section type</p>
     }
   }

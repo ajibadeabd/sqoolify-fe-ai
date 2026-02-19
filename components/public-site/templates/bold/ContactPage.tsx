@@ -11,6 +11,7 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
   const name = school.name || 'Our School';
 
   const heroSec = getSection(sitePage, 'hero')
+  const contactSec = getSection(sitePage, 'contact')
   const ctaSec = getSection(sitePage, 'cta')
 
   const _dh = contactHeroContent()
@@ -19,10 +20,21 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
     headline: heroSec?.headline || _dh.headline,
     headlineSub: heroSec?.headlineSub || _dh.headlineSub,
     description: heroSec?.description || heroSec?.subtitle || _dh.description,
+    heroImage: heroSec?.heroImage || images.contactHero,
   }
 
-  const officeHours = defaultOfficeHours
-  const visitReasons = defaultVisitReasons
+  const officeHours: { day: string; time: string; note?: string }[] = contactSec?.officeHours || defaultOfficeHours
+  const visitReasons: { title: string; desc: string; iconName: string }[] = contactSec?.visitReasons || defaultVisitReasons
+  const officeHoursBadge = contactSec?.officeHoursBadge || 'Office Hours'
+  const officeHoursHeading = contactSec?.officeHoursHeading || 'When to reach us'
+  const responseTimeLabel = contactSec?.responseTimeLabel || 'Average Response Time'
+  const responseTimeValue = contactSec?.responseTimeValue || 'Within 2 business hours'
+  const visitBadge = contactSec?.visitBadge || 'Plan A Visit'
+  const visitHeading = contactSec?.visitHeading || 'Why visit us'
+  const officeHoursImage = contactSec?.officeHoursImage || images.contactOfficeHours
+  const addressCardLabel = contactSec?.addressCardTitle || 'Visit Us'
+  const phoneCardLabel = contactSec?.phoneCardTitle || 'Call Us'
+  const emailCardLabel = contactSec?.emailCardTitle || 'Email Us'
 
   const _dc = contactCtaContent(name)
   const cta = {
@@ -31,17 +43,21 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
     description: ctaSec?.description || _dc.description,
   };
 
+  const ctaButtons: { text: string; link: string; variant: string }[] = ctaSec?.buttons || [
+    { text: 'Start Application', link: '/admissions', variant: 'primary' },
+  ]
+
   const contactInfo = [
-    ...(school.address ? [{ icon: 'location', label: 'Visit Us', value: school.address }] : []),
-    ...(school.phone ? [{ icon: 'phone', label: 'Call Us', value: school.phone }] : []),
-    ...(school.email ? [{ icon: 'email', label: 'Email Us', value: school.email }] : []),
+    ...(school.address ? [{ icon: 'location', label: addressCardLabel, value: school.address }] : []),
+    ...(school.phone ? [{ icon: 'phone', label: phoneCardLabel, value: school.phone }] : []),
+    ...(school.email ? [{ icon: 'email', label: emailCardLabel, value: school.email }] : []),
   ];
 
   return (
     <>
       {/* ═══════ HERO — FULL-BLEED ═══════ */}
       <section className="relative min-h-[60vh] flex items-end overflow-hidden">
-        <img src={images.contactHero} alt="Contact" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={hero.heroImage} alt="Contact" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
@@ -82,9 +98,9 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
           <div className="grid lg:grid-cols-2 gap-20">
             {/* Office Hours */}
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>Office Hours</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>{officeHoursBadge}</p>
               <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter leading-[0.95] uppercase mb-10">
-                When to reach us
+                {officeHoursHeading}
               </h2>
 
               <div className="space-y-0">
@@ -104,17 +120,17 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
                   <Icon name="clock" className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <div className="font-black text-gray-900 uppercase tracking-wide text-sm">Average Response Time</div>
-                  <div className="text-gray-500">Within 2 business hours</div>
+                  <div className="font-black text-gray-900 uppercase tracking-wide text-sm">{responseTimeLabel}</div>
+                  <div className="text-gray-500">{responseTimeValue}</div>
                 </div>
               </div>
             </div>
 
             {/* Why Visit */}
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>Plan A Visit</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>{visitBadge}</p>
               <h2 className="text-4xl lg:text-5xl font-black text-gray-900 tracking-tighter leading-[0.95] uppercase mb-10">
-                Why visit us
+                {visitHeading}
               </h2>
 
               <div className="space-y-0">
@@ -137,7 +153,7 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
 
       {/* ═══════ CTA — FULL-BLEED ═══════ */}
       <section className="relative py-32 overflow-hidden">
-        <img src={images.contactOfficeHours} alt="" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={officeHoursImage} alt="" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/70" />
         <div className="relative max-w-5xl mx-auto px-6 text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2 bg-white/10 backdrop-blur-sm border border-white/15 mb-8">
@@ -145,14 +161,17 @@ export default function ContactPage({ school, sitePage }: { school: PublicSchool
           </div>
           <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] uppercase mb-6 whitespace-pre-line">{cta.headline}</h2>
           <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed mb-12">{cta.description}</p>
-          <a
-            href="/admissions"
-            className="group inline-flex items-center justify-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all"
-            style={{ backgroundColor: pc, color: '#fff' }}
-          >
-            Start Application
-            <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </a>
+          {ctaButtons.map((btn, i) => (
+            <a
+              key={i}
+              href={btn.link}
+              className="group inline-flex items-center justify-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all"
+              style={{ backgroundColor: btn.variant === 'primary' ? pc : 'transparent', color: btn.variant === 'primary' ? '#fff' : '#fff', border: btn.variant !== 'primary' ? '2px solid rgba(255,255,255,0.3)' : undefined }}
+            >
+              {btn.text}
+              <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </a>
+          ))}
         </div>
       </section>
     </>

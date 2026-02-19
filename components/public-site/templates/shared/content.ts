@@ -8,6 +8,7 @@ export interface IncludedItem { title: string; desc: string; iconName: string }
 export interface AgeRequirement { level: string; age: string }
 export interface FAQItem { q: string; a: string; cat: string }
 export interface FAQCategory { name: string; iconName: string; color: string }
+export interface NewsItemContent { id: string; title: string; excerpt: string; date: string; image?: string; category?: string }
 export interface OfficeHour { day: string; time: string; note?: string }
 export interface VisitReason { title: string; desc: string; iconName: string }
 export interface Pillar { title: string; desc: string; iconName: string }
@@ -245,6 +246,31 @@ export const contactCtaContent = (name: string) => ({
 })
 
 // ══════════════════════════════════════════════
+// NEWS & EVENTS PAGE
+// ══════════════════════════════════════════════
+
+export const newsHeroContent = (name: string) => ({
+  badge: 'News & Events',
+  headline: 'Latest Updates',
+  headlineSub: `from ${name}`,
+  description: 'Stay informed about our school activities, events, announcements, and achievements.',
+})
+
+export const defaultNewsItems: NewsItemContent[] = [
+  { id: '1', title: 'Inter-House Sports Competition 2025', excerpt: 'Our annual inter-house sports competition brought together students from all four houses in an exciting display of athleticism, sportsmanship, and school spirit. Red House emerged champions this year.', date: 'Jan 2025', image: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?w=800&q=80', category: 'Sports' },
+  { id: '2', title: 'STEM Fair Showcases Student Innovation', excerpt: 'Students from JSS1 to SS3 presented groundbreaking projects at our annual STEM Fair, demonstrating creativity in robotics, renewable energy, app development, and environmental science.', date: 'Dec 2024', image: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80', category: 'Academics' },
+  { id: '3', title: 'New Computer Lab Now Open', excerpt: 'We are excited to announce the opening of our state-of-the-art computer lab featuring 40 new workstations, high-speed internet, and dedicated software for coding and digital arts.', date: 'Nov 2024', image: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80', category: 'Facilities' },
+  { id: '4', title: 'Cultural Day Celebration', excerpt: 'Students and staff celebrated Nigeria\'s rich cultural heritage with traditional attire, food, music, dance performances, and exhibitions showcasing the beauty of our diverse backgrounds.', date: 'Oct 2024', image: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=800&q=80', category: 'Events' },
+  { id: '5', title: 'Outstanding WAEC Results Again', excerpt: 'We are proud to announce that 98% of our SS3 students passed their WAEC examinations with credits in five subjects or more, continuing our tradition of academic excellence.', date: 'Sep 2024', image: 'https://images.unsplash.com/photo-1577896851231-70ef18881754?w=800&q=80', category: 'Academics' },
+  { id: '6', title: 'Parent-Teacher Conference Highlights', excerpt: 'Our termly parent-teacher conference saw record attendance as families engaged with educators on student progress, upcoming programmes, and ways to support learning at home.', date: 'Sep 2024', image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=800&q=80', category: 'Events' },
+]
+
+export const newsCtaContent = (name: string) => ({
+  headline: 'Never miss an\nimportant update',
+  description: `Follow our announcements, events, and news so you stay connected with the ${name} community.`,
+})
+
+// ══════════════════════════════════════════════
 // SHARED IMAGES
 // ══════════════════════════════════════════════
 
@@ -263,4 +289,6 @@ export const images = {
   faqHero: 'https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=1600&q=80',
   contactHero: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=1600&q=80',
   contactOfficeHours: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80',
+  newsHero: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1600&q=80',
+  newsFallback: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=800&q=80',
 }

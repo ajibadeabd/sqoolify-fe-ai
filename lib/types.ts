@@ -269,6 +269,15 @@ export interface SitePage {
   updatedAt?: string;
 }
 
+export interface NewsItem {
+  id: string;
+  title: string;
+  excerpt: string;
+  date: string;
+  image?: string;
+  category?: string;
+}
+
 export interface SocialLinks {
   facebook?: string;
   twitter?: string;

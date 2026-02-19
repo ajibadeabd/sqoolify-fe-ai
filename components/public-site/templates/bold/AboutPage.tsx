@@ -2,10 +2,10 @@ import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
 import { getSection } from '../shared/section-helpers';
 import {
-  aboutHeroStats as defaultAboutHeroStats, aboutHeroContent, timeline as defaultTimeline,
+  aboutHeroStats as defaultAboutHeroStats, aboutHeroContent,
   missionText as defaultMissionText, visionText as defaultVisionText,
   coreValues as defaultCoreValues, approachItems as defaultApproachItems,
-  aboutCtaContent, images,
+  aboutCtaContent, images, timeline as defaultTimeline,
 } from '../shared/content';
 
 export default function AboutPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
@@ -13,6 +13,7 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
   const name = school.name || 'Our School';
 
   const heroSec = getSection(sitePage, 'hero')
+  const textSec = getSection(sitePage, 'text')
   const featuresSec = getSection(sitePage, 'features')
   const ctaSec = getSection(sitePage, 'cta')
 
@@ -22,30 +23,48 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
     headline: heroSec?.headline || _dh.headline,
     headlineSub: heroSec?.headlineSub || heroSec?.subtitle || _dh.headlineSub,
     description: heroSec?.description || heroSec?.subtitle || _dh.description,
+    heroImage: heroSec?.heroImage || images.aboutHero,
   }
   const aboutHeroStats = heroSec?.stats || defaultAboutHeroStats
 
-  const timeline = defaultTimeline
-  const missionText = defaultMissionText
-  const visionText = defaultVisionText
+  const storyBadge = textSec?.storyBadge || 'Our Journey'
+  const storyHeading = textSec?.storyHeading || 'How we got here'
+  const storyImage = textSec?.storyImage || images.aboutStory
+  const timeline: { title: string; desc: string }[] = textSec?.timeline || defaultTimeline.map(t => ({ title: t.title, desc: t.getDesc(name) }))
 
+  const missionVisionBadge = textSec?.missionVisionBadge || 'What Drives Us'
+  const missionVisionHeading = textSec?.missionVisionHeading || 'Mission & Vision'
+  const missionLabel = textSec?.missionLabel || 'Our Mission'
+  const missionText = textSec?.missionText || defaultMissionText
+  const visionLabel = textSec?.visionLabel || 'Our Vision'
+  const visionText = textSec?.visionText || defaultVisionText
+
+  const approachBadge = textSec?.approachBadge || 'Our Approach'
+  const approachHeading = textSec?.approachHeading || 'How we teach'
+  const approachImage = textSec?.approachImage || images.aboutApproach
+  const approachItems: { title: string; desc: string }[] = textSec?.approachItems || defaultApproachItems
+
+  const valuesBadge = featuresSec?.valuesBadge || 'Our Values'
+  const valuesHeading = featuresSec?.valuesHeading || 'What we stand for'
   const coreValues = featuresSec?.features?.map((f: any) => ({
     title: f.title, desc: f.description || f.desc || '', iconName: f.iconName || 'excellence',
   })) || defaultCoreValues
-
-  const approachItems = defaultApproachItems
 
   const _dc = aboutCtaContent(name)
   const cta = {
     headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
     description: ctaSec?.description || _dc.description,
   };
+  const ctaButtons: { text: string; link: string; variant: string }[] = ctaSec?.buttons || [
+    { text: 'Schedule a Visit', link: '/contact', variant: 'primary' },
+    { text: 'Apply Now', link: '/admissions', variant: 'secondary' },
+  ]
 
   return (
     <>
       {/* ═══════ HERO — FULL-BLEED IMAGE ═══════ */}
       <section className="relative min-h-[80vh] flex items-end overflow-hidden">
-        <img src={images.aboutHero} alt="Campus" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={hero.heroImage} alt="Campus" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/60" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
@@ -75,9 +94,9 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="grid lg:grid-cols-2 gap-20">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: pc }}>Our Journey</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: pc }}>{storyBadge}</p>
               <h2 className="text-5xl lg:text-6xl font-black text-gray-900 tracking-tighter leading-[0.95] uppercase mb-12">
-                How we got here
+                {storyHeading}
               </h2>
 
               <div className="space-y-0">
@@ -88,14 +107,14 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
                       <div className="absolute left-[7px] top-6 bottom-0 w-0.5 bg-gray-100" />
                     )}
                     <h3 className="text-2xl font-black text-gray-900 uppercase tracking-wide mb-3">{item.title}</h3>
-                    <p className="text-gray-500 leading-relaxed">{item.getDesc(name)}</p>
+                    <p className="text-gray-500 leading-relaxed">{item.desc}</p>
                   </div>
                 ))}
               </div>
             </div>
 
             <div className="hidden lg:block">
-              <img src={images.aboutStory} alt="Our story" className="w-full h-full object-cover" />
+              <img src={storyImage} alt="Our story" className="w-full h-full object-cover" />
             </div>
           </div>
         </div>
@@ -105,9 +124,9 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
       <section className="bg-gray-950">
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="mb-16">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>What Drives Us</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>{missionVisionBadge}</p>
             <h2 className="text-5xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] uppercase">
-              Mission & Vision
+              {missionVisionHeading}
             </h2>
           </div>
 
@@ -116,14 +135,14 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
               <div className="w-14 h-14 flex items-center justify-center mb-6 border-2" style={{ borderColor: `${pc}40`, color: pc }}>
                 <Icon name="mission" className="w-7 h-7" />
               </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-4">Our Mission</h3>
+              <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-4">{missionLabel}</h3>
               <p className="text-gray-400 leading-relaxed text-lg">{missionText}</p>
             </div>
             <div className="bg-gray-950 p-10 lg:p-14">
               <div className="w-14 h-14 flex items-center justify-center mb-6 border-2" style={{ borderColor: `${pc}40`, color: pc }}>
                 <Icon name="vision" className="w-7 h-7" />
               </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-4">Our Vision</h3>
+              <h3 className="text-2xl font-black text-white uppercase tracking-wide mb-4">{visionLabel}</h3>
               <p className="text-gray-400 leading-relaxed text-lg">{visionText}</p>
             </div>
           </div>
@@ -134,9 +153,9 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
       <section className="bg-white">
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="mb-16">
-            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>Our Values</p>
+            <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>{valuesBadge}</p>
             <h2 className="text-5xl lg:text-7xl font-black text-gray-900 tracking-tighter leading-[0.95] uppercase">
-              What we stand for
+              {valuesHeading}
             </h2>
           </div>
 
@@ -159,9 +178,9 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
         <div className="max-w-7xl mx-auto px-6 py-28">
           <div className="grid lg:grid-cols-2 gap-20 items-center">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: pc }}>Our Approach</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: pc }}>{approachBadge}</p>
               <h2 className="text-4xl lg:text-6xl font-black text-white tracking-tighter leading-[0.95] uppercase mb-10">
-                How we teach
+                {approachHeading}
               </h2>
               <div className="space-y-6">
                 {approachItems.map((item, i) => (
@@ -178,7 +197,7 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
               </div>
             </div>
             <div className="hidden lg:block">
-              <img src={images.aboutApproach} alt="Our approach" className="w-full h-[600px] object-cover" />
+              <img src={approachImage} alt="Our approach" className="w-full h-[600px] object-cover" />
             </div>
           </div>
         </div>
@@ -192,13 +211,18 @@ export default function AboutPage({ school, sitePage }: { school: PublicSchool; 
           <h2 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white tracking-tighter leading-[0.95] uppercase mb-6 whitespace-pre-line">{cta.headline}</h2>
           <p className="text-white/40 text-lg max-w-2xl mx-auto leading-relaxed mb-12">{cta.description}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a href="/contact" className="group inline-flex items-center justify-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all" style={{ backgroundColor: pc, color: '#fff' }}>
-              Schedule a Visit
-              <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </a>
-            <a href="/admissions" className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white uppercase tracking-wider border-2 border-white/30 hover:bg-white/10 transition-all">
-              Apply Now
-            </a>
+            {ctaButtons.map((btn, i) => (
+              btn.variant === 'primary' ? (
+                <a key={i} href={btn.link} className="group inline-flex items-center justify-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all" style={{ backgroundColor: pc, color: '#fff' }}>
+                  {btn.text}
+                  <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </a>
+              ) : (
+                <a key={i} href={btn.link} className="inline-flex items-center justify-center px-10 py-5 text-lg font-bold text-white uppercase tracking-wider border-2 border-white/30 hover:bg-white/10 transition-all">
+                  {btn.text}
+                </a>
+              )
+            ))}
           </div>
         </div>
       </section>

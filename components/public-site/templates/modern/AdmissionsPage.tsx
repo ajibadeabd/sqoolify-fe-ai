@@ -12,6 +12,7 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
   const name = school.name || 'Our School';
 
   const heroSec = getSection(sitePage, 'hero')
+  const textSec = getSection(sitePage, 'text')
   const featuresSec = getSection(sitePage, 'features')
   const ctaSec = getSection(sitePage, 'cta')
 
@@ -23,12 +24,23 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
     description: heroSec?.description || heroSec?.subtitle || _dh.description,
   }
 
-  const admissionSteps = defaultAdmissionSteps
+  const stepsBadge = textSec?.stepsBadge || 'How To Apply'
+  const stepsHeading = textSec?.stepsHeading || 'Five simple steps'
+  const admissionSteps: { step: string; title: string; desc: string; iconName: string }[] = textSec?.admissionSteps || defaultAdmissionSteps
+
+  const includedBadge = featuresSec?.includedBadge || 'What You Get'
+  const includedHeading = featuresSec?.includedHeading || 'Everything included'
   const includedItems = featuresSec?.features?.map((f: any) => ({
     title: f.title, desc: f.description || f.desc || '', iconName: f.iconName || 'curriculum',
   })) || defaultIncludedItems
-  const requiredDocs = defaultRequiredDocs
-  const ageRequirements = defaultAgeRequirements
+
+  const docsBadge = textSec?.docsBadge || 'Required Documents'
+  const docsHeading = textSec?.docsHeading || 'What to prepare'
+  const requiredDocs: string[] = textSec?.requiredDocs || defaultRequiredDocs
+
+  const ageBadge = textSec?.ageBadge || 'Age Requirements'
+  const ageHeading = textSec?.ageHeading || 'Entry levels'
+  const ageRequirements: { level: string; age: string }[] = textSec?.ageRequirements || defaultAgeRequirements
 
   const _dc = admissionsCtaContent(name)
   const cta = {
@@ -36,6 +48,9 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
     headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
     description: ctaSec?.description || _dc.description,
   };
+  const ctaButtons: { text: string; link: string; variant: string }[] = ctaSec?.buttons || [
+    { text: 'Contact Admissions', link: '/contact', variant: 'primary' },
+  ]
 
   return (
     <>
@@ -63,8 +78,8 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
       <section className="px-6 py-24 bg-white">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>How To Apply</p>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">Five simple steps</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{stepsBadge}</p>
+            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">{stepsHeading}</h2>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-5 gap-6">
@@ -86,8 +101,8 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
       <section className="px-6 py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>What You Get</p>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">Everything included</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{includedBadge}</p>
+            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">{includedHeading}</h2>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -110,8 +125,8 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
           <div className="grid lg:grid-cols-2 gap-12">
             {/* Documents */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Required Documents</p>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">What to prepare</h3>
+              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{docsBadge}</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">{docsHeading}</h3>
               <div className="space-y-3">
                 {requiredDocs.map((doc, i) => (
                   <div key={i} className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
@@ -126,8 +141,8 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
 
             {/* Age Requirements */}
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Age Requirements</p>
-              <h3 className="text-2xl font-bold text-gray-900 mb-6">Entry levels</h3>
+              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{ageBadge}</p>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">{ageHeading}</h3>
               <div className="bg-gray-50 rounded-2xl overflow-hidden border border-gray-100">
                 {ageRequirements.map((req, i) => (
                   <div key={i} className={`flex items-center justify-between px-6 py-4 ${i < ageRequirements.length - 1 ? 'border-b border-gray-100' : ''}`}>
@@ -153,10 +168,18 @@ export default function AdmissionsPage({ school, sitePage }: { school: PublicSch
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.15] mb-5 whitespace-pre-line">{cta.headline}</h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed mb-10">{cta.description}</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/contact" className="group inline-flex items-center justify-center gap-2.5 bg-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all" style={{ color: pc }}>
-                  Contact Admissions
-                  <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                </a>
+                {ctaButtons.map((btn, i) => (
+                  btn.variant === 'primary' ? (
+                    <a key={i} href={btn.link} className="group inline-flex items-center justify-center gap-2.5 bg-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all" style={{ color: pc }}>
+                      {btn.text}
+                      <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                    </a>
+                  ) : (
+                    <a key={i} href={btn.link} className="inline-flex items-center justify-center px-8 py-4 rounded-full font-semibold text-lg text-white border border-white/20 hover:bg-white/10 transition-all">
+                      {btn.text}
+                    </a>
+                  )
+                ))}
               </div>
             </div>
           </div>

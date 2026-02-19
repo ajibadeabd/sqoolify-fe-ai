@@ -25,9 +25,11 @@ const ICON_OPTIONS = [
 export default function FeaturesEditor({
   content,
   onChange,
+  pageSlug,
 }: {
   content: FeaturesSectionContent
   onChange: (content: FeaturesSectionContent) => void
+  pageSlug?: string
 }) {
   const [newFeature, setNewFeature] = useState<FeatureItem>({ title: '', description: '', iconName: 'academic' })
 
@@ -53,51 +55,98 @@ export default function FeaturesEditor({
     onChange({ ...content, features: updated })
   }
 
+  const c = content as any
+  const set = (key: string, value: any) => onChange({ ...content, [key]: value } as any)
+
   return (
     <div className="space-y-5">
-      <div className="grid grid-cols-3 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Section Label</label>
-          <input
-            type="text"
-            value={content.label || ''}
-            onChange={(e) => onChange({ ...content, label: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="Why Our School"
-          />
+      {pageSlug === 'about' ? (
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Values Badge</label>
+            <input type="text" value={c.valuesBadge || ''} onChange={(e) => set('valuesBadge', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Core Values" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Values Heading</label>
+            <input type="text" value={c.valuesHeading || ''} onChange={(e) => set('valuesHeading', e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="What We Stand For" />
+          </div>
         </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
-          <input
-            type="text"
-            value={content.title || ''}
-            onChange={(e) => onChange({ ...content, title: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="An education designed for"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">Title Highlight</label>
-          <input
-            type="text"
-            value={content.titleHighlight || ''}
-            onChange={(e) => onChange({ ...content, titleHighlight: e.target.value })}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            placeholder="real-world success"
-          />
-        </div>
-      </div>
+      ) : pageSlug === 'admissions' ? (
+        <>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Included Badge</label>
+              <input type="text" value={c.includedBadge || ''} onChange={(e) => set('includedBadge', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="What's Included" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Included Heading</label>
+              <input type="text" value={c.includedHeading || ''} onChange={(e) => set('includedHeading', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Everything Your Child Needs" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Heading Sub</label>
+              <input type="text" value={c.includedHeadingSub || ''} onChange={(e) => set('includedHeadingSub', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="to thrive" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+              <input type="text" value={c.includedDescription || ''} onChange={(e) => set('includedDescription', e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="We provide comprehensive..." />
+            </div>
+          </div>
+        </>
+      ) : (
+        <>
+          <div className="grid grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Section Label</label>
+              <input
+                type="text"
+                value={content.label || ''}
+                onChange={(e) => onChange({ ...content, label: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Why Our School"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+              <input
+                type="text"
+                value={content.title || ''}
+                onChange={(e) => onChange({ ...content, title: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="An education designed for"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Title Highlight</label>
+              <input
+                type="text"
+                value={content.titleHighlight || ''}
+                onChange={(e) => onChange({ ...content, titleHighlight: e.target.value })}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="real-world success"
+              />
+            </div>
+          </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
-        <textarea
-          value={content.subtitle || ''}
-          onChange={(e) => onChange({ ...content, subtitle: e.target.value })}
-          rows={2}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
-          placeholder="A brief description..."
-        />
-      </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Subtitle</label>
+            <textarea
+              value={content.subtitle || ''}
+              onChange={(e) => onChange({ ...content, subtitle: e.target.value })}
+              rows={2}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
+              placeholder="A brief description..."
+            />
+          </div>
+        </>
+      )}
 
       {/* Existing features */}
       {(content.features || []).length > 0 && (

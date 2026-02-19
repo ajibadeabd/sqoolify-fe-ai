@@ -10,6 +10,7 @@ const FALLBACK_NAV_PAGES = [
   { _id: 'about', title: 'About Us', slug: 'about', isHomePage: false },
   { _id: 'admissions', title: 'Admissions', slug: 'admissions', isHomePage: false },
   { _id: 'faq', title: 'FAQ', slug: 'faq', isHomePage: false },
+  { _id: 'news', title: 'News & Events', slug: 'news', isHomePage: false },
   { _id: 'contact', title: 'Contact', slug: 'contact', isHomePage: false },
 ] as unknown as SitePage[]
 

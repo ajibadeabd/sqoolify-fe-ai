@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 import { useData } from 'vike-react/useData';
 import { SchoolProvider } from '../lib/school-context';
 import { useAuthStore } from '../lib/stores/auth-store';
+import { decryptAuth } from '../lib/crypto-utils';
+import { getSchoolSlug } from '../lib/subdomain';
 import { isSchoolHost } from '../lib/host-utils';
 import type { Data } from './+data';
 
@@ -10,16 +12,30 @@ export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
 
   useEffect(() => {
-    // Clean up auth handoff params from URL after hydration
     const params = new URLSearchParams(window.location.search)
-    if (params.has('_at') || params.has('_rt') || params.has('_u')) {
-      params.delete('_at')
-      params.delete('_rt')
-      params.delete('_u')
+    const encryptedAuth = params.get('_auth')
+
+    if (encryptedAuth) {
+      params.delete('_auth')
       const newSearch = params.toString()
       window.history.replaceState({}, '', window.location.pathname + (newSearch ? `?${newSearch}` : ''))
+
+      const slug = getSchoolSlug()
+      if (slug) {
+        decryptAuth<{ at: string; rt: string; u: any }>(encryptedAuth, slug)
+          .then(({ at, rt, u }) => {
+            const store = useAuthStore.getState()
+            store.setTokens(at, rt)
+            store.updateUser(u)
+          })
+          .catch(() => {})
+          .finally(() => useAuthStore.setState({ isLoading: false }))
+      } else {
+        useAuthStore.setState({ isLoading: false })
+      }
+    } else {
+      useAuthStore.getState()._hydrate()
     }
-    useAuthStore.getState()._hydrate()
   }, [])
 
   if ((slug || (typeof window !== 'undefined' && isSchoolHost(window.location.hostname))) && !school) {

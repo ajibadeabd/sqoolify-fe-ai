@@ -11,27 +11,9 @@ function isBrowser() {
 }
 
 function readLocalStorage() {
-  if (!isBrowser()) return { token: null, refreshToken: null, user: null }
+  if (!isBrowser()) return { token: null, refreshToken: null, user: null, hasAuthHandoff: false }
 
-  // Cross-subdomain auth handoff: consume tokens passed as URL params
-  try {
-    const params = new URLSearchParams(window.location.search)
-    const at = params.get('_at')
-    const rt = params.get('_rt')
-    const u = params.get('_u')
-    if (at && rt && u) {
-      const user = JSON.parse(atob(u))
-      localStorage.setItem(TOKEN_KEY, at)
-      localStorage.setItem(REFRESH_TOKEN_KEY, rt)
-      localStorage.setItem(USER_KEY, JSON.stringify(user))
-      const url = new URL(window.location.href)
-      url.searchParams.delete('_at')
-      url.searchParams.delete('_rt')
-      url.searchParams.delete('_u')
-      window.history.replaceState({}, '', url.toString())
-    }
-  } catch {}
-
+  const hasAuthHandoff = new URLSearchParams(window.location.search).has('_auth')
   const token = localStorage.getItem(TOKEN_KEY)
   const refreshToken = localStorage.getItem(REFRESH_TOKEN_KEY)
   const userStr = localStorage.getItem(USER_KEY)
@@ -39,7 +21,7 @@ function readLocalStorage() {
   if (userStr) {
     try { user = JSON.parse(userStr) } catch { localStorage.removeItem(USER_KEY) }
   }
-  return { token, refreshToken, user }
+  return { token, refreshToken, user, hasAuthHandoff }
 }
 
 interface AuthState {
@@ -70,7 +52,7 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
   user: initial.user,
   token: initial.token,
   refreshToken: initial.refreshToken,
-  isLoading: !!initial.token,
+  isLoading: !!initial.token || initial.hasAuthHandoff,
   pendingUserId: null,
 
   setTokens(accessToken: string, refresh: string) {

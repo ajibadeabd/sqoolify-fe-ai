@@ -4,6 +4,7 @@ import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../../lib/auth-context'
 import { useAuthStore } from '../../../lib/stores/auth-store'
 import { buildSchoolUrl } from '../../../lib/subdomain'
+import { encryptAuth } from '../../../lib/crypto-utils'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1'
 
@@ -119,12 +120,8 @@ export default function RegisterPage() {
       toast.success('Account created successfully!')
       const { token, refreshToken, user } = useAuthStore.getState()
       const schoolUrl = buildSchoolUrl(formData.slug)
-      const params = new URLSearchParams({
-        _at: token!,
-        _rt: refreshToken!,
-        _u: btoa(JSON.stringify(user)),
-      })
-      setRedirectUrl(`${schoolUrl}/dashboard?${params.toString()}`)
+      const encrypted = await encryptAuth({ at: token, rt: refreshToken, u: user }, formData.slug)
+      setRedirectUrl(`${schoolUrl}/dashboard?_auth=${encodeURIComponent(encrypted)}`)
     } catch (err: any) {
       toast.error(err.message || 'Registration failed')
     } finally {

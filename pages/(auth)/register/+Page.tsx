@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
 import { useAuth } from '../../../lib/auth-context'
+import { useAuthStore } from '../../../lib/stores/auth-store'
 import { buildSchoolUrl } from '../../../lib/subdomain'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1'
@@ -116,8 +117,14 @@ export default function RegisterPage() {
       })
 
       toast.success('Account created successfully!')
+      const { token, refreshToken, user } = useAuthStore.getState()
       const schoolUrl = buildSchoolUrl(formData.slug)
-      setRedirectUrl(`${schoolUrl}/dashboard`)
+      const params = new URLSearchParams({
+        _at: token!,
+        _rt: refreshToken!,
+        _u: btoa(JSON.stringify(user)),
+      })
+      setRedirectUrl(`${schoolUrl}/dashboard?${params.toString()}`)
     } catch (err: any) {
       toast.error(err.message || 'Registration failed')
     } finally {
@@ -439,16 +446,9 @@ export default function RegisterPage() {
                 {countdown}
               </span>
             </div>
-            <p className="text-xs text-gray-400 mb-4">
+            <p className="text-xs text-gray-400">
               {formData.slug}.sqoolify.com
             </p>
-            <button
-              onClick={() => { window.location.href = redirectUrl }}
-              className="text-white px-6 py-2.5 rounded-lg font-medium transition text-sm"
-              style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
-            >
-              Go Now
-            </button>
           </div>
         </div>
       )}

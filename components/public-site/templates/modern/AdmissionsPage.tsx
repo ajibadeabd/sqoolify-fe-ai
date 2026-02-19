@@ -1,15 +1,41 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
+import { getSection } from '../shared/section-helpers';
 import {
-  admissionsHeroContent, admissionSteps, includedItems,
-  requiredDocs, ageRequirements, admissionsCtaContent,
+  admissionsHeroContent, admissionSteps as defaultAdmissionSteps,
+  includedItems as defaultIncludedItems, requiredDocs as defaultRequiredDocs,
+  ageRequirements as defaultAgeRequirements, admissionsCtaContent,
 } from '../shared/content';
 
-export default function AdmissionsPage({ school }: { school: PublicSchool }) {
+export default function AdmissionsPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
-  const hero = admissionsHeroContent(name);
-  const cta = admissionsCtaContent(name);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const featuresSec = getSection(sitePage, 'features')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = admissionsHeroContent(name)
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+  }
+
+  const admissionSteps = defaultAdmissionSteps
+  const includedItems = featuresSec?.features?.map((f: any) => ({
+    title: f.title, desc: f.description || f.desc || '', iconName: f.iconName || 'curriculum',
+  })) || defaultIncludedItems
+  const requiredDocs = defaultRequiredDocs
+  const ageRequirements = defaultAgeRequirements
+
+  const _dc = admissionsCtaContent(name)
+  const cta = {
+    badge: ctaSec?.badge || ctaSec?.title || _dc.badge,
+    headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+  };
 
   return (
     <>

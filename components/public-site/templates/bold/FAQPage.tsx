@@ -1,13 +1,41 @@
 import { useState } from 'react';
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
-import { faqCategories, faqs, images } from '../shared/content';
+import { getSection, normalizeFaqs } from '../shared/section-helpers';
+import { faqCategories as defaultFaqCategories, faqs as defaultFaqs } from '../shared/content';
 
-export default function FAQPage({ school }: { school: PublicSchool }) {
+export default function FAQPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const faqSec = getSection(sitePage, 'faq')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const hero = {
+    badge: heroSec?.badge || 'Help Centre',
+    headline: heroSec?.headline || 'Frequently asked',
+    headlineSub: heroSec?.headlineSub || 'questions',
+    description: heroSec?.description || `Find answers about ${name}'s admissions, academics, fees, and campus life.`,
+    heroImage: heroSec?.heroImage || 'https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=1600&q=80',
+  }
+
+  const faqCategories = faqSec?.categories?.map((c: any) => ({
+    name: c.name, iconName: c.iconName || c.icon || 'faqGeneral', color: c.color || pc,
+  })) || defaultFaqCategories
+  const faqs = normalizeFaqs(faqSec?.faqs) || defaultFaqs
+  const allFilterLabel = faqSec?.allFilterLabel || 'All'
+  const emptyText = faqSec?.emptyTitle || 'No questions found in this category.'
+
+  const cta = {
+    headline: ctaSec?.headline || 'Still have questions?',
+    description: ctaSec?.description || "Can't find what you're looking for? Our admissions team is here to help.",
+    buttons: ctaSec?.buttons || [
+      { text: 'Contact Us', link: '/contact', variant: 'primary' },
+    ],
+  }
 
   const filtered = activeCategory === 'All' ? faqs : faqs.filter((f) => f.cat === activeCategory);
 
@@ -15,18 +43,18 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
     <>
       {/* ═══════ HERO — FULL-BLEED ═══════ */}
       <section className="relative min-h-[60vh] flex items-end overflow-hidden">
-        <img src={images.faqHero} alt="FAQ" className="absolute inset-0 w-full h-full object-cover" />
+        <img src={hero.heroImage} alt="FAQ" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-black/65" />
         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
 
         <div className="relative w-full max-w-7xl mx-auto px-6 pb-20 pt-48">
-          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>Help Centre</p>
+          <p className="text-xs font-bold uppercase tracking-[0.2em] mb-5" style={{ color: pc }}>{hero.badge}</p>
           <h1 className="text-6xl sm:text-7xl lg:text-8xl font-black text-white leading-[0.95] tracking-tighter uppercase max-w-4xl">
-            Frequently asked{' '}
-            <span style={{ color: pc }}>questions</span>
+            {hero.headline}{' '}
+            <span style={{ color: pc }}>{hero.headlineSub}</span>
           </h1>
           <p className="text-lg text-white/50 max-w-xl leading-relaxed mt-6">
-            Find answers about {name}'s admissions, academics, fees, and campus life.
+            {hero.description}
           </p>
         </div>
       </section>
@@ -42,9 +70,9 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
               }`}
               style={activeCategory === 'All' ? { backgroundColor: pc } : {}}
             >
-              All
+              {allFilterLabel}
             </button>
-            {faqCategories.map((cat) => (
+            {faqCategories.map((cat: any) => (
               <button
                 key={cat.name}
                 onClick={() => setActiveCategory(cat.name)}
@@ -67,7 +95,7 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
           <div className="space-y-0">
             {filtered.map((faq, i) => {
               const isOpen = openIndex === i;
-              const cat = faqCategories.find((c) => c.name === faq.cat);
+              const cat = faqCategories.find((c: any) => c.name === faq.cat);
               return (
                 <div key={i} className="border-b-2 border-gray-100 last:border-b-0">
                   <button
@@ -97,7 +125,7 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
 
           {filtered.length === 0 && (
             <div className="text-center py-20">
-              <p className="text-gray-400 text-lg">No questions found in this category.</p>
+              <p className="text-gray-400 text-lg">{emptyText}</p>
             </div>
           )}
         </div>
@@ -106,20 +134,22 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
       {/* ═══════ CONTACT CTA ═══════ */}
       <section className="bg-gray-950">
         <div className="max-w-7xl mx-auto px-6 py-28 text-center">
-          <h3 className="text-4xl lg:text-6xl font-black text-white tracking-tighter leading-[0.95] uppercase mb-6">
-            Still have questions?
+          <h3 className="text-4xl lg:text-6xl font-black text-white tracking-tighter leading-[0.95] uppercase mb-6 whitespace-pre-line">
+            {cta.headline}
           </h3>
           <p className="text-gray-400 text-lg max-w-lg mx-auto mb-10">
-            Can't find what you're looking for? Our admissions team is here to help.
+            {cta.description}
           </p>
-          <a
-            href="/contact"
-            className="group inline-flex items-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all"
-            style={{ backgroundColor: pc, color: '#fff' }}
-          >
-            Contact Us
-            <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </a>
+          {cta.buttons[0] && (
+            <a
+              href={cta.buttons[0].link}
+              className="group inline-flex items-center gap-3 px-10 py-5 text-lg font-bold uppercase tracking-wider hover:scale-[1.02] transition-all"
+              style={{ backgroundColor: pc, color: '#fff' }}
+            >
+              {cta.buttons[0].text}
+              <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </a>
+          )}
         </div>
       </section>
     </>

@@ -1,11 +1,13 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 import { navigate } from 'vike/client/router'
 import { sitePageService, siteConfigService, schoolService } from '../../../lib/api-services'
-import type { SitePage, SiteConfig, School } from '../../../lib/types'
+import type { SitePage, SiteConfig, School, PublicSchool } from '../../../lib/types'
 import { useAuth } from '../../../lib/auth-context'
 import Button from '../../../components/ui/Button'
 import Breadcrumbs from '../../../components/layout/Breadcrumbs'
+import { getTemplatePage, getTemplateHome } from '../../../components/public-site/templates'
+import PublicSiteLayout from '../../../components/public-site/PublicSiteLayout'
 
 const SECTION_ICONS: Record<string, string> = {
   hero: '🖼', text: '📝', features: '✨', gallery: '📸', contact: '📞', cta: '🚀',
@@ -89,22 +91,22 @@ export default function SiteBuilderPage() {
               Settings
             </span>
           </Button>
-          <Button variant="outline" size="sm" onClick={() => navigate('/site-builder/templates')}>
+          {/* <Button variant="outline" size="sm" onClick={() => navigate('/site-builder/templates')}>
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
               </svg>
               Templates
             </span>
-          </Button>
-          <Button size="sm" onClick={() => navigate('/site-builder/new')}>
+          </Button> */}
+          {/* <Button size="sm" onClick={() => navigate('/site-builder/new')}>
             <span className="flex items-center gap-1.5">
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
               </svg>
               New Page
             </span>
-          </Button>
+          </Button> */}
         </div>
       </div>
 
@@ -118,7 +120,7 @@ export default function SiteBuilderPage() {
           </div>
           <h3 className="text-base font-semibold text-gray-900">No pages yet</h3>
           <p className="mt-1 text-sm text-gray-500 max-w-sm mx-auto">Create your first page to start building your school's public website.</p>
-          <div className="mt-5">
+          {/* <div className="mt-5">
             <Button size="sm" onClick={() => navigate('/site-builder/new')}>
               <span className="flex items-center gap-1.5">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -127,7 +129,7 @@ export default function SiteBuilderPage() {
                 Create Your First Page
               </span>
             </Button>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div className="grid gap-3">
@@ -200,9 +202,113 @@ export default function SiteBuilderPage() {
   )
 }
 
+const PREVIEW_PAGES = [
+  { key: 'home', label: 'Home' },
+  { key: 'about', label: 'About' },
+  { key: 'faq', label: 'FAQ' },
+  { key: 'admissions', label: 'Admissions' },
+  { key: 'contact', label: 'Contact' },
+] as const
+
+function TemplatePreviewModal({
+  templateId,
+  templateName,
+  school,
+  onClose,
+}: {
+  templateId: string
+  templateName: string
+  school: School
+  onClose: () => void
+}) {
+  const [activePage, setActivePage] = useState<string>('home')
+  const [sidebarWidth, setSidebarWidth] = useState(64)
+  const scrollRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    const sidebar = document.querySelector('aside')
+    if (!sidebar) return
+    setSidebarWidth(sidebar.getBoundingClientRect().width)
+    const observer = new ResizeObserver((entries) => {
+      setSidebarWidth(entries[0].contentRect.width)
+    })
+    observer.observe(sidebar)
+    return () => observer.disconnect()
+  }, [])
+
+  useEffect(() => {
+    scrollRef.current?.scrollTo(0, 0)
+  }, [activePage])
+
+  const previewSchool = useMemo<PublicSchool>(() => ({
+    _id: school._id,
+    name: school.name,
+    slug: (school as any).slug || '',
+    logo: school.schoolSetup?.logo,
+    phone: school.schoolSetup?.schoolPhoneNumber,
+    email: school.schoolSetup?.schoolEmailAddress,
+    address: school.schoolSetup?.schoolAddress,
+    siteConfig: { ...school.siteConfig, template: templateId as any },
+  }), [school, templateId])
+
+  const PageComponent = activePage === 'home'
+    ? getTemplateHome(previewSchool)
+    : getTemplatePage(previewSchool, activePage)
+
+  return (
+    <div
+      className="fixed inset-y-0 right-0 bg-black/70 flex items-center justify-center z-100 p-4 transition-all duration-300"
+      style={{ left: sidebarWidth }}
+      onClick={onClose}
+    >
+      <div className="bg-white rounded-xl w-full h-full overflow-hidden shadow-2xl flex flex-col" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between shrink-0">
+          <div>
+            <h3 className="text-base font-bold text-gray-900">{templateName} Template</h3>
+            <p className="text-xs text-gray-500">Preview with your school's data</p>
+          </div>
+          <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        {/* Page tabs */}
+        <div className="px-5 flex gap-1 shrink-0 border-b border-gray-100 bg-gray-50/50">
+          {PREVIEW_PAGES.map(p => (
+            <button
+              key={p.key}
+              onClick={() => setActivePage(p.key)}
+              className={`px-4 py-2.5 text-sm font-medium transition-colors ${
+                activePage === p.key
+                  ? 'text-blue-600 border-b-2 border-blue-600 bg-white -mb-px'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
+        {/* Scaled preview */}
+        <div ref={scrollRef} className="flex-1 overflow-y-auto overflow-x-hidden bg-gray-100">
+          <div style={{ zoom: 0.5 }}>
+            <PublicSiteLayout school={previewSchool}>
+              <PageComponent school={previewSchool} />
+            </PublicSiteLayout>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose: () => void; onSave: () => void }) {
   const [config, setConfig] = useState<SiteConfig>(school.siteConfig || {})
   const [saving, setSaving] = useState(false)
+  const [previewTemplate, setPreviewTemplate] = useState<{ id: string; name: string } | null>(null)
 
   const handleSave = async () => {
     setSaving(true)
@@ -227,6 +333,7 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
   ] as const
 
   return (
+    <>
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={onClose}>
       <div className="bg-white rounded-xl max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className="p-6 border-b border-gray-100">
@@ -245,19 +352,30 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
               ]).map((t) => {
                 const isActive = (config.template || 'classic') === t.id
                 return (
-                  <button
+                  <div
                     key={t.id}
-                    type="button"
-                    onClick={() => setConfig({ ...config, template: t.id })}
                     className={`relative rounded-xl border-2 p-3 text-left transition-all ${
                       isActive
                         ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50/30'
                         : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >
-                    <div className={`h-16 rounded-lg bg-linear-to-br ${t.gradient} mb-2.5`} />
-                    <p className="text-sm font-semibold text-gray-900">{t.name}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
+                    <button
+                      type="button"
+                      onClick={() => setConfig({ ...config, template: t.id })}
+                      className="w-full text-left"
+                    >
+                      <div className={`h-16 rounded-lg bg-linear-to-br ${t.gradient} mb-2.5`} />
+                      <p className="text-sm font-semibold text-gray-900">{t.name}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t.desc}</p>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTemplate({ id: t.id, name: t.name })}
+                      className="mt-2 w-full text-center text-xs font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg py-1.5 transition-colors"
+                    >
+                      Preview
+                    </button>
                     {isActive && (
                       <div className="absolute top-2 right-2 w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
                         <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +383,7 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
                         </svg>
                       </div>
                     )}
-                  </button>
+                  </div>
                 )
               })}
             </div>
@@ -330,5 +448,14 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
         </div>
       </div>
     </div>
+    {previewTemplate && (
+      <TemplatePreviewModal
+        templateId={previewTemplate.id}
+        templateName={previewTemplate.name}
+        school={school}
+        onClose={() => setPreviewTemplate(null)}
+      />
+    )}
+    </>
   )
 }

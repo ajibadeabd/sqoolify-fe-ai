@@ -1,8 +1,31 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
+import { getSection } from '../shared/section-helpers';
+import {
+  aboutHeroContent, aboutHeroStats as defaultAboutHeroStats,
+  aboutCtaContent,
+} from '../shared/content';
 
-export default function AboutPage({ school }: { school: PublicSchool }) {
+export default function AboutPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#1E3A5F';
   const name = school.name || 'Our School';
+
+  const heroSec = getSection(sitePage, 'hero')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = aboutHeroContent(name)
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+  }
+  const heroStats = heroSec?.stats || defaultAboutHeroStats
+
+  const _dc = aboutCtaContent(name)
+  const cta = {
+    headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+  }
 
   return (
     <>
@@ -24,26 +47,21 @@ export default function AboutPage({ school }: { school: PublicSchool }) {
           <div className="grid lg:grid-cols-2 gap-12 items-end">
             <div>
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 mb-8">
-                <span className="text-white/90 text-sm font-medium tracking-wide">Est. 2005</span>
+                <span className="text-white/90 text-sm font-medium tracking-wide">{hero.badge}</span>
               </div>
               <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6">
-                The story
-                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white/60 to-white">behind {name}</span>
+                {hero.headline}
+                <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white/60 to-white">{hero.headlineSub}</span>
               </h1>
               <p className="text-xl text-white/50 max-w-lg leading-relaxed">
-                Two decades of shaping futures, building character, and proving that every child can achieve extraordinary things.
+                {hero.description}
               </p>
             </div>
 
             {/* Floating stats card */}
             <div className="bg-white/10 backdrop-blur-xl border border-white/15 rounded-3xl p-8 lg:p-10">
               <div className="grid grid-cols-2 gap-6">
-                {[
-                  { val: '20+', label: 'Years' },
-                  { val: '5,000+', label: 'Alumni' },
-                  { val: '98%', label: 'Pass Rate' },
-                  { val: '50+', label: 'Faculty' },
-                ].map((s) => (
+                {heroStats.map((s: any) => (
                   <div key={s.label}>
                     <div className="text-3xl lg:text-4xl font-black text-white">{s.val}</div>
                     <div className="text-sm text-white/40 font-medium mt-1">{s.label}</div>
@@ -290,11 +308,11 @@ export default function AboutPage({ school }: { school: PublicSchool }) {
           <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.05] bg-white" />
         </div>
         <div className="relative max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            Come see what makes<br />us different
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6 whitespace-pre-line">
+            {cta.headline}
           </h2>
           <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed mb-12">
-            Words and photos can only say so much. Visit our campus, meet our teachers, watch our students in action — and experience the {name} difference for yourself.
+            {cta.description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a

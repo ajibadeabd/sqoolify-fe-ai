@@ -1,16 +1,87 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
+import { getSection } from '../shared/section-helpers';
 import {
-  heroStats, pillars, heroContent, campusImages, aboutStripStats,
-  aboutStripContent, featuredTestimonial, testimonials, homeCtaContent, images,
+  heroStats as defaultHeroStats, pillars as defaultPillars, heroContent, campusImages, aboutStripStats,
+  aboutStripContent, featuredTestimonial as defaultFeaturedTestimonial,
+  testimonials as defaultTestimonials, homeCtaContent, images,
 } from '../shared/content';
 
-export default function HomePage({ school }: { school: PublicSchool }) {
+export default function HomePage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
-  const hero = heroContent(name);
-  const about = aboutStripContent(name);
-  const cta = homeCtaContent(name);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const featuresSec = getSection(sitePage, 'features')
+  const gallerySec = getSection(sitePage, 'gallery')
+  const textSec = getSection(sitePage, 'text')
+  const testimonialsSec = getSection(sitePage, 'testimonials')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = heroContent(name)
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+    stats: heroSec?.stats || defaultHeroStats,
+    buttons: heroSec?.buttons || [
+      { text: 'Start Application', link: '/admissions', variant: 'primary' },
+      { text: 'Our Story', link: '/about', variant: 'secondary' },
+    ],
+  }
+
+  const features = {
+    label: featuresSec?.label || `Why ${name}`,
+    title: featuresSec?.title || 'An education designed for excellence',
+    subtitle: featuresSec?.subtitle || 'We go beyond textbooks. Every programme develops critical thinkers, confident communicators, and compassionate leaders.',
+    items: featuresSec?.features?.map((f: any) => ({
+      title: f.title, desc: f.description || f.desc || '', iconName: f.iconName || 'academic',
+    })) || defaultPillars,
+  }
+
+  const gallery = {
+    label: gallerySec?.label || 'Campus Life',
+    title: gallerySec?.title || 'More than a school',
+    images: gallerySec?.images || {
+      main: campusImages.main,
+      items: [campusImages.library, campusImages.computerLab, campusImages.sports],
+    },
+    statCard: gallerySec?.statCard || { val: '15+', label: 'Clubs & Activities' },
+  }
+
+  const about = {
+    label: textSec?.label || 'Our Story',
+    title: textSec?.title || 'Building a legacy of excellence',
+    para1: textSec?.para1 || textSec?.content || aboutStripContent(name).para1,
+    para2: textSec?.para2 || aboutStripContent(name).para2,
+    stats: textSec?.stats || aboutStripStats,
+    link: textSec?.link || { text: 'Read our full story', href: '/about' },
+    floatingCard: textSec?.floatingCard || { val: 'A+', label: 'Average Grade' },
+  }
+
+  const _ft = testimonialsSec?.testimonials?.[0]
+  const featuredTestimonial = _ft
+    ? { name: _ft.name, role: _ft.role || '', initials: _ft.initials || _ft.name?.split(' ').map((w: string) => w[0]).join('') || '', quote: _ft.quote || _ft.content || '' }
+    : defaultFeaturedTestimonial
+  const tMeta = {
+    label: testimonialsSec?.label || 'Testimonials',
+    title: testimonialsSec?.title || 'Trusted by families',
+  }
+  const testimonials = testimonialsSec?.testimonials?.slice(1).map((t: any) => ({
+    name: t.name, role: t.role || '', initials: t.initials || t.name?.split(' ').map((w: string) => w[0]).join('') || '', quote: t.quote || t.content || '',
+  })) || defaultTestimonials
+
+  const _dc = homeCtaContent(name)
+  const cta = {
+    badge: ctaSec?.badge || ctaSec?.title || _dc.badge,
+    headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+    buttons: ctaSec?.buttons || [
+      { text: 'Begin Application', link: '/admissions', variant: 'primary' },
+      { text: 'Talk to Admissions', link: '/contact', variant: 'secondary' },
+    ],
+  };
 
   return (
     <>
@@ -38,24 +109,28 @@ export default function HomePage({ school }: { school: PublicSchool }) {
           </p>
 
           <div className="flex flex-wrap gap-4 justify-center mb-20">
-            <a
-              href="/admissions"
-              className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-full text-white font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
-              style={{ backgroundColor: pc }}
-            >
-              Start Application
-              <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-            </a>
-            <a
-              href="/about"
-              className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-lg text-gray-700 border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
-            >
-              Our Story
-            </a>
+            {hero.buttons[0] && (
+              <a
+                href={hero.buttons[0].link}
+                className="group inline-flex items-center gap-2.5 px-8 py-4 rounded-full text-white font-semibold text-lg shadow-lg hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
+                style={{ backgroundColor: pc }}
+              >
+                {hero.buttons[0].text}
+                <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            )}
+            {hero.buttons[1] && (
+              <a
+                href={hero.buttons[1].link}
+                className="inline-flex items-center gap-2 px-8 py-4 rounded-full font-semibold text-lg text-gray-700 border border-gray-200 bg-white hover:bg-gray-50 hover:border-gray-300 transition-all duration-300"
+              >
+                {hero.buttons[1].text}
+              </a>
+            )}
           </div>
 
           <div className="flex flex-wrap justify-center gap-12 lg:gap-20">
-            {heroStats.map((s) => (
+            {hero.stats.map((s: any) => (
               <div key={s.label} className="text-center">
                 <div className="text-3xl font-bold" style={{ color: pc }}>{s.val}</div>
                 <div className="text-sm text-gray-400 font-medium mt-1">{s.label}</div>
@@ -69,17 +144,17 @@ export default function HomePage({ school }: { school: PublicSchool }) {
       <section className="px-6 py-24 bg-white">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Why {name}</p>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{features.label}</p>
             <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight mb-5">
-              An education designed for excellence
+              {features.title}
             </h2>
             <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
-              We go beyond textbooks. Every programme develops critical thinkers, confident communicators, and compassionate leaders.
+              {features.subtitle}
             </p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {pillars.map((p) => (
+            {features.items.map((p: any) => (
               <div key={p.title} className="bg-white rounded-2xl p-8 border border-gray-100 hover:border-gray-200 hover:shadow-lg transition-all duration-300">
                 <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: `${pc}10`, color: pc }}>
                   <Icon name={p.iconName} className="w-6 h-6" />
@@ -96,20 +171,20 @@ export default function HomePage({ school }: { school: PublicSchool }) {
       <section className="px-6 py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Campus Life</p>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">More than a school</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{gallery.label}</p>
+            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">{gallery.title}</h2>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 h-[400px] lg:h-[480px]">
             <div className="col-span-2 row-span-2 rounded-2xl overflow-hidden relative group">
-              <img src={campusImages.main.src} alt={campusImages.main.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+              <img src={gallery.images.main.src} alt={gallery.images.main.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
               <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
               <div className="absolute bottom-5 left-5">
-                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-2" style={{ backgroundColor: pc }}>{campusImages.main.tag}</span>
-                <h3 className="text-lg font-bold text-white">{campusImages.main.label}</h3>
+                <span className="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-2" style={{ backgroundColor: pc }}>{gallery.images.main.tag}</span>
+                <h3 className="text-lg font-bold text-white">{gallery.images.main.label}</h3>
               </div>
             </div>
-            {[campusImages.library, campusImages.computerLab, campusImages.sports].map((img) => (
+            {gallery.images.items.map((img: any) => (
               <div key={img.alt} className="rounded-2xl overflow-hidden relative group">
                 <img src={img.src} alt={img.alt} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent" />
@@ -117,8 +192,8 @@ export default function HomePage({ school }: { school: PublicSchool }) {
               </div>
             ))}
             <div className="rounded-2xl flex flex-col items-center justify-center" style={{ backgroundColor: `${pc}08`, border: `1px solid ${pc}20` }}>
-              <div className="text-3xl font-bold" style={{ color: pc }}>15+</div>
-              <div className="text-xs text-gray-500 font-medium mt-1">Clubs & Activities</div>
+              <div className="text-3xl font-bold" style={{ color: pc }}>{gallery.statCard.val}</div>
+              <div className="text-xs text-gray-500 font-medium mt-1">{gallery.statCard.label}</div>
             </div>
           </div>
         </div>
@@ -133,8 +208,8 @@ export default function HomePage({ school }: { school: PublicSchool }) {
                 <img src={images.aboutStrip} alt="Students" className="w-full h-[420px] object-cover" />
               </div>
               <div className="absolute -bottom-6 -right-6 bg-white rounded-xl shadow-lg border border-gray-100 p-5 hidden sm:block">
-                <div className="text-2xl font-bold" style={{ color: pc }}>A+</div>
-                <div className="text-xs text-gray-400 mt-0.5">Average Grade</div>
+                <div className="text-2xl font-bold" style={{ color: pc }}>{about.floatingCard.val}</div>
+                <div className="text-xs text-gray-400 mt-0.5">{about.floatingCard.label}</div>
                 <div className="flex gap-0.5 mt-2">
                   {[1,2,3,4,5].map((s) => (
                     <svg key={s} className="w-3.5 h-3.5 text-amber-400" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 0 0 .95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 0 0-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 0 0-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 0 0-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 0 0 .951-.69l1.07-3.292z" /></svg>
@@ -144,13 +219,13 @@ export default function HomePage({ school }: { school: PublicSchool }) {
             </div>
 
             <div>
-              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Our Story</p>
-              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight mb-6">Building a legacy of excellence</h2>
+              <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{about.label}</p>
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 tracking-tight mb-6">{about.title}</h2>
               <p className="text-gray-500 text-lg leading-relaxed mb-4">{about.para1}</p>
               <p className="text-gray-400 leading-relaxed mb-8">{about.para2}</p>
 
               <div className="flex gap-8">
-                {aboutStripStats.map((s) => (
+                {about.stats.map((s: any) => (
                   <div key={s.label}>
                     <div className="text-2xl font-bold" style={{ color: pc }}>{s.val}</div>
                     <div className="text-xs text-gray-400 font-medium mt-0.5">{s.label}</div>
@@ -158,8 +233,8 @@ export default function HomePage({ school }: { school: PublicSchool }) {
                 ))}
               </div>
 
-              <a href="/about" className="group inline-flex items-center gap-2 mt-8 font-semibold" style={{ color: pc }}>
-                Read our full story
+              <a href={about.link.href} className="group inline-flex items-center gap-2 mt-8 font-semibold" style={{ color: pc }}>
+                {about.link.text}
                 <Icon name="arrowRight" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </a>
             </div>
@@ -171,8 +246,8 @@ export default function HomePage({ school }: { school: PublicSchool }) {
       <section className="px-6 py-24 bg-gray-50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-14">
-            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>Testimonials</p>
-            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">Trusted by families</h2>
+            <p className="text-sm font-semibold uppercase tracking-widest mb-4" style={{ color: pc }}>{tMeta.label}</p>
+            <h2 className="text-3xl lg:text-5xl font-bold text-gray-900 tracking-tight">{tMeta.title}</h2>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-6">
@@ -189,7 +264,7 @@ export default function HomePage({ school }: { school: PublicSchool }) {
             </div>
 
             <div className="grid gap-4">
-              {testimonials.slice(0, 2).map((t, i) => (
+              {testimonials.slice(0, 2).map((t: any, i: number) => (
                 <div key={i} className="bg-white rounded-2xl p-6 border border-gray-100">
                   <div className="flex gap-0.5 mb-3">
                     {[1,2,3,4,5].map((s) => (
@@ -223,13 +298,17 @@ export default function HomePage({ school }: { school: PublicSchool }) {
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white tracking-tight leading-[1.15] mb-5 whitespace-pre-line">{cta.headline}</h2>
               <p className="text-white/50 text-lg max-w-xl mx-auto leading-relaxed mb-10">{cta.description}</p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <a href="/admissions" className="group inline-flex items-center justify-center gap-2.5 bg-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all" style={{ color: pc }}>
-                  Begin Application
-                  <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                </a>
-                <a href="/contact" className="inline-flex items-center justify-center px-8 py-4 rounded-full font-semibold text-lg text-white border border-white/20 hover:bg-white/10 transition-all">
-                  Talk to Admissions
-                </a>
+                {cta.buttons[0] && (
+                  <a href={cta.buttons[0].link} className="group inline-flex items-center justify-center gap-2.5 bg-white px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition-all" style={{ color: pc }}>
+                    {cta.buttons[0].text}
+                    <Icon name="arrowRight" className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                  </a>
+                )}
+                {cta.buttons[1] && (
+                  <a href={cta.buttons[1].link} className="inline-flex items-center justify-center px-8 py-4 rounded-full font-semibold text-lg text-white border border-white/20 hover:bg-white/10 transition-all">
+                    {cta.buttons[1].text}
+                  </a>
+                )}
               </div>
             </div>
           </div>

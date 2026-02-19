@@ -1,4 +1,4 @@
-import type { PublicSchool } from '../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../lib/types';
 import type { ComponentType } from 'react';
 
 import ClassicHome from './classic/HomePage';
@@ -19,8 +19,10 @@ import BoldFAQ from './bold/FAQPage';
 import BoldAdmissions from './bold/AdmissionsPage';
 import BoldContact from './bold/ContactPage';
 
-type PageComponent = ComponentType<{ school: PublicSchool }>;
+type PageComponent = ComponentType<{ school: PublicSchool; sitePage?: SitePage }>;
 type TemplateName = 'classic' | 'modern' | 'bold';
+
+export const TEMPLATE_SLUGS = ['home', 'about', 'faq', 'admissions', 'contact'];
 
 const templates: Record<TemplateName, Record<string, PageComponent>> = {
   classic: {
@@ -46,7 +48,6 @@ const templates: Record<TemplateName, Record<string, PageComponent>> = {
   },
 };
 
-export const STATIC_SLUGS = ['about', 'faq', 'admissions', 'contact'];
 
 export function getTemplatePage(school: PublicSchool, page: string): PageComponent {
   const templateName = (school.siteConfig?.template || 'classic') as TemplateName;

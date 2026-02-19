@@ -1,15 +1,45 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
+import { getSection } from '../shared/section-helpers';
 import {
-  aboutHeroStats, aboutHeroContent, timeline, missionText, visionText,
-  coreValues, approachItems, aboutCtaContent, images,
+  aboutHeroStats as defaultAboutHeroStats, aboutHeroContent, timeline as defaultTimeline,
+  missionText as defaultMissionText, visionText as defaultVisionText,
+  coreValues as defaultCoreValues, approachItems as defaultApproachItems,
+  aboutCtaContent, images,
 } from '../shared/content';
 
-export default function AboutPage({ school }: { school: PublicSchool }) {
+export default function AboutPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
-  const hero = aboutHeroContent(name);
-  const cta = aboutCtaContent(name);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const featuresSec = getSection(sitePage, 'features')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = aboutHeroContent(name)
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || heroSec?.subtitle || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+  }
+  const aboutHeroStats = heroSec?.stats || defaultAboutHeroStats
+
+  const timeline = defaultTimeline
+  const missionText = defaultMissionText
+  const visionText = defaultVisionText
+
+  const coreValues = featuresSec?.features?.map((f: any) => ({
+    title: f.title, desc: f.description || f.desc || '', iconName: f.iconName || 'excellence',
+  })) || defaultCoreValues
+
+  const approachItems = defaultApproachItems
+
+  const _dc = aboutCtaContent(name)
+  const cta = {
+    headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+  };
 
   return (
     <>

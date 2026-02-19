@@ -6,7 +6,7 @@ import type { PublicSchool, SitePage } from '../../lib/types'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
 import { getTemplateHome } from '../../components/public-site/templates'
 
-const STATIC_NAV_PAGES = [
+const FALLBACK_NAV_PAGES = [
   { _id: 'about', title: 'About Us', slug: 'about', isHomePage: false },
   { _id: 'admissions', title: 'Admissions', slug: 'admissions', isHomePage: false },
   { _id: 'faq', title: 'FAQ', slug: 'faq', isHomePage: false },
@@ -125,12 +125,13 @@ export default function HomePage() {
   const { homePage, navPages } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
 
-  // Subdomain → render static home page
+  // Subdomain → render school home page with DB content
   if (school) {
+    const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES
     const SchoolHomePage = getTemplateHome(school as PublicSchool)
     return (
-      <PublicSiteLayout school={school as PublicSchool} navPages={STATIC_NAV_PAGES}>
-        <SchoolHomePage school={school as PublicSchool} />
+      <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
+        <SchoolHomePage school={school as PublicSchool} sitePage={homePage || undefined} />
       </PublicSiteLayout>
     )
   }

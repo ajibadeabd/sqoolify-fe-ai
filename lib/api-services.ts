@@ -717,27 +717,27 @@ export const sitePageService = {
   getById: (id: string) =>
     api.get<ApiResponse<SitePage>>(`/site-pages/${id}`, authOptions()),
 
-  create: (data: Partial<SitePage>) =>
-    api.post<ApiResponse<SitePage>>('/site-pages', data, authOptions()),
+  // create: (data: Partial<SitePage>) =>
+  //   api.post<ApiResponse<SitePage>>('/site-pages', data, authOptions()),
 
   update: (id: string, data: Partial<SitePage>) =>
     api.patch<ApiResponse<SitePage>>(`/site-pages/${id}`, data, authOptions()),
 
-  delete: (id: string) =>
-    api.delete<ApiResponse<void>>(`/site-pages/${id}`, authOptions()),
+  // delete: (id: string) =>
+  //   api.delete<ApiResponse<void>>(`/site-pages/${id}`, authOptions()),
 };
 
 // ============ PAGE TEMPLATES ============
-export const pageTemplateService = {
-  getAll: (category?: string) =>
-    api.get<ApiResponse<PageTemplate[]>>(`/page-templates${buildQuery({ category })}`, authOptions()),
-
-  getById: (id: string) =>
-    api.get<ApiResponse<PageTemplate>>(`/page-templates/${id}`, authOptions()),
-
-  import: (id: string) =>
-    api.post<ApiResponse<SitePage>>(`/page-templates/${id}/import`, {}, authOptions()),
-};
+// export const pageTemplateService = {
+//   getAll: (category?: string) =>
+//     api.get<ApiResponse<PageTemplate[]>>(`/page-templates${buildQuery({ category })}`, authOptions()),
+//
+//   getById: (id: string) =>
+//     api.get<ApiResponse<PageTemplate>>(`/page-templates/${id}`, authOptions()),
+//
+//   import: (id: string) =>
+//     api.post<ApiResponse<SitePage>>(`/page-templates/${id}/import`, {}, authOptions()),
+// };
 
 // ============ SITE CONFIG ============
 export const siteConfigService = {

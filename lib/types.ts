@@ -97,40 +97,63 @@ export enum SectionType {
 }
 
 export interface HeroSectionContent {
-  title: string;
+  badge?: string;
+  headline?: string;
+  headlineSub?: string;
+  description?: string;
+  title?: string;
   subtitle?: string;
-  backgroundImage?: string;
-  ctaText?: string;
-  ctaLink?: string;
+  stats?: { val: string; label: string }[];
+  buttons?: { text: string; link: string; variant: 'primary' | 'secondary' }[];
 }
 
 export interface TextSectionContent {
+  label?: string;
   title?: string;
-  content: string;
+  titleHighlight?: string;
+  content?: string;
+  para1?: string;
+  para2?: string;
+  stats?: { val: string; label: string }[];
+  link?: { text: string; href: string };
+  floatingCard?: { val: string; label: string };
   alignment?: 'left' | 'center' | 'right';
 }
 
 export interface FeatureItem {
   icon?: string;
+  iconName?: string;
   title: string;
   description: string;
 }
 
 export interface FeaturesSectionContent {
+  label?: string;
   title?: string;
+  titleHighlight?: string;
   subtitle?: string;
   features: FeatureItem[];
   columns?: number;
 }
 
 export interface GalleryImage {
-  url: string;
-  caption?: string;
+  src: string;
+  alt?: string;
+  label?: string;
+  tag?: string;
+  tagDesc?: string;
 }
 
 export interface GallerySectionContent {
+  label?: string;
   title?: string;
-  images: GalleryImage[];
+  titleSub?: string;
+  subtitle?: string;
+  images?: {
+    main?: GalleryImage;
+    items?: GalleryImage[];
+  };
+  statCard?: { val: string; label: string };
 }
 
 export interface ContactSectionContent {
@@ -143,25 +166,24 @@ export interface ContactSectionContent {
 }
 
 export interface CTASectionContent {
-  title: string;
+  badge?: string;
+  headline?: string;
+  title?: string;
   description?: string;
-  primaryButtonText?: string;
-  primaryButtonLink?: string;
-  secondaryButtonText?: string;
-  secondaryButtonLink?: string;
-  backgroundColor?: string;
+  buttons?: { text: string; link: string; variant: 'primary' | 'secondary' }[];
 }
 
 export interface TestimonialItem {
   name: string;
   role?: string;
+  initials?: string;
   quote: string;
-  image?: string;
 }
 
 export interface TestimonialsSectionContent {
+  label?: string;
   title?: string;
-  subtitle?: string;
+  titleSub?: string;
   testimonials: TestimonialItem[];
 }
 
@@ -193,7 +215,7 @@ export interface TeamSectionContent {
 
 export interface FAQCategory {
   name: string;
-  icon?: string;
+  iconName?: string;
   color?: string;
 }
 
@@ -205,10 +227,14 @@ export interface FAQItem {
 
 export interface FAQSectionContent {
   title?: string;
-  subtitle?: string;
   faqs: FAQItem[];
   categories?: FAQCategory[];
-  backgroundImage?: string;
+  allFilterLabel?: string;
+  browseAllHeading?: string;
+  countSuffix?: string;
+  emptyTitle?: string;
+  emptyDescription?: string;
+  emptyButton?: string;
 }
 
 export type SectionContent =

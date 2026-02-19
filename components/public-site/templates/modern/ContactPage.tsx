@@ -1,12 +1,35 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
-import { contactHeroContent, officeHours, visitReasons, contactCtaContent } from '../shared/content';
+import { getSection } from '../shared/section-helpers';
+import {
+  contactHeroContent, officeHours as defaultOfficeHours,
+  visitReasons as defaultVisitReasons, contactCtaContent,
+} from '../shared/content';
 
-export default function ContactPage({ school }: { school: PublicSchool }) {
+export default function ContactPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
-  const hero = contactHeroContent();
-  const cta = contactCtaContent(name);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = contactHeroContent()
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+  }
+
+  const officeHours = defaultOfficeHours
+  const visitReasons = defaultVisitReasons
+
+  const _dc = contactCtaContent(name)
+  const cta = {
+    badge: ctaSec?.badge || ctaSec?.title || _dc.badge,
+    headline: ctaSec?.headline || ctaSec?.title || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+  };
 
   const contactInfo = [
     ...(school.address ? [{ icon: 'location', label: 'Visit Us', value: school.address }] : []),

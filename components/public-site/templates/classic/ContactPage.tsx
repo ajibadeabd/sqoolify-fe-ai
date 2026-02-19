@@ -1,9 +1,29 @@
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
+import { getSection } from '../shared/section-helpers';
+import { contactHeroContent, contactCtaContent } from '../shared/content';
 
-export default function ContactPage({ school }: { school: PublicSchool }) {
+export default function ContactPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#1E3A5F';
   const name = school.name || 'Our School';
   const hasContact = school.address || school.phone || school.email;
+
+  const heroSec = getSection(sitePage, 'hero')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const _dh = contactHeroContent()
+  const hero = {
+    badge: heroSec?.badge || heroSec?.title || _dh.badge,
+    headline: heroSec?.headline || _dh.headline,
+    headlineSub: heroSec?.headlineSub || _dh.headlineSub,
+    description: heroSec?.description || heroSec?.subtitle || _dh.description,
+  }
+
+  const _dc = contactCtaContent(name)
+  const cta = {
+    badge: ctaSec?.badge || ctaSec?.title || _dc.badge,
+    headline: ctaSec?.headline || _dc.headline,
+    description: ctaSec?.description || _dc.description,
+  }
 
   return (
     <>
@@ -25,14 +45,14 @@ export default function ContactPage({ school }: { school: PublicSchool }) {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 mb-8">
               <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/90 text-sm font-medium tracking-wide">We'd love to hear from you</span>
+              <span className="text-white/90 text-sm font-medium tracking-wide">{hero.badge}</span>
             </div>
             <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6">
-              Get in
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white/60 to-white">touch with us</span>
+              {hero.headline}
+              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white/60 to-white">{hero.headlineSub}</span>
             </h1>
             <p className="text-xl text-white/50 max-w-lg leading-relaxed mb-10">
-              Have a question about admissions, fees, or our programmes? Our team is here to help you every step of the way.
+              {hero.description}
             </p>
             {school.phone && (
               <a
@@ -248,13 +268,13 @@ export default function ContactPage({ school }: { school: PublicSchool }) {
         <div className="relative max-w-4xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-white/15 mb-8">
             <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white/80 text-sm font-medium">Our doors are always open</span>
+            <span className="text-white/80 text-sm font-medium">{cta.badge}</span>
           </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6">
-            We look forward to<br />meeting you
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6 whitespace-pre-line">
+            {cta.headline}
           </h2>
           <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed mb-12">
-            Whether you're a prospective parent, a member of the community, or a partner — we welcome you to visit {name} and experience our learning environment.
+            {cta.description}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <a

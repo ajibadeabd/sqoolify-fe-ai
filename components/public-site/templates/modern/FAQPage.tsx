@@ -1,13 +1,40 @@
 import { useState } from 'react';
-import type { PublicSchool } from '../../../../lib/types';
+import type { PublicSchool, SitePage } from '../../../../lib/types';
 import { Icon } from '../shared/icons';
-import { faqCategories, faqs } from '../shared/content';
+import { getSection, normalizeFaqs } from '../shared/section-helpers';
+import { faqCategories as defaultFaqCategories, faqs as defaultFaqs } from '../shared/content';
 
-export default function FAQPage({ school }: { school: PublicSchool }) {
+export default function FAQPage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
   const pc = school.siteConfig?.primaryColor || '#3B82F6';
   const name = school.name || 'Our School';
   const [activeCategory, setActiveCategory] = useState('All');
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const heroSec = getSection(sitePage, 'hero')
+  const faqSec = getSection(sitePage, 'faq')
+  const ctaSec = getSection(sitePage, 'cta')
+
+  const hero = {
+    badge: heroSec?.badge || 'Help Centre',
+    headline: heroSec?.headline || 'Frequently asked',
+    headlineSub: heroSec?.headlineSub || 'questions',
+    description: heroSec?.description || `Find answers to common questions about ${name}'s admissions, academics, fees, and campus life.`,
+  }
+
+  const faqCategories = faqSec?.categories?.map((c: any) => ({
+    name: c.name, iconName: c.iconName || c.icon || 'faqGeneral', color: c.color || pc,
+  })) || defaultFaqCategories
+  const faqs = normalizeFaqs(faqSec?.faqs) || defaultFaqs
+  const allFilterLabel = faqSec?.allFilterLabel || 'All'
+  const emptyText = faqSec?.emptyTitle || 'No questions found in this category.'
+
+  const cta = {
+    headline: ctaSec?.headline || 'Still have questions?',
+    description: ctaSec?.description || "Can't find what you're looking for? Our admissions team is happy to help.",
+    buttons: ctaSec?.buttons || [
+      { text: 'Contact Us', link: '/contact', variant: 'primary' },
+    ],
+  }
 
   const filtered = activeCategory === 'All' ? faqs : faqs.filter((f) => f.cat === activeCategory);
 
@@ -20,14 +47,14 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
         </div>
         <div className="relative max-w-4xl mx-auto px-6 pt-32 pb-20 text-center">
           <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full border border-gray-200 bg-white shadow-sm mb-8">
-            <span className="text-gray-600 text-sm font-medium">Help Centre</span>
+            <span className="text-gray-600 text-sm font-medium">{hero.badge}</span>
           </div>
           <h1 className="text-5xl sm:text-6xl font-bold text-gray-900 leading-[1.1] tracking-tight mb-5">
-            Frequently asked{' '}
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(135deg, ${pc}, ${pc}99)` }}>questions</span>
+            {hero.headline}{' '}
+            <span className="bg-clip-text text-transparent" style={{ backgroundImage: `linear-gradient(135deg, ${pc}, ${pc}99)` }}>{hero.headlineSub}</span>
           </h1>
           <p className="text-lg text-gray-500 max-w-xl mx-auto leading-relaxed">
-            Find answers to common questions about {name}'s admissions, academics, fees, and campus life.
+            {hero.description}
           </p>
         </div>
       </section>
@@ -45,9 +72,9 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
               }`}
               style={activeCategory === 'All' ? { backgroundColor: pc } : {}}
             >
-              All
+              {allFilterLabel}
             </button>
-            {faqCategories.map((cat) => (
+            {faqCategories.map((cat: any) => (
               <button
                 key={cat.name}
                 onClick={() => setActiveCategory(cat.name)}
@@ -72,7 +99,7 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
           <div className="space-y-3">
             {filtered.map((faq, i) => {
               const isOpen = openIndex === i;
-              const cat = faqCategories.find((c) => c.name === faq.cat);
+              const cat = faqCategories.find((c: any) => c.name === faq.cat);
               return (
                 <div key={i} className="border border-gray-100 rounded-xl overflow-hidden hover:border-gray-200 transition-colors">
                   <button
@@ -102,7 +129,7 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
 
           {filtered.length === 0 && (
             <div className="text-center py-16">
-              <p className="text-gray-400">No questions found in this category.</p>
+              <p className="text-gray-400">{emptyText}</p>
             </div>
           )}
         </div>
@@ -115,18 +142,20 @@ export default function FAQPage({ school }: { school: PublicSchool }) {
             <div className="w-14 h-14 rounded-xl mx-auto flex items-center justify-center mb-5" style={{ backgroundColor: `${pc}10`, color: pc }}>
               <Icon name="askQuestions" className="w-7 h-7" />
             </div>
-            <h3 className="text-2xl font-bold text-gray-900 mb-3">Still have questions?</h3>
+            <h3 className="text-2xl font-bold text-gray-900 mb-3">{cta.headline}</h3>
             <p className="text-gray-500 mb-6 max-w-md mx-auto">
-              Can't find what you're looking for? Our admissions team is happy to help.
+              {cta.description}
             </p>
-            <a
-              href="/contact"
-              className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-white font-semibold hover:shadow-lg transition-all"
-              style={{ backgroundColor: pc }}
-            >
-              Contact Us
-              <Icon name="arrowRight" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-            </a>
+            {cta.buttons[0] && (
+              <a
+                href={cta.buttons[0].link}
+                className="group inline-flex items-center gap-2 px-8 py-3.5 rounded-full text-white font-semibold hover:shadow-lg transition-all"
+                style={{ backgroundColor: pc }}
+              >
+                {cta.buttons[0].text}
+                <Icon name="arrowRight" className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+              </a>
+            )}
           </div>
         </div>
       </section>

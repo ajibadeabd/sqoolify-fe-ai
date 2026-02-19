@@ -31,16 +31,16 @@ const SECTION_META: Record<SectionType, { label: string; icon: string; color: st
 }
 
 const DEFAULT_CONTENT: Record<SectionType, any> = {
-  hero: { title: '', subtitle: '' },
-  text: { content: '' },
-  features: { features: [] },
-  gallery: { images: [] },
+  hero: { badge: '', headline: '', headlineSub: '', description: '', stats: [], buttons: [] },
+  text: { label: '', title: '', para1: '', para2: '', stats: [], link: { text: '', href: '' }, floatingCard: { val: '', label: '' } },
+  features: { label: '', title: '', subtitle: '', features: [] },
+  gallery: { label: '', title: '', subtitle: '', images: { main: { src: '', alt: '', label: '', tag: '' }, items: [] }, statCard: { val: '', label: '' } },
   contact: { contactInfo: {} },
-  cta: { title: '' },
-  testimonials: { testimonials: [] },
+  cta: { badge: '', headline: '', description: '', buttons: [] },
+  testimonials: { label: '', title: '', testimonials: [] },
   stats: { stats: [] },
   team: { members: [] },
-  faq: { faqs: [], categories: [] },
+  faq: { title: '', faqs: [], categories: [], allFilterLabel: '', browseAllHeading: '', countSuffix: '', emptyTitle: '', emptyDescription: '', emptyButton: '' },
 }
 
 export default function SitePageEditorPage() {
@@ -184,9 +184,9 @@ export default function SitePageEditorPage() {
       }
 
       if (isNew) {
-        const res = await sitePageService.create(data)
-        toast.success('Page created')
-        navigate(`/site-builder/${res.data._id}`)
+        // Page creation disabled
+        toast.error('Page creation is disabled')
+        return
       } else {
         await sitePageService.update(id, data)
         toast.success('Page saved')
@@ -303,8 +303,8 @@ export default function SitePageEditorPage() {
                 <input
                   type="text"
                   value={slug}
-                  onChange={(e) => setSlug(autoSlug(e.target.value))}
-                  className="flex-1 px-3.5 py-2.5 border border-gray-300 rounded-r-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                  disabled
+                  className="flex-1 px-3.5 py-2.5 border border-gray-300 rounded-r-lg text-sm font-mono bg-gray-50 text-gray-500 cursor-not-allowed transition"
                   placeholder="about-us"
                 />
               </div>

@@ -130,7 +130,7 @@ export default function FeesPage() {
           <h1 className="text-2xl font-bold text-gray-900">Fee Management</h1>
           <p className="text-sm text-gray-500 mt-1">{total} fee structures</p>
         </div>
-        {can('create_fees') && <Button onClick={() => navigate('/fees/add')}>+ Add Fee Structure</Button>}
+        {can('write_fees') && <Button onClick={() => navigate('/fees/add')}>+ Add Fee Structure</Button>}
       </div>
 
       {/* Summary Cards */}

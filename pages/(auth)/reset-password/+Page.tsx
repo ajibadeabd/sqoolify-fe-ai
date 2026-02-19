@@ -50,7 +50,7 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="text-3xl font-bold text-blue-600">{schoolName}</a>
+          <a href="/" className="text-3xl font-bold" style={{ color: 'var(--color-primary, #3B82F6)' }}>{schoolName}</a>
           <p className="text-gray-600 mt-2">Set your new password</p>
         </div>
 
@@ -63,7 +63,8 @@ export default function ResetPasswordPage() {
               </p>
               <a
                 href="/login"
-                className="inline-block bg-blue-600 text-white px-6 py-2.5 rounded-lg font-medium hover:bg-blue-700 transition"
+                className="inline-block text-white px-6 py-2.5 rounded-lg font-medium transition"
+                style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
               >
                 Sign In
               </a>
@@ -117,13 +118,14 @@ export default function ResetPasswordPage() {
               <button
                 type="submit"
                 disabled={loading || !token}
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="w-full text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
               >
                 {loading ? 'Resetting...' : 'Reset Password'}
               </button>
 
               <p className="text-center text-sm">
-                <a href="/login" className="text-blue-600 hover:underline">Back to Sign In</a>
+                <a href="/login" className="hover:underline" style={{ color: 'var(--color-primary, #3B82F6)' }}>Back to Sign In</a>
               </p>
             </form>
           )}

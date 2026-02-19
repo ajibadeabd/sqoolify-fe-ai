@@ -300,6 +300,7 @@ export interface PageTemplate {
 
 export interface SiteConfig {
   primaryColor?: string;
+  secondaryColor?: string;
   footerText?: string;
   socialLinks?: SocialLinks;
   template?: 'classic' | 'modern' | 'bold';

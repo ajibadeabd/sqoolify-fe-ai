@@ -11,7 +11,7 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500',
+  primary: 'text-white focus:ring-blue-500',
   secondary: 'bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500',
   outline: 'border border-gray-300 text-gray-700 hover:bg-gray-50 focus:ring-gray-500',
   danger: 'bg-red-600 text-white hover:bg-red-700 focus:ring-red-500',
@@ -32,11 +32,16 @@ export default function Button({
   disabled,
   ...props
 }: ButtonProps) {
+  const primaryStyle = variant === 'primary'
+    ? { backgroundColor: 'var(--color-primary, #3B82F6)', ...props.style }
+    : props.style
+
   return (
     <button
       className={`inline-flex items-center justify-center rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${sizes[size]} ${variants[variant]} ${className}`}
       disabled={disabled || loading}
       {...props}
+      style={primaryStyle}
     >
       {loading && (
         <svg className="animate-spin -ml-1 mr-2 h-4 w-4" fill="none" viewBox="0 0 24 24">

@@ -32,11 +32,11 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex">
       {/* Left Panel — Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-blue-400 to-blue-600 text-white p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden lg:flex lg:w-1/2 text-white p-12 flex-col justify-between relative overflow-hidden" style={{ background: 'linear-gradient(to bottom right, var(--color-primary, #60A5FA), var(--color-secondary, #2563EB))' }}>
         <div className="absolute inset-0">
-          <div className="absolute top-20 -left-10 w-72 h-72 bg-blue-300/30 rounded-full" />
-          <div className="absolute bottom-20 right-10 w-96 h-96 bg-blue-300/20 rounded-full" />
-          <div className="absolute top-1/2 left-1/3 w-48 h-48 bg-blue-200/25 rounded-full" />
+          <div className="absolute top-20 -left-10 w-72 h-72 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.15)' }} />
+          <div className="absolute bottom-20 right-10 w-96 h-96 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.1)' }} />
+          <div className="absolute top-1/2 left-1/3 w-48 h-48 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
         </div>
 
         <div className="relative z-10">
@@ -48,7 +48,7 @@ export default function LoginPage() {
             <h1 className="text-4xl font-bold leading-tight mb-4">
               Manage your entire school from one platform
             </h1>
-            <p className="text-blue-100 text-lg leading-relaxed">
+            <p className="text-white/80 text-lg leading-relaxed">
               Students, teachers, exams, fees, attendance, report cards — everything in one place.
             </p>
           </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
         </div>
 
         <div className="relative z-10">
-          <p className="text-blue-200 text-sm">&copy; {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
+          <p className="text-white/60 text-sm">&copy; {new Date().getFullYear()} {schoolName}. All rights reserved.</p>
         </div>
       </div>
 
@@ -77,7 +77,7 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-6 py-12 bg-gray-50">
         <div className="w-full max-w-md">
           <div className="lg:hidden text-center mb-8">
-            <span className="text-3xl font-bold text-blue-600">{schoolName}</span>
+            <span className="text-3xl font-bold" style={{ color: 'var(--color-primary, #3B82F6)' }}>{schoolName}</span>
           </div>
 
           <div className="mb-8">
@@ -107,7 +107,7 @@ export default function LoginPage() {
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <a href="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700">
+                <a href="/forgot-password" className="text-sm" style={{ color: 'var(--color-primary, #3B82F6)' }}>
                   Forgot password?
                 </a>
               </div>
@@ -140,7 +140,8 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              className="w-full text-white py-3 rounded-lg font-medium transition disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+              style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
@@ -155,7 +156,7 @@ export default function LoginPage() {
 
             <p className="text-center text-sm text-gray-500">
               Don't have an account?{' '}
-              <a href={school ? 'https://sqoolify.com/register' : '/register'} className="text-blue-600 font-medium hover:text-blue-700">Create your school</a>
+              <a href={school ? 'https://sqoolify.com/register' : '/register'} className="font-medium" style={{ color: 'var(--color-primary, #3B82F6)' }}>Create your school</a>
             </p>
           </form>
         </div>

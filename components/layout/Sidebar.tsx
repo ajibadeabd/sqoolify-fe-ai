@@ -157,23 +157,24 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
 
   return (
     <aside
-      className={`fixed top-0 left-0 h-full bg-linear-to-br from-blue-500 to-blue-700 z-30 transition-all duration-300 overflow-hidden ${
+      className={`fixed top-0 left-0 h-full z-30 transition-all duration-300 overflow-hidden ${
         collapsed ? 'w-16' : 'w-64'
       }`}
+      style={{ background: 'linear-gradient(to bottom right, var(--color-primary, #3B82F6), var(--color-secondary, #2563EB))' }}
     >
       {/* Decorative circles */}
       <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-400/20 rounded-full" />
-        <div className="absolute bottom-20 -right-8 w-48 h-48 bg-blue-400/15 rounded-full" />
-        <div className="absolute top-1/2 left-1/4 w-24 h-24 bg-blue-300/15 rounded-full" />
+        <div className="absolute -top-10 -left-10 w-40 h-40 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.12)' }} />
+        <div className="absolute bottom-20 -right-8 w-48 h-48 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
+        <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
       </div>
 
       {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 border-b border-blue-400/30 relative z-10">
+      <div className="h-16 flex items-center justify-between px-4 relative z-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
         {!collapsed && <span className="text-xl font-bold text-white">{schoolName}</span>}
         <button
           onClick={onToggle}
-          className="p-1.5 rounded-lg hover:bg-white/10 text-blue-100"
+          className="p-1.5 rounded-lg hover:bg-white/10 text-white/80"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
@@ -186,7 +187,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
         {filteredSections.map((section, sectionIndex) => (
           <div key={section.title} className={sectionIndex > 0 ? 'mt-4' : ''}>
             {!collapsed && (
-              <p className="px-3 mb-2 text-xs font-semibold text-blue-200/70 uppercase tracking-wider">
+              <p className="px-3 mb-2 text-xs font-semibold text-white/50 uppercase tracking-wider">
                 {section.title}
               </p>
             )}
@@ -200,7 +201,7 @@ export default function Sidebar({ collapsed, onToggle }: { collapsed: boolean; o
                     className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition text-sm ${
                       isActive
                         ? 'bg-white/20 text-white font-medium'
-                        : 'text-blue-100 hover:bg-white/10 hover:text-white'
+                        : 'text-white/80 hover:bg-white/10 hover:text-white'
                     }`}
                     title={collapsed ? item.label : undefined}
                   >

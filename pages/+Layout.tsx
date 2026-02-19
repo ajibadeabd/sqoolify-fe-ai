@@ -4,7 +4,7 @@ import { Toaster } from 'sonner'
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50/50 via-white to-purple-50/30 text-gray-900 antialiased">
+    <div className="min-h-screen bg-gradient-to-br via-white to-purple-50/30 text-gray-900 antialiased" style={{ '--tw-gradient-from': 'rgba(var(--color-primary-rgb, 59,130,246), 0.05)' } as React.CSSProperties}>
       {children}
       <Toaster
         position="top-right"

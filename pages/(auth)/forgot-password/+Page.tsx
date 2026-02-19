@@ -29,7 +29,7 @@ export default function ForgotPasswordPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
       <div className="w-full max-w-md">
         <div className="text-center mb-8">
-          <a href="/" className="text-3xl font-bold text-blue-600">{schoolName}</a>
+          <a href="/" className="text-3xl font-bold" style={{ color: 'var(--color-primary, #3B82F6)' }}>{schoolName}</a>
           <p className="text-gray-600 mt-2">Reset your password</p>
         </div>
 
@@ -40,7 +40,7 @@ export default function ForgotPasswordPage() {
               <p className="text-gray-600 text-sm mb-4">
                 If an account exists for {email}, we've sent a password reset link.
               </p>
-              <a href="/login" className="text-blue-600 hover:underline text-sm">
+              <a href="/login" className="hover:underline text-sm" style={{ color: 'var(--color-primary, #3B82F6)' }}>
                 Back to Sign In
               </a>
             </div>
@@ -70,13 +70,14 @@ export default function ForgotPasswordPage() {
               <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 transition disabled:opacity-50"
+                className="w-full text-white py-2.5 rounded-lg font-medium transition disabled:opacity-50"
+                style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
               >
                 {loading ? 'Sending...' : 'Send Reset Link'}
               </button>
 
               <p className="text-center text-sm">
-                <a href="/login" className="text-blue-600 hover:underline">Back to Sign In</a>
+                <a href="/login" className="hover:underline" style={{ color: 'var(--color-primary, #3B82F6)' }}>Back to Sign In</a>
               </p>
             </form>
           )}

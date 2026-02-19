@@ -20,7 +20,7 @@ export default function Topbar() {
           onClick={() => setDropdownOpen(!dropdownOpen)}
           className="flex items-center gap-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition"
         >
-          <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center text-sm font-medium">
+          <div className="w-8 h-8 text-white rounded-full flex items-center justify-center text-sm font-medium" style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}>
             {user ? user.firstName[0] + user.lastName[0] : '?'}
           </div>
           <div className="hidden sm:block text-left">

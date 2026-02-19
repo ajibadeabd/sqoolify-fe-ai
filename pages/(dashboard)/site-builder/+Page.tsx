@@ -410,6 +410,28 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
             </div>
           </div>
           <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Secondary Color</label>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <input
+                  type="color"
+                  value={config.secondaryColor || config.primaryColor || '#3B82F6'}
+                  onChange={(e) => setConfig({ ...config, secondaryColor: e.target.value })}
+                  className="w-12 h-12 border-2 border-gray-200 rounded-xl cursor-pointer hover:border-gray-300 transition"
+                />
+              </div>
+              <input
+                type="text"
+                value={config.secondaryColor || ''}
+                onChange={(e) => setConfig({ ...config, secondaryColor: e.target.value })}
+                className="flex-1 px-3.5 py-2.5 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Auto (darker primary)"
+              />
+              <div className="w-20 h-10 rounded-lg" style={{ backgroundColor: config.secondaryColor || config.primaryColor || '#3B82F6' }} />
+            </div>
+            <p className="text-xs text-gray-400 mt-1">Leave empty to auto-derive from primary color</p>
+          </div>
+          <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Footer Text</label>
             <input
               type="text"

@@ -40,7 +40,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2" style={{ borderBottomColor: 'var(--color-primary, #3B82F6)' }}></div>
       </div>
     )
   }
@@ -53,8 +53,8 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen relative">
       <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute -top-20 -right-20 w-96 h-96 bg-blue-100/30 rounded-full blur-3xl" />
-        <div className="absolute top-1/3 -left-16 w-72 h-72 bg-blue-100/25 rounded-full blur-2xl" />
+        <div className="absolute -top-20 -right-20 w-96 h-96 rounded-full blur-3xl" style={{ backgroundColor: 'rgba(var(--color-primary-rgb, 59,130,246), 0.12)' }} />
+        <div className="absolute top-1/3 -left-16 w-72 h-72 rounded-full blur-2xl" style={{ backgroundColor: 'rgba(var(--color-primary-rgb, 59,130,246), 0.1)' }} />
         <div className="absolute bottom-10 right-1/4 w-64 h-64 bg-purple-100/20 rounded-full blur-3xl" />
       </div>
       <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />

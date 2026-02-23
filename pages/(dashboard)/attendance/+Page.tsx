@@ -141,6 +141,14 @@ export default function AttendancePage() {
     if (viewMode === 'view') fetchViewStudents();
   }, [viewClassId, viewMode, fetchViewStudents]);
 
+  useEffect(() => {
+    if (viewMode === 'view' && viewClassId) fetchClassView();
+  }, [viewClassId, viewStartDate, viewEndDate]);
+
+  useEffect(() => {
+    if (viewMode === 'view' && viewStudentId) fetchStudentView();
+  }, [viewStudentId, viewStartDate, viewEndDate]);
+
   const fetchClassView = async () => {
     if (!viewClassId) return;
     setViewLoading(true);
@@ -582,11 +590,11 @@ export default function AttendancePage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div className="flex items-end">
-                    <Button onClick={fetchClassView} loading={viewLoading} disabled={!viewClassId}>
-                      Load
-                    </Button>
-                  </div>
+                  {viewLoading && (
+                    <div className="flex items-end">
+                      <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -645,7 +653,6 @@ export default function AttendancePage() {
                               <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Late</th>
                               <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Excused</th>
                               <th className="px-4 py-3 text-center text-xs font-semibold text-gray-600 uppercase">Rate</th>
-                              <th className="px-4 py-3 w-10"></th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
@@ -659,26 +666,10 @@ export default function AttendancePage() {
                               const rate = total > 0 ? Math.round((present / total) * 100) : 0;
                               const isExpanded = expandedDate === doc._id;
 
-                              const recordMap = new Map(recs.map((r: any) => [r.student?._id || r.student, r]));
-                              const allRecs = viewStudents.length > 0
-                                ? viewStudents.map((s) => recordMap.get(s._id) || { student: s._id, status: 'absent', remark: '' })
-                                : recs;
-                              const filteredRecs = [...allRecs]
-                                .sort((a: any, b: any) => {
-                                  const order: Record<string, number> = { absent: 0, late: 1, excused: 2, present: 3 };
-                                  return (order[a.status] ?? 4) - (order[b.status] ?? 4);
-                                })
-                                .filter((r: any) => {
-                                  if (!expandedSearch) return true;
-                                  const sid = r.student?._id || r.student;
-                                  return getStudentName(sid).toLowerCase().includes(expandedSearch.toLowerCase());
-                                });
-
                               return (
-                                <>
                                   <tr
                                     key={doc._id}
-                                    className={`hover:bg-blue-50 transition-colors cursor-pointer ${isExpanded ? 'bg-blue-50' : ''}`}
+                                    className={`hover:bg-blue-50 transition-colors cursor-pointer ${isExpanded ? 'bg-blue-100' : ''}`}
                                     onClick={() => { setExpandedDate(isExpanded ? null : doc._id); setExpandedSearch(''); }}
                                   >
                                     <td className="px-4 py-2.5 text-sm font-medium text-gray-900">{formatDate(doc.date)}</td>
@@ -697,60 +688,7 @@ export default function AttendancePage() {
                                         </span>
                                       </div>
                                     </td>
-                                    <td className="px-3 py-2.5 text-center text-gray-400">
-                                      <span className="text-xs">{isExpanded ? '▲' : '▼'}</span>
-                                    </td>
                                   </tr>
-                                  {isExpanded && (
-                                    <tr key={`${doc._id}-exp`}>
-                                      <td colSpan={8} className="p-0 border-t border-blue-100">
-                                        <div className="bg-blue-50">
-                                          {allRecs.length > 8 && (
-                                            <div className="flex items-center gap-3 px-4 py-2 border-b border-blue-100">
-                                              <input
-                                                type="text"
-                                                placeholder="Search student..."
-                                                value={expandedSearch}
-                                                onChange={(e) => { e.stopPropagation(); setExpandedSearch(e.target.value); }}
-                                                onClick={(e) => e.stopPropagation()}
-                                                className="px-2.5 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 w-48"
-                                              />
-                                              <span className="text-xs text-gray-500">{filteredRecs.length} of {allRecs.length} students</span>
-                                            </div>
-                                          )}
-                                          <div className="max-h-80 overflow-y-auto">
-                                            <table className="w-full text-xs">
-                                              <thead className="bg-blue-100 sticky top-0">
-                                                <tr>
-                                                  <th className="px-4 py-1.5 text-left font-semibold text-blue-700">Student</th>
-                                                  <th className="px-4 py-1.5 text-center font-semibold text-blue-700 w-24">Status</th>
-                                                  <th className="px-4 py-1.5 text-left font-semibold text-blue-700">Remark</th>
-                                                </tr>
-                                              </thead>
-                                              <tbody>
-                                                {filteredRecs.map((r: any, i: number) => {
-                                                  const sid = r.student?._id || r.student;
-                                                  return (
-                                                    <tr key={i} className="border-t border-blue-100 hover:bg-white">
-                                                      <td className="px-4 py-1.5 text-gray-700">{getStudentName(sid)}</td>
-                                                      <td className="px-4 py-1.5 text-center">
-                                                        <span className={`px-2 py-0.5 rounded-full capitalize font-medium ${getStatusBadge(r.status)}`}>{r.status}</span>
-                                                      </td>
-                                                      <td className="px-4 py-1.5 text-gray-400">{r.remark || '—'}</td>
-                                                    </tr>
-                                                  );
-                                                })}
-                                                {filteredRecs.length === 0 && (
-                                                  <tr><td colSpan={3} className="px-4 py-3 text-center text-gray-400">No students match</td></tr>
-                                                )}
-                                              </tbody>
-                                            </table>
-                                          </div>
-                                        </div>
-                                      </td>
-                                    </tr>
-                                  )}
-                                </>
                               );
                             })}
                           </tbody>
@@ -770,6 +708,112 @@ export default function AttendancePage() {
                           </div>
                         )}
                       </div>
+                    );
+                  })()}
+
+                  {/* Slide-out panel for date details */}
+                  {expandedDate && (() => {
+                    const doc = classRecords.find((d: any) => d._id === expandedDate);
+                    if (!doc) return null;
+                    const recs = doc.records || [];
+                    const total = viewStudents.length || recs.length;
+                    const present = countByStatus(recs, 'present');
+                    const late = countByStatus(recs, 'late');
+                    const excused = countByStatus(recs, 'excused');
+                    const absent = total - present - late - excused;
+                    const rate = total > 0 ? Math.round((present / total) * 100) : 0;
+
+                    const recordMap = new Map(recs.map((r: any) => [r.student?._id || r.student, r]));
+                    const allRecs = viewStudents.length > 0
+                      ? viewStudents.map((s) => recordMap.get(s._id) || { student: s._id, status: 'absent', remark: '' })
+                      : recs;
+                    const filteredRecs = [...allRecs]
+                      .sort((a: any, b: any) => {
+                        const order: Record<string, number> = { absent: 0, late: 1, excused: 2, present: 3 };
+                        return (order[a.status] ?? 4) - (order[b.status] ?? 4);
+                      })
+                      .filter((r: any) => {
+                        if (!expandedSearch) return true;
+                        const sid = r.student?._id || r.student;
+                        return getStudentName(sid).toLowerCase().includes(expandedSearch.toLowerCase());
+                      });
+
+                    return (
+                      <>
+                        <div className="fixed inset-0 bg-black/30 z-40" onClick={() => setExpandedDate(null)} />
+                        <div className="fixed top-0 right-0 h-full w-full max-w-md bg-white shadow-2xl z-50 flex flex-col" style={{ animation: 'slideInRight 0.2s ease-out' }}>
+                          <div className="flex items-center justify-between px-5 py-4 border-b border-gray-200">
+                            <div>
+                              <h3 className="text-lg font-semibold text-gray-900">{formatDate(doc.date)}</h3>
+                              <p className="text-xs text-gray-500 mt-0.5">{total} students</p>
+                            </div>
+                            <button onClick={() => setExpandedDate(null)} className="text-gray-400 hover:text-gray-600 p-1">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                              </svg>
+                            </button>
+                          </div>
+
+                          <div className="grid grid-cols-4 gap-3 px-5 py-4 border-b border-gray-100">
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-green-600">{present}</div>
+                              <div className="text-[10px] uppercase text-gray-500 font-medium">Present</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-red-600">{absent}</div>
+                              <div className="text-[10px] uppercase text-gray-500 font-medium">Absent</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-yellow-600">{late}</div>
+                              <div className="text-[10px] uppercase text-gray-500 font-medium">Late</div>
+                            </div>
+                            <div className="text-center">
+                              <div className="text-lg font-bold text-blue-600">{excused}</div>
+                              <div className="text-[10px] uppercase text-gray-500 font-medium">Excused</div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-3 px-5 py-3 border-b border-gray-100">
+                            <div className="flex-1 bg-gray-200 rounded-full h-2">
+                              <div className={`h-2 rounded-full ${rate >= 80 ? 'bg-green-500' : rate >= 60 ? 'bg-yellow-500' : 'bg-red-500'}`} style={{ width: `${rate}%` }} />
+                            </div>
+                            <span className={`text-sm font-bold ${rate >= 80 ? 'text-green-700' : rate >= 60 ? 'text-yellow-700' : 'text-red-700'}`}>{rate}%</span>
+                          </div>
+
+                          <div className="px-5 py-3 border-b border-gray-100">
+                            <input
+                              type="text"
+                              placeholder="Search student..."
+                              value={expandedSearch}
+                              onChange={(e) => setExpandedSearch(e.target.value)}
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            />
+                          </div>
+
+                          <div className="flex-1 overflow-y-auto">
+                            {filteredRecs.map((r: any, i: number) => {
+                              const sid = r.student?._id || r.student;
+                              return (
+                                <div key={i} className={`flex items-center justify-between px-5 py-3 border-b border-gray-50 ${
+                                  r.status === 'present' ? 'bg-green-50/50' :
+                                  r.status === 'absent' ? 'bg-red-50/50' :
+                                  r.status === 'late' ? 'bg-yellow-50/50' :
+                                  r.status === 'excused' ? 'bg-blue-50/50' : ''
+                                }`}>
+                                  <div>
+                                    <p className="text-sm font-medium text-gray-900">{getStudentName(sid)}</p>
+                                    {r.remark && <p className="text-xs text-gray-400 mt-0.5">{r.remark}</p>}
+                                  </div>
+                                  <span className={`px-2.5 py-1 rounded-full text-xs font-semibold capitalize ${getStatusBadge(r.status)}`}>{r.status}</span>
+                                </div>
+                              );
+                            })}
+                            {filteredRecs.length === 0 && (
+                              <div className="px-5 py-8 text-center text-gray-400 text-sm">No students match</div>
+                            )}
+                          </div>
+                        </div>
+                      </>
                     );
                   })()}
 
@@ -941,11 +985,11 @@ export default function AttendancePage() {
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  <div className="flex items-end">
-                    <Button onClick={fetchStudentView} loading={viewLoading} disabled={!viewStudentId}>
-                      Load
-                    </Button>
-                  </div>
+                  {viewLoading && (
+                    <div className="flex items-end">
+                      <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>
+                    </div>
+                  )}
                 </div>
               </div>
 

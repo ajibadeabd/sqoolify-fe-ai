@@ -557,46 +557,106 @@ export default function AttendancePage() {
           {viewSubMode === 'class' && (
             <>
               {/* Filters */}
-              <div className="bg-white rounded-xl border border-gray-200 p-5 mb-6">
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Class</label>
-                    <select
-                      value={viewClassId}
-                      onChange={(e) => setViewClassId(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    >
-                      <option value="">Select Class</option>
-                      {classes.map((c) => (
-                        <option key={c._id} value={c._id}>{c.name}</option>
-                      ))}
-                    </select>
+              <div className="bg-white rounded-xl border border-gray-200 p-4 mb-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <select
+                    value={viewClassId}
+                    onChange={(e) => setViewClassId(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">Select Class</option>
+                    {classes.map((c) => (
+                      <option key={c._id} value={c._id}>{c.name}</option>
+                    ))}
+                  </select>
+
+                  <div className="flex gap-1 bg-gray-100 rounded-lg p-0.5">
+                    {[
+                      { label: 'Today', getRange: () => { const d = new Date().toISOString().split('T')[0]; return [d, d]; } },
+                      { label: 'This Week', getRange: () => { const now = new Date(); const day = now.getDay(); const mon = new Date(now); mon.setDate(now.getDate() - (day === 0 ? 6 : day - 1)); return [mon.toISOString().split('T')[0], now.toISOString().split('T')[0]]; } },
+                      { label: 'This Month', getRange: () => { const now = new Date(); const start = new Date(now.getFullYear(), now.getMonth(), 1); return [start.toISOString().split('T')[0], now.toISOString().split('T')[0]]; } },
+                    ].map((preset) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => { const [s, e] = preset.getRange(); setViewStartDate(s); setViewEndDate(e); }}
+                        className={`px-3 py-1.5 text-xs font-medium rounded-md transition ${
+                          (() => { const [s, e] = preset.getRange(); return viewStartDate === s && viewEndDate === e; })()
+                            ? 'bg-white text-blue-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
+                        }`}
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">From</label>
+
+                  <div className="flex items-center gap-2 ml-auto">
                     <input
                       type="date"
                       value={viewStartDate}
                       onChange={(e) => setViewStartDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">To</label>
+                    <span className="text-gray-400 text-xs">–</span>
                     <input
                       type="date"
                       value={viewEndDate}
                       onChange={(e) => setViewEndDate(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      className="px-2 py-1.5 border border-gray-300 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                     />
                   </div>
-                  {viewLoading && (
-                    <div className="flex items-end">
-                      <div className="px-3 py-2 text-sm text-gray-500">Loading...</div>
-                    </div>
-                  )}
+
+                  {viewLoading && <span className="text-xs text-gray-400">Loading...</span>}
                 </div>
               </div>
+
+              {/* Stat Cards */}
+              {classRecords.length > 0 && (() => {
+                const totalStudents = viewStudents.length;
+                const latestDoc = classRecords[0];
+                const latestRecs = latestDoc?.records || [];
+                const lPresent = countByStatus(latestRecs, 'present');
+                const lLate = countByStatus(latestRecs, 'late');
+                const lExcused = countByStatus(latestRecs, 'excused');
+                const lAbsent = totalStudents - lPresent - lLate - lExcused;
+                const overallPresent = classRecords.reduce((sum: number, d: any) => sum + countByStatus(d.records || [], 'present'), 0);
+                const overallTotal = classRecords.reduce((sum: number) => sum + totalStudents, 0) || classRecords.reduce((sum: number, d: any) => sum + (d.records?.length || 0), 0);
+                const overallRate = overallTotal > 0 ? Math.round((overallPresent / overallTotal) * 100) : 0;
+
+                return (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6">
+                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Attendance Rate</div>
+                      <div className={`text-2xl font-bold ${overallRate >= 80 ? 'text-green-600' : overallRate >= 60 ? 'text-yellow-600' : 'text-red-600'}`}>{overallRate}%</div>
+                      <div className="text-[10px] text-gray-400 mt-1">{overallRate >= 80 ? 'Good' : overallRate >= 60 ? 'Fair' : 'Low'}</div>
+                    </div>
+                    <div className="bg-white rounded-xl border border-gray-200 p-4">
+                      <div className="text-xs text-gray-500 font-medium mb-1">Total Students</div>
+                      <div className="text-2xl font-bold text-gray-900">{totalStudents}</div>
+                      <div className="text-[10px] text-gray-400 mt-1">Active</div>
+                    </div>
+                    <div className="rounded-xl border border-green-100 p-4 bg-green-50/30">
+                      <div className="text-xs text-green-600 font-medium mb-1">Present Today</div>
+                      <div className="text-2xl font-bold text-green-700">{lPresent}</div>
+                      <div className="text-[10px] text-green-500 mt-1">{totalStudents > 0 ? Math.round((lPresent / totalStudents) * 100) : 0}%</div>
+                    </div>
+                    <div className="rounded-xl border border-red-100 p-4 bg-red-50/30">
+                      <div className="text-xs text-red-600 font-medium mb-1">Absent Today</div>
+                      <div className="text-2xl font-bold text-red-700">{lAbsent}</div>
+                      <div className="text-[10px] text-red-500 mt-1">{totalStudents > 0 ? Math.round((lAbsent / totalStudents) * 100) : 0}%</div>
+                    </div>
+                    <div className="rounded-xl border border-yellow-100 p-4 bg-yellow-50/30">
+                      <div className="text-xs text-yellow-600 font-medium mb-1">Late Today</div>
+                      <div className="text-2xl font-bold text-yellow-700">{lLate}</div>
+                      <div className="text-[10px] text-yellow-500 mt-1">{totalStudents > 0 ? Math.round((lLate / totalStudents) * 100) : 0}%</div>
+                    </div>
+                    <div className="rounded-xl border border-blue-100 p-4 bg-blue-50/30">
+                      <div className="text-xs text-blue-600 font-medium mb-1">Excused Today</div>
+                      <div className="text-2xl font-bold text-blue-700">{lExcused}</div>
+                      <div className="text-[10px] text-blue-500 mt-1">{totalStudents > 0 ? Math.round((lExcused / totalStudents) * 100) : 0}%</div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {classRecords.length > 0 || classSummary.length > 0 ? (
                 <>
@@ -880,11 +940,19 @@ export default function AttendancePage() {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-100">
-                            {filteredSummary.map((row: any, index) => (
-                              <tr key={index} className={`${row.rate < 75 ? 'bg-red-50 hover:bg-red-100' : 'hover:bg-gray-50'} transition-colors`}>
+                            {filteredSummary.map((row: any, index) => {
+                              const badge = row.rate >= 90
+                                ? { label: 'Excellent', bg: 'bg-green-50', hover: 'hover:bg-green-100', text: 'text-green-700', pill: 'bg-green-100 text-green-700' }
+                                : row.rate >= 75
+                                ? { label: 'Good', bg: 'bg-blue-50', hover: 'hover:bg-blue-100', text: 'text-blue-700', pill: 'bg-blue-100 text-blue-700' }
+                                : row.rate >= 60
+                                ? { label: 'Warning', bg: 'bg-yellow-50', hover: 'hover:bg-yellow-100', text: 'text-yellow-700', pill: 'bg-yellow-100 text-yellow-700' }
+                                : { label: 'At Risk', bg: 'bg-red-50', hover: 'hover:bg-red-100', text: 'text-red-700', pill: 'bg-red-100 text-red-700' };
+                              return (
+                              <tr key={index} className={`${badge.bg} ${badge.hover} transition-colors`}>
                                 <td className="px-4 py-2.5 text-sm font-medium text-gray-900">
                                   {row.name}
-                                  {row.rate < 75 && <span className="ml-2 text-xs text-red-500 font-normal">at risk</span>}
+                                  <span className={`ml-2 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${badge.pill}`}>{badge.label}</span>
                                 </td>
                                 <td className="px-4 py-2.5 text-sm text-center text-gray-600">{row.total}</td>
                                 <td className="px-4 py-2.5 text-sm text-center font-semibold text-green-700">{row.present}</td>
@@ -905,7 +973,8 @@ export default function AttendancePage() {
                                   </div>
                                 </td>
                               </tr>
-                            ))}
+                              );
+                            })}
                             {filteredSummary.length === 0 && (
                               <tr><td colSpan={7} className="px-4 py-8 text-center text-gray-400 text-sm">No students match your search</td></tr>
                             )}

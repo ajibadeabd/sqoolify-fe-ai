@@ -487,7 +487,7 @@ export default function AttendancePage() {
                                           : 'bg-white text-gray-400 border-gray-200 hover:border-gray-400 hover:text-gray-600'
                                       }`}
                                     >
-                                      {status === 'present' ? 'P' : status === 'absent' ? 'A' : status === 'late' ? 'L' : 'E'}
+                                      {status}
                                     </button>
                                   ))}
                                 </div>
@@ -635,22 +635,22 @@ export default function AttendancePage() {
                       <div className="text-[10px] text-gray-400 mt-1">Active</div>
                     </div>
                     <div className="rounded-xl border border-green-100 p-4 bg-green-50/30">
-                      <div className="text-xs text-green-600 font-medium mb-1">Present Today</div>
+                      <div className="text-xs text-green-600 font-medium mb-1">Present</div>
                       <div className="text-2xl font-bold text-green-700">{lPresent}</div>
                       <div className="text-[10px] text-green-500 mt-1">{totalStudents > 0 ? Math.round((lPresent / totalStudents) * 100) : 0}%</div>
                     </div>
                     <div className="rounded-xl border border-red-100 p-4 bg-red-50/30">
-                      <div className="text-xs text-red-600 font-medium mb-1">Absent Today</div>
+                      <div className="text-xs text-red-600 font-medium mb-1">Absent</div>
                       <div className="text-2xl font-bold text-red-700">{lAbsent}</div>
                       <div className="text-[10px] text-red-500 mt-1">{totalStudents > 0 ? Math.round((lAbsent / totalStudents) * 100) : 0}%</div>
                     </div>
                     <div className="rounded-xl border border-yellow-100 p-4 bg-yellow-50/30">
-                      <div className="text-xs text-yellow-600 font-medium mb-1">Late Today</div>
+                      <div className="text-xs text-yellow-600 font-medium mb-1">Late</div>
                       <div className="text-2xl font-bold text-yellow-700">{lLate}</div>
                       <div className="text-[10px] text-yellow-500 mt-1">{totalStudents > 0 ? Math.round((lLate / totalStudents) * 100) : 0}%</div>
                     </div>
                     <div className="rounded-xl border border-blue-100 p-4 bg-blue-50/30">
-                      <div className="text-xs text-blue-600 font-medium mb-1">Excused Today</div>
+                      <div className="text-xs text-blue-600 font-medium mb-1">Excused</div>
                       <div className="text-2xl font-bold text-blue-700">{lExcused}</div>
                       <div className="text-[10px] text-blue-500 mt-1">{totalStudents > 0 ? Math.round((lExcused / totalStudents) * 100) : 0}%</div>
                     </div>

@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { sitePageService } from '../../../../lib/api-services'
-import type { SitePage, PageSection, SectionType } from '../../../../lib/types'
+import { sitePageService, schoolService } from '../../../../lib/api-services'
+import type { SitePage, PageSection, SectionType, School } from '../../../../lib/types'
+import { useAuth } from '../../../../lib/auth-context'
 import Button from '../../../../components/ui/Button'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
 import HeroEditor from '../../../../components/site-builder/sections/HeroEditor'
@@ -16,6 +17,7 @@ import TestimonialsEditor from '../../../../components/site-builder/sections/Tes
 import StatsEditor from '../../../../components/site-builder/sections/StatsEditor'
 import TeamEditor from '../../../../components/site-builder/sections/TeamEditor'
 import FAQEditor from '../../../../components/site-builder/sections/FAQEditor'
+import CanvasEditor from '../../../../components/public-site/templates/canvas/CanvasEditor'
 
 const SECTION_META: Record<SectionType, { label: string; icon: string; color: string; description: string }> = {
   hero: { label: 'Hero Banner', icon: '🖼', color: 'bg-purple-50 text-purple-600 border-purple-200', description: 'Full-width banner with title, subtitle and CTA' },
@@ -47,7 +49,10 @@ export default function SitePageEditorPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
   const isNew = id === 'new'
+  const { user } = useAuth()
 
+  const [editMode, setEditMode] = useState<'simple' | 'canvas'>('simple')
+  const [school, setSchool] = useState<School | null>(null)
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [description, setDescription] = useState('')
@@ -62,21 +67,25 @@ export default function SitePageEditorPage() {
 
   const fetchPage = useCallback(async () => {
     try {
-      const res = await sitePageService.getById(id)
-      const page = res.data
+      const [pageRes, schoolRes] = await Promise.all([
+        sitePageService.getById(id),
+        user?.school ? schoolService.getById(user.school) : Promise.resolve({ data: null }),
+      ])
+      const page = pageRes.data
       setTitle(page.title)
       setSlug(page.slug)
       setDescription(page.description || '')
       setIsPublished(page.isPublished)
       setIsHomePage(page.isHomePage)
       setSections(page.sections || [])
+      setSchool(schoolRes.data)
     } catch (err: any) {
       toast.error(err.message || 'Failed to load page')
       navigate('/site-builder')
     } finally {
       setLoading(false)
     }
-  }, [id])
+  }, [id, user?.school])
 
   useEffect(() => {
     if (!isNew) fetchPage()
@@ -162,6 +171,15 @@ export default function SitePageEditorPage() {
     })
   }
 
+  const pageObj = useMemo<SitePage>(() => ({
+    _id: id,
+    title,
+    slug,
+    sections,
+    isPublished,
+    isHomePage,
+  } as SitePage), [id, title, slug, sections, isPublished, isHomePage])
+
   const handleSave = async () => {
     if (!title.trim()) {
       toast.error('Page title is required')
@@ -228,6 +246,15 @@ export default function SitePageEditorPage() {
   }
 
   return (
+    <>
+    {editMode === 'canvas' && school && (
+      <CanvasEditor
+        school={school}
+        page={pageObj}
+        onClose={() => setEditMode('simple')}
+        onSave={() => { fetchPage(); setEditMode('simple'); }}
+      />
+    )}
     <div className="max-w-4xl mx-auto">
       <Breadcrumbs
         items={[
@@ -254,6 +281,22 @@ export default function SitePageEditorPage() {
               </div>
             )}
           </div>
+          {!isNew && (
+            <div className="flex items-center rounded-lg border border-gray-200 overflow-hidden bg-white">
+              <button
+                onClick={() => setEditMode('simple')}
+                className={`px-3.5 py-1.5 text-xs font-semibold transition ${editMode === 'simple' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                Simple
+              </button>
+              <button
+                onClick={() => setEditMode('canvas')}
+                className={`px-3.5 py-1.5 text-xs font-semibold transition ${editMode === 'canvas' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-50'}`}
+              >
+                Canvas
+              </button>
+            </div>
+          )}
           <div className="flex gap-2">
             {!isNew && isPublished && slug && (
               <Button
@@ -517,5 +560,6 @@ export default function SitePageEditorPage() {
         </div>
       )}
     </div>
+    </>
   )
 }

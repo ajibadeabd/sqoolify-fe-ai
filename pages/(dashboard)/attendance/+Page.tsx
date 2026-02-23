@@ -112,7 +112,7 @@ export default function AttendancePage() {
           if (existingRecord) {
             return { ...r, status: existingRecord.status, remark: existingRecord.remark || '' };
           }
-          return r;
+          return { ...r, status: 'absent' as AttendanceStatus, remark: '' };
         }));
       }
     } catch {
@@ -651,15 +651,19 @@ export default function AttendancePage() {
                           <tbody className="divide-y divide-gray-100">
                             {pagedRecords.map((doc: any) => {
                               const recs = doc.records || [];
-                              const total = recs.length;
+                              const total = viewStudents.length || recs.length;
                               const present = countByStatus(recs, 'present');
-                              const absent = countByStatus(recs, 'absent');
                               const late = countByStatus(recs, 'late');
                               const excused = countByStatus(recs, 'excused');
+                              const absent = total - present - late - excused;
                               const rate = total > 0 ? Math.round((present / total) * 100) : 0;
                               const isExpanded = expandedDate === doc._id;
 
-                              const filteredRecs = [...recs]
+                              const recordMap = new Map(recs.map((r: any) => [r.student?._id || r.student, r]));
+                              const allRecs = viewStudents.length > 0
+                                ? viewStudents.map((s) => recordMap.get(s._id) || { student: s._id, status: 'absent', remark: '' })
+                                : recs;
+                              const filteredRecs = [...allRecs]
                                 .sort((a: any, b: any) => {
                                   const order: Record<string, number> = { absent: 0, late: 1, excused: 2, present: 3 };
                                   return (order[a.status] ?? 4) - (order[b.status] ?? 4);
@@ -701,7 +705,7 @@ export default function AttendancePage() {
                                     <tr key={`${doc._id}-exp`}>
                                       <td colSpan={8} className="p-0 border-t border-blue-100">
                                         <div className="bg-blue-50">
-                                          {recs.length > 8 && (
+                                          {allRecs.length > 8 && (
                                             <div className="flex items-center gap-3 px-4 py-2 border-b border-blue-100">
                                               <input
                                                 type="text"
@@ -711,7 +715,7 @@ export default function AttendancePage() {
                                                 onClick={(e) => e.stopPropagation()}
                                                 className="px-2.5 py-1 text-xs border border-gray-300 rounded-md bg-white focus:ring-1 focus:ring-blue-500 w-48"
                                               />
-                                              <span className="text-xs text-gray-500">{filteredRecs.length} of {recs.length} students</span>
+                                              <span className="text-xs text-gray-500">{filteredRecs.length} of {allRecs.length} students</span>
                                             </div>
                                           )}
                                           <div className="max-h-80 overflow-y-auto">

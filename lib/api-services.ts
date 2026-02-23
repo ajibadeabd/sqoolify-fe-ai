@@ -470,10 +470,16 @@ export const bankService = {
   getById: (id: string) =>
     api.get<ApiResponse<Bank>>(`/banks/${id}`, authOptions()),
 
+  getBankList: () =>
+    api.get<ApiResponse<{ name: string; code: string }[]>>('/banks/bank-list', authOptions()),
+
+  resolveAccount: (accountNumber: string, bankCode: string) =>
+    api.post<ApiResponse<{ accountName: string; accountNumber: string }>>('/banks/resolve', { accountNumber, bankCode }, authOptions()),
+
   create: (data: CreateBankData) =>
     api.post<ApiResponse<Bank>>('/banks', data, authOptions()),
 
-  update: (id: string, data: Partial<CreateBankData>) =>
+  update: (id: string, data: Partial<CreateBankData & { isActive: boolean }>) =>
     api.patch<ApiResponse<Bank>>(`/banks/${id}`, data, authOptions()),
 
   delete: (id: string) =>
@@ -717,8 +723,8 @@ export const sitePageService = {
   getById: (id: string) =>
     api.get<ApiResponse<SitePage>>(`/site-pages/${id}`, authOptions()),
 
-  // create: (data: Partial<SitePage>) =>
-  //   api.post<ApiResponse<SitePage>>('/site-pages', data, authOptions()),
+  create: (data: Partial<SitePage>) =>
+    api.post<ApiResponse<SitePage>>('/site-pages', data, authOptions()),
 
   update: (id: string, data: Partial<SitePage>) =>
     api.patch<ApiResponse<SitePage>>(`/site-pages/${id}`, data, authOptions()),

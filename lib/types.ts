@@ -35,6 +35,7 @@ export interface RegisterData {
   schoolName: string;
   phone?: string;
   slug?: string;
+  country: string;
 }
 
 export interface AuthResponse {
@@ -298,12 +299,20 @@ export interface PageTemplate {
   updatedAt?: string;
 }
 
+export type CanvasBlockType = 'hero' | 'text' | 'features' | 'stats' | 'gallery' | 'cta' | 'testimonials';
+
+export interface CanvasBlock {
+  id: string;
+  type: CanvasBlockType;
+  data: Record<string, any>;
+}
+
 export interface SiteConfig {
   primaryColor?: string;
   secondaryColor?: string;
   footerText?: string;
   socialLinks?: SocialLinks;
-  template?: 'classic' | 'modern' | 'bold';
+  template?: 'classic' | 'modern' | 'bold' | 'editorial' | 'prestige' | 'canvas';
 }
 
 export interface PublicSchool {
@@ -758,8 +767,11 @@ export interface Bank {
   _id: string;
   accountName: string;
   bankName: string;
+  bankCode: string;
   accountNumber: string;
   isActive: boolean;
+  verificationStatus: 'pending' | 'verified' | 'failed';
+  subaccountCode?: string;
   school: string;
   createdAt?: string;
   updatedAt?: string;
@@ -768,6 +780,7 @@ export interface Bank {
 export interface CreateBankData {
   accountName: string;
   bankName: string;
+  bankCode: string;
   accountNumber: string;
 }
 

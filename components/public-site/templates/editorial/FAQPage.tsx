@@ -10,9 +10,9 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [openIds, setOpenIds] = useState<Set<number>>(new Set());
 
-  const heroSec = getSection(sitePage, 'hero')
-  const faqSec = getSection(sitePage, 'faq')
-  const ctaSec = getSection(sitePage, 'cta')
+  const heroSec = getSection(sitePage, 'hero');
+  const faqSec = getSection(sitePage, 'faq');
+  const ctaSec = getSection(sitePage, 'cta');
 
   const hero = {
     badge: heroSec?.badge || 'Everything you need to know',
@@ -20,12 +20,12 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
     headlineSub: heroSec?.headlineSub || 'questions',
     description: heroSec?.description || `Find answers to common queries about ${name}'s admissions, academics, fees, and campus life.`,
     heroImage: heroSec?.heroImage || 'https://images.unsplash.com/photo-1588075592446-265fd1e6e76f?w=1600&q=80',
-  }
+  };
 
   const faqCategories = faqSec?.categories?.map((c: any) => ({
     name: c.name, iconName: c.iconName || c.icon || 'faqGeneral', color: c.color || pc,
-  })) || defaultFaqCategories
-  const activeFaqs = normalizeFaqs(faqSec?.faqs) || defaultFaqs
+  })) || defaultFaqCategories;
+  const activeFaqs = normalizeFaqs(faqSec?.faqs) || defaultFaqs;
 
   const faqLabels = {
     allFilter: faqSec?.allFilterLabel || 'All Questions',
@@ -34,7 +34,7 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
     emptyTitle: faqSec?.emptyTitle || 'No questions in this category yet',
     emptyDesc: faqSec?.emptyDescription || 'Try browsing all questions instead',
     emptyButton: faqSec?.emptyButton || 'View all questions',
-  }
+  };
 
   const cta = {
     badge: ctaSec?.badge || "We're here to help",
@@ -44,7 +44,7 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
       { text: 'Contact Us', link: '/contact', variant: 'primary' },
       { text: 'View Admissions', link: '/admissions', variant: 'secondary' },
     ],
-  }
+  };
 
   const toggle = (i: number) => {
     setOpenIds((prev) => {
@@ -59,32 +59,29 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
   return (
     <>
       {/* ═══════ HERO ═══════ */}
-      <section className="relative min-h-[85vh] flex items-end overflow-hidden" style={{ backgroundColor: pc }}>
-        <div className="absolute inset-0">
-          <img
-            src={hero.heroImage}
-            alt="Students"
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-        </div>
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute -top-40 -right-40 w-[600px] h-[600px] rounded-full opacity-[0.05] bg-white" />
-        </div>
+      <section className="relative min-h-[92vh] flex items-end overflow-hidden bg-black">
+        <img
+          src={hero.heroImage}
+          alt="Students"
+          className="absolute inset-0 w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/55 to-black/20" />
 
-        <div className="relative w-full max-w-7xl mx-auto px-6 pb-20 pt-40">
+        <div className="relative w-full max-w-7xl mx-auto px-6 pb-24 pt-40">
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 mb-8">
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-              <span className="text-white/90 text-sm font-medium tracking-wide">{hero.badge}</span>
-            </div>
-            <h1 className="text-5xl sm:text-6xl lg:text-7xl font-black text-white leading-[1.05] tracking-tight mb-6">
+            <span
+              className="inline-flex items-center gap-2 px-6 py-2 rounded-full backdrop-blur-sm border border-white/20 mb-8"
+              style={{ backgroundColor: `${pc}20`, color: 'white' }}
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-sm font-semibold tracking-wide">{hero.badge}</span>
+            </span>
+
+            <h1 className="text-[3.2rem] sm:text-[4.5rem] lg:text-[5rem] font-black tracking-tight leading-[1.05] text-white mb-6">
               {hero.headline}
-              <span className="block text-transparent bg-clip-text bg-gradient-to-r from-white/60 to-white">{hero.headlineSub}</span>
+              <span className="block text-white/60">{hero.headlineSub}</span>
             </h1>
-            <p className="text-xl text-white/50 max-w-lg leading-relaxed">
-              {hero.description}
-            </p>
+            <p className="text-xl text-white/50 max-w-lg leading-relaxed">{hero.description}</p>
           </div>
         </div>
       </section>
@@ -95,10 +92,8 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
           <div className="flex flex-wrap justify-center gap-3">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
-                activeCategory === null
-                  ? 'text-white shadow-lg scale-105'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              className={`px-5 py-2.5 rounded-[1rem] text-sm font-bold transition-all duration-300 ${
+                activeCategory === null ? 'text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
               }`}
               style={activeCategory === null ? { backgroundColor: pc } : undefined}
             >
@@ -110,10 +105,8 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
                 <button
                   key={cat.name}
                   onClick={() => setActiveCategory(isActive ? null : cat.name)}
-                  className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all duration-300 ${
-                    isActive
-                      ? 'text-white shadow-lg scale-105'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  className={`flex items-center gap-2 px-5 py-2.5 rounded-[1rem] text-sm font-bold transition-all duration-300 ${
+                    isActive ? 'text-white shadow-lg scale-105' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}
                   style={isActive ? { backgroundColor: cat.color } : undefined}
                 >
@@ -161,17 +154,15 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
               return (
                 <div
                   key={globalIdx}
-                  className={`group rounded-2xl overflow-hidden transition-all duration-300 ${
+                  className={`group rounded-[2rem] overflow-hidden transition-all duration-300 ${
                     isOpen
                       ? 'bg-white shadow-xl shadow-gray-200/60 border-gray-200/80'
-                      : 'bg-gray-50/80 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 border-gray-100/80'
+                      : 'bg-gray-50 hover:bg-white hover:shadow-lg hover:shadow-gray-200/40 border-gray-100'
                   } border`}
                 >
                   <button onClick={() => toggle(globalIdx)} className="w-full flex items-center gap-4 p-6 text-left">
                     <div
-                      className={`shrink-0 w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-300 ${
-                        isOpen ? 'scale-110 rotate-3' : 'group-hover:scale-105'
-                      }`}
+                      className={`shrink-0 w-10 h-10 rounded-[0.75rem] flex items-center justify-center transition-all duration-300 ${isOpen ? 'scale-110 rotate-3' : 'group-hover:scale-105'}`}
                       style={{ backgroundColor: isOpen ? borderColor : `${borderColor}12`, color: isOpen ? 'white' : borderColor }}
                     >
                       <Icon name={catObj?.iconName || 'faqGeneral'} className="w-5 h-5" />
@@ -187,9 +178,7 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
                     </div>
                   </button>
                   <div className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-                    <div className="px-6 pb-6 pl-20 text-gray-500 leading-relaxed text-[15px]">
-                      {faq.a}
-                    </div>
+                    <div className="px-6 pb-6 pl-20 text-gray-500 leading-relaxed text-[15px]">{faq.a}</div>
                   </div>
                 </div>
               );
@@ -198,7 +187,7 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
 
           {filtered.length === 0 && activeCategory && (
             <div className="text-center py-20">
-              <div className="w-16 h-16 mx-auto rounded-2xl flex items-center justify-center mb-4" style={{ backgroundColor: `${pc}10` }}>
+              <div className="w-16 h-16 mx-auto rounded-[1.25rem] flex items-center justify-center mb-4" style={{ backgroundColor: `${pc}10` }}>
                 <Icon name="faqGeneral" className="w-7 h-7" />
               </div>
               <p className="text-lg font-bold text-gray-900 mb-1">{faqLabels.emptyTitle}</p>
@@ -212,28 +201,23 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
       </section>
 
       {/* ═══════ CTA ═══════ */}
-      <section className="relative px-6 py-32 overflow-hidden" style={{ backgroundColor: pc }}>
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, white 1px, transparent 0)', backgroundSize: '32px 32px' }} />
-          <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full opacity-[0.08] bg-white" />
-          <div className="absolute -bottom-32 -left-32 w-[500px] h-[500px] rounded-full opacity-[0.05] bg-white" />
-        </div>
+      <section className="relative px-6 py-36 overflow-hidden" style={{ backgroundColor: pc }}>
+        <div className="absolute inset-0 opacity-[0.04] bg-[radial-gradient(circle_at_1px_1px,white_1px,transparent_0)] bg-[length:32px_32px]" />
+        <div className="absolute -top-40 -right-40 w-[700px] h-[700px] rounded-full opacity-[0.08] bg-white" />
+
         <div className="relative max-w-4xl mx-auto text-center">
-          <div className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-white/10 border border-white/15 mb-8">
-            <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span className="text-white/80 text-sm font-medium">{cta.badge}</span>
-          </div>
-          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black text-white tracking-tight leading-[1.1] mb-6 whitespace-pre-line">
+          <span className="inline-block px-5 py-2 mb-6 rounded-full bg-white/10 border border-white/15 text-sm font-semibold text-white">
+            {cta.badge}
+          </span>
+          <h2 className="text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight text-white leading-[1.05] mb-6 whitespace-pre-line">
             {cta.headline}
           </h2>
-          <p className="text-white/50 text-lg max-w-2xl mx-auto leading-relaxed mb-12">
-            {cta.description}
-          </p>
+          <p className="text-white/50 text-lg max-w-2xl mx-auto mb-12 leading-relaxed">{cta.description}</p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             {cta.buttons[0] && (
               <a
                 href={cta.buttons[0].link}
-                className="group inline-flex items-center justify-center gap-3 bg-white px-10 py-5 rounded-2xl text-lg font-bold hover:shadow-2xl hover:shadow-white/20 hover:scale-[1.02] transition-all duration-300"
+                className="group inline-flex items-center justify-center gap-3 bg-white px-12 py-5 rounded-2xl text-lg font-black hover:shadow-2xl hover:shadow-white/20 hover:scale-[1.02] transition-all"
                 style={{ color: pc }}
               >
                 {cta.buttons[0].text}
@@ -241,7 +225,7 @@ export default function FAQPage({ school, sitePage }: { school: PublicSchool; si
               </a>
             )}
             {cta.buttons[1] && (
-              <a href={cta.buttons[1].link} className="inline-flex items-center justify-center gap-2 px-10 py-5 rounded-2xl text-lg font-bold text-white border-2 border-white/20 hover:bg-white/10 hover:border-white/40 transition-all duration-300">
+              <a href={cta.buttons[1].link} className="inline-flex items-center justify-center px-12 py-5 rounded-2xl text-lg font-bold border-2 border-white/30 text-white hover:bg-white/10 transition-all">
                 {cta.buttons[1].text}
               </a>
             )}

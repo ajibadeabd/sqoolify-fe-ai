@@ -133,11 +133,14 @@ export default function SiteBuilderPage() {
         </div>
       ) : (
         <div className="grid gap-3">
-          {pages.map((page) => (
+          {pages.map((page) => {
+            const isCanvas = school?.siteConfig?.template === 'canvas'
+            const blockCount = page.canvasBlocks?.length ?? 0
+            return (
             <div
               key={page._id}
               className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-              onClick={() => navigate(`/site-builder/${page._id}`)}
+              onClick={() => navigate(isCanvas ? `/canvas-editor/${page._id}` : `/site-builder/${page._id}`)}
             >
               <div className="p-5">
                 <div className="flex items-start justify-between">
@@ -154,17 +157,23 @@ export default function SiteBuilderPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 font-mono">/{page.slug}</p>
-                    {page.sections.length > 0 && (
-                      <div className="flex items-center gap-1.5 mt-2">
-                        {page.sections.slice(0, 6).map((s, i) => (
-                          <span key={i} className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center text-xs" title={s.type}>
-                            {SECTION_ICONS[s.type] || '?'}
-                          </span>
-                        ))}
-                        {page.sections.length > 6 && (
-                          <span className="text-xs text-gray-400 ml-1">+{page.sections.length - 6}</span>
-                        )}
-                      </div>
+                    {isCanvas ? (
+                      blockCount > 0 && (
+                        <p className="text-xs text-gray-400 mt-2">{blockCount} canvas block{blockCount !== 1 ? 's' : ''}</p>
+                      )
+                    ) : (
+                      page.sections.length > 0 && (
+                        <div className="flex items-center gap-1.5 mt-2">
+                          {page.sections.slice(0, 6).map((s, i) => (
+                            <span key={i} className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center text-xs" title={s.type}>
+                              {SECTION_ICONS[s.type] || '?'}
+                            </span>
+                          ))}
+                          {page.sections.length > 6 && (
+                            <span className="text-xs text-gray-400 ml-1">+{page.sections.length - 6}</span>
+                          )}
+                        </div>
+                      )
                     )}
                   </div>
                   <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition" onClick={(e) => e.stopPropagation()}>
@@ -187,7 +196,7 @@ export default function SiteBuilderPage() {
                 </div>
               </div>
             </div>
-          ))}
+          )})}
         </div>
       )}
 
@@ -207,6 +216,7 @@ const PREVIEW_PAGES = [
   { key: 'about', label: 'About' },
   { key: 'faq', label: 'FAQ' },
   { key: 'admissions', label: 'Admissions' },
+  { key: 'news', label: 'News' },
   { key: 'contact', label: 'Contact' },
 ] as const
 
@@ -344,13 +354,15 @@ function SiteConfigModal({ school, onClose, onSave }: { school: School; onClose:
           {/* Template Selector */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-3">Website Template</label>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               {([
                 { id: 'classic' as const, name: 'Classic', desc: 'Dark heroes, elegant cards', gradient: 'from-gray-900 via-gray-800 to-gray-700' },
                 { id: 'modern' as const, name: 'Modern', desc: 'Light & airy, soft gradients', gradient: 'from-blue-50 via-white to-purple-50' },
-                { id: 'bold' as const, name: 'Bold', desc: 'Full-bleed, editorial feel', gradient: 'from-black via-gray-900 to-black' },
+                { id: 'bold' as const, name: 'Bold', desc: 'Full-bleed, high contrast', gradient: 'from-black via-gray-900 to-black' },
+                { id: 'editorial' as const, name: 'Editorial', desc: 'Magazine-style, ultra-bold', gradient: 'from-gray-950 via-gray-900 to-black' },
+                { id: 'prestige' as const, name: 'Prestige', desc: 'Split-screen luxury layout', gradient: 'from-white via-gray-50 to-gray-200' },
               ]).map((t) => {
-                const isActive = (config.template || 'classic') === t.id
+                const isActive = (config.template || 'prestige') === t.id
                 return (
                   <div
                     key={t.id}

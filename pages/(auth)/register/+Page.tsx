@@ -5,6 +5,7 @@ import { useAuth } from '../../../lib/auth-context'
 import { useAuthStore } from '../../../lib/stores/auth-store'
 import { buildSchoolUrl } from '../../../lib/subdomain'
 import { encryptAuth } from '../../../lib/crypto-utils'
+import countries from '../../../lib/countries.json'
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1'
 
@@ -16,6 +17,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
     schoolName: '',
+    country: '',
     phone: '',
     slug: '',
   })
@@ -113,6 +115,7 @@ export default function RegisterPage() {
         email: formData.email,
         password: formData.password,
         schoolName: formData.schoolName,
+        country: formData.country,
         phone: formData.phone || undefined,
         slug: formData.slug || undefined,
       })
@@ -276,6 +279,25 @@ export default function RegisterPage() {
                   className={inputClass}
                   placeholder="Bright Future Academy"
                 />
+              </div>
+
+              <div>
+                <label htmlFor="country" className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Country
+                </label>
+                <select
+                  id="country"
+                  name="country"
+                  value={formData.country}
+                  onChange={(e) => setFormData({ ...formData, country: e.target.value })}
+                  required
+                  className={inputClass}
+                >
+                  <option value="">Select your country</option>
+                  {countries.map((c) => (
+                    <option key={c.code} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div>

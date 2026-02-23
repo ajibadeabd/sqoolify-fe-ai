@@ -4,10 +4,7 @@ import Card from '../../../components/ui/Card'
 import Badge from '../../../components/ui/Badge'
 import Breadcrumbs from '../../../components/layout/Breadcrumbs'
 import Pagination from '../../../components/ui/Pagination'
-import { useAuth } from '../../../lib/auth-context'
-
 export default function MyAttendancePage() {
-  const { user } = useAuth()
   const [records, setRecords] = useState<any[]>([])
   const [summary, setSummary] = useState<any>({ total: 0, present: 0, absent: 0, late: 0, excused: 0, attendanceRate: 0 })
   const [loading, setLoading] = useState(true)
@@ -40,23 +37,7 @@ export default function MyAttendancePage() {
     excused: 'info',
   }
 
-  // The backend returns full attendance entries — extract this student's record from each
-  const studentId = (user as any)?.studentId
-  const attendanceRows = records.map((entry: any) => {
-    // If the backend already flattened the records, use directly; otherwise find this student
-    const childRecord = entry.records
-      ? (entry.records || []).find((r: any) => {
-          const sid = r.student?._id || r.student
-          return sid?.toString() === studentId
-        })
-      : entry
-    return {
-      _id: entry._id,
-      date: entry.date,
-      status: childRecord?.status || 'N/A',
-      remark: childRecord?.remark || '',
-    }
-  })
+  const attendanceRows = records
 
   const { total, present: presentCount, absent: absentCount, late: lateCount, excused: excusedCount, attendanceRate } = summary
 

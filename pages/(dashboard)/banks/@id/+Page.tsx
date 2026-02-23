@@ -17,30 +17,15 @@ export default function BankDetailPage() {
   const { can } = usePermission()
   const [bank, setBank] = useState<Bank | null>(null)
   const [loading, setLoading] = useState(true)
-  const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [formData, setFormData] = useState({
-    bankName: '',
-    accountName: '',
-    accountNumber: '',
-    isActive: true,
-  })
 
   useEffect(() => {
     const fetchBank = async () => {
       try {
         const res = await bankService.getById(id)
         setBank(res.data)
-        if (res.data) {
-          setFormData({
-            bankName: res.data.bankName,
-            accountName: res.data.accountName,
-            accountNumber: res.data.accountNumber,
-            isActive: res.data.isActive,
-          })
-        }
       } catch {
         setBank(null)
       } finally {
@@ -50,31 +35,18 @@ export default function BankDetailPage() {
     if (id) fetchBank()
   }, [id])
 
-  const handleSave = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const handleToggleActive = async () => {
+    if (!bank) return
     setSaving(true)
     try {
-      const res = await bankService.update(id, formData)
+      const res = await bankService.update(id, { isActive: !bank.isActive })
       setBank(res.data)
-      setEditing(false)
-      toast.success('Bank account updated')
+      toast.success(res.data?.isActive ? 'Bank set as active' : 'Bank set as inactive')
     } catch (err: any) {
       toast.error(err.message || 'Failed to update bank')
     } finally {
       setSaving(false)
     }
-  }
-
-  const handleCancel = () => {
-    if (bank) {
-      setFormData({
-        bankName: bank.bankName,
-        accountName: bank.accountName,
-        accountNumber: bank.accountNumber,
-        isActive: bank.isActive,
-      })
-    }
-    setEditing(false)
   }
 
   const handleDelete = async () => {
@@ -102,6 +74,12 @@ export default function BankDetailPage() {
     return <div className="text-center py-12 text-gray-500">Bank account not found</div>
   }
 
+  const verificationVariant: Record<string, 'warning' | 'success' | 'danger'> = {
+    pending: 'warning',
+    verified: 'success',
+    failed: 'danger',
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Banks', href: '/banks' }, { label: bank.bankName }]} />
@@ -110,90 +88,52 @@ export default function BankDetailPage() {
         <h1 className="text-2xl font-bold text-gray-900">Bank Account Details</h1>
         <div className="flex gap-3">
           <Button variant="outline" onClick={() => navigate('/banks')}>Back</Button>
-          {can('write_banks') && !editing && (
-            <Button variant="primary" onClick={() => setEditing(true)}>Edit</Button>
+          {can('write_banks') && (
+            <Button variant={bank.isActive ? 'secondary' : 'primary'} loading={saving} onClick={handleToggleActive}>
+              {bank.isActive ? 'Set Inactive' : 'Set Active'}
+            </Button>
           )}
-          {can('delete_banks') && !editing && (
+          {/* {can('delete_banks') && (
             <Button variant="danger" onClick={() => setDeleteOpen(true)}>Delete</Button>
-          )}
+          )} */}
         </div>
       </div>
 
       <Card title="Account Information">
-        {editing ? (
-          <form onSubmit={handleSave} className="space-y-4">
-            <div className="grid sm:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Bank Name</label>
-                <input
-                  type="text"
-                  value={formData.bankName}
-                  onChange={(e) => setFormData({ ...formData, bankName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Account Name</label>
-                <input
-                  type="text"
-                  value={formData.accountName}
-                  onChange={(e) => setFormData({ ...formData, accountName: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Account Number</label>
-                <input
-                  type="text"
-                  value={formData.accountNumber}
-                  onChange={(e) => setFormData({ ...formData, accountNumber: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  required
-                />
-              </div>
-              <div className="flex items-center">
-                <label className="flex items-center gap-2 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={formData.isActive}
-                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                    className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                  />
-                  <span className="text-sm text-gray-700">Active</span>
-                </label>
-              </div>
-            </div>
-            <div className="flex gap-2 pt-2">
-              <Button type="submit" loading={saving}>Save Changes</Button>
-              <Button type="button" variant="secondary" onClick={handleCancel}>Cancel</Button>
-            </div>
-          </form>
-        ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div>
-              <label className="text-sm text-gray-500">Bank Name</label>
-              <p className="font-medium">{bank.bankName}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500">Account Name</label>
-              <p className="font-medium">{bank.accountName}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500">Account Number</label>
-              <p className="font-mono font-medium">{bank.accountNumber}</p>
-            </div>
-            <div>
-              <label className="text-sm text-gray-500">Status</label>
-              <div className="mt-1">
-                <Badge variant={bank.isActive ? 'success' : 'error'}>
-                  {bank.isActive ? 'Active' : 'Inactive'}
-                </Badge>
-              </div>
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div>
+            <label className="text-sm text-gray-500">Bank Name</label>
+            <p className="font-medium">{bank.bankName}</p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Bank Code</label>
+            <p className="font-mono font-medium">{bank.bankCode}</p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Account Name</label>
+            <p className="font-medium">{bank.accountName}</p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Account Number</label>
+            <p className="font-mono font-medium">{bank.accountNumber}</p>
+          </div>
+          <div>
+            <label className="text-sm text-gray-500">Verification</label>
+            <div className="mt-1">
+              <Badge variant={verificationVariant[bank.verificationStatus] || 'default'}>
+                {bank.verificationStatus}
+              </Badge>
             </div>
           </div>
-        )}
+          <div>
+            <label className="text-sm text-gray-500">Status</label>
+            <div className="mt-1">
+              <Badge variant={bank.isActive ? 'success' : 'error'}>
+                {bank.isActive ? 'Active' : 'Inactive'}
+              </Badge>
+            </div>
+          </div>
+        </div>
       </Card>
 
       {bank.createdAt && (
@@ -217,14 +157,14 @@ export default function BankDetailPage() {
         </Card>
       )}
 
-      <ConfirmDialog
+      {/* <ConfirmDialog
         open={deleteOpen}
         onClose={() => setDeleteOpen(false)}
         onConfirm={handleDelete}
         title="Delete Bank Account"
         message={`Are you sure you want to delete ${bank.bankName}? This action cannot be undone.`}
         loading={deleting}
-      />
+      /> */}
     </div>
   )
 }

@@ -9,7 +9,7 @@ import {
 } from '../shared/content';
 
 export default function HomePage({ school, sitePage }: { school: PublicSchool; sitePage?: SitePage }) {
-  const pc = school.siteConfig?.primaryColor || '#1E3A5F';
+  const pc = school.siteConfig?.primaryColor || '#1a5634';
   const name = school.name || 'Our School';
 
   const heroSec = getSection(sitePage, 'hero')

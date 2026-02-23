@@ -48,7 +48,7 @@ const FAQS = [
 ];
 
 export default function FAQPage({ school }: { school: PublicSchool }) {
-  const pc = school.siteConfig?.primaryColor || '#1E3A5F';
+  const pc = school.siteConfig?.primaryColor || '#1a5634';
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [openIds, setOpenIds] = useState<Set<number>>(new Set());
 

@@ -22,8 +22,22 @@ import BoldAdmissions from './bold/AdmissionsPage';
 import BoldContact from './bold/ContactPage';
 import BoldNews from './bold/NewsPage';
 
+import EditorialHome from './editorial/HomePage';
+import EditorialAbout from './editorial/AboutPage';
+import EditorialFAQ from './editorial/FAQPage';
+import EditorialAdmissions from './editorial/AdmissionsPage';
+import EditorialContact from './editorial/ContactPage';
+import EditorialNews from './editorial/NewsPage';
+
+import PrestigeHome from './prestige/HomePage';
+import PrestigeAbout from './prestige/AboutPage';
+import PrestigeFAQ from './prestige/FAQPage';
+import PrestigeAdmissions from './prestige/AdmissionsPage';
+import PrestigeContact from './prestige/ContactPage';
+import PrestigeNews from './prestige/NewsPage';
+
 type PageComponent = ComponentType<{ school: PublicSchool; sitePage?: SitePage }>;
-type TemplateName = 'classic' | 'modern' | 'bold';
+type TemplateName = 'classic' | 'modern' | 'bold' | 'editorial' | 'prestige';
 
 export const TEMPLATE_SLUGS = ['home', 'about', 'faq', 'admissions', 'news', 'contact'];
 
@@ -52,13 +66,29 @@ const templates: Record<TemplateName, Record<string, PageComponent>> = {
     news: BoldNews,
     contact: BoldContact,
   },
+  editorial: {
+    home: EditorialHome,
+    about: EditorialAbout,
+    faq: EditorialFAQ,
+    admissions: EditorialAdmissions,
+    news: EditorialNews,
+    contact: EditorialContact,
+  },
+  prestige: {
+    home: PrestigeHome,
+    about: PrestigeAbout,
+    faq: PrestigeFAQ,
+    admissions: PrestigeAdmissions,
+    news: PrestigeNews,
+    contact: PrestigeContact,
+  },
 };
 
 
 export function getTemplatePage(school: PublicSchool, page: string): PageComponent {
-  const templateName = (school.siteConfig?.template || 'classic') as TemplateName;
-  const template = templates[templateName] || templates.classic;
-  return template[page] || templates.classic[page];
+  const templateName = (school.siteConfig?.template || 'prestige') as TemplateName;
+  const template = templates[templateName] || templates.prestige;
+  return template[page] || templates.prestige[page];
 }
 
 export function getTemplateHome(school: PublicSchool): PageComponent {

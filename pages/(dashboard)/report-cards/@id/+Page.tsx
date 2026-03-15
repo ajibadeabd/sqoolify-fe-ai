@@ -7,19 +7,28 @@ import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
 import Avatar from '../../../../components/ui/Avatar'
 import Breadcrumbs from '../../../../components/layout/Breadcrumbs'
+import { usePermission } from '../../../../lib/use-permission'
+import { toast } from 'sonner'
 
 export default function ReportCardDetailPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
+  const { can } = usePermission()
   const [reportCard, setReportCard] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
+  const [teacherRemark, setTeacherRemark] = useState('')
+  const [principalRemark, setPrincipalRemark] = useState('')
+  const [generating, setGenerating] = useState(false)
+  const [savingRemarks, setSavingRemarks] = useState(false)
 
   useEffect(() => {
     const fetchReportCard = async () => {
       try {
         const res = await reportCardService.getById(id)
         setReportCard(res.data)
+        setTeacherRemark(res.data?.teacherRemark || '')
+        setPrincipalRemark(res.data?.principalRemark || '')
       } catch {
         setReportCard(null)
       } finally {
@@ -28,6 +37,32 @@ export default function ReportCardDetailPage() {
     }
     if (id) fetchReportCard()
   }, [id])
+
+  const handleGenerateRemarks = async () => {
+    setGenerating(true)
+    try {
+      const res = await reportCardService.generateRemarks(id)
+      setTeacherRemark(res.data?.teacherRemark || '')
+      setPrincipalRemark(res.data?.principalRemark || '')
+      toast.success('Remarks generated! Review and save when ready.')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate remarks')
+    } finally {
+      setGenerating(false)
+    }
+  }
+
+  const handleSaveRemarks = async () => {
+    setSavingRemarks(true)
+    try {
+      await reportCardService.update(id, { teacherRemark, principalRemark })
+      toast.success('Remarks saved')
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to save remarks')
+    } finally {
+      setSavingRemarks(false)
+    }
+  }
 
   const handleDownloadPdf = async () => {
     setDownloading(true)
@@ -148,12 +183,54 @@ export default function ReportCardDetailPage() {
         </div>
 
         {/* Remarks */}
-        {reportCard.remarks && (
-          <div className="mt-6 pt-4 border-t border-gray-200">
-            <label className="text-sm text-gray-500">Remarks</label>
-            <p className="font-medium mt-1">{reportCard.remarks}</p>
+        <div className="mt-6 pt-4 border-t border-gray-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Remarks</h3>
+            {can('write_report_cards') && (
+              <Button size="sm" variant="outline" onClick={handleGenerateRemarks} loading={generating}>
+                Generate with AI
+              </Button>
+            )}
           </div>
-        )}
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Teacher's Remark</label>
+              {can('write_report_cards') ? (
+                <textarea
+                  value={teacherRemark}
+                  onChange={(e) => setTeacherRemark(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Enter teacher's remark..."
+                />
+              ) : (
+                <p className="text-sm text-gray-700">{teacherRemark || 'No remark yet'}</p>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Principal's Remark</label>
+              {can('write_report_cards') ? (
+                <textarea
+                  value={principalRemark}
+                  onChange={(e) => setPrincipalRemark(e.target.value)}
+                  rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+                  placeholder="Enter principal's remark..."
+                />
+              ) : (
+                <p className="text-sm text-gray-700">{principalRemark || 'No remark yet'}</p>
+              )}
+            </div>
+
+            {can('write_report_cards') && (
+              <div className="flex justify-end">
+                <Button onClick={handleSaveRemarks} loading={savingRemarks}>Save Remarks</Button>
+              </div>
+            )}
+          </div>
+        </div>
       </Card>
     </div>
   )

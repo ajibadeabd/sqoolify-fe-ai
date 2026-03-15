@@ -51,7 +51,7 @@ const icons = {
 
 export default function StatsCard({ title, value, change, icon, color = 'blue' }: StatsCardProps) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-6">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
       <div className="flex items-center justify-between mb-4">
         <span className="text-sm font-medium text-gray-500">{title}</span>
         {icon && (
@@ -60,7 +60,7 @@ export default function StatsCard({ title, value, change, icon, color = 'blue' }
           </div>
         )}
       </div>
-      <div className="text-3xl font-bold text-gray-900">{value}</div>
+      <div className="text-2xl sm:text-3xl font-bold text-gray-900">{value}</div>
       {change && (
         <p className="mt-1 text-sm text-green-600">{change}</p>
       )}

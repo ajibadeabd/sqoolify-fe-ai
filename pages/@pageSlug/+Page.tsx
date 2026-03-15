@@ -5,6 +5,7 @@ import type { PublicSchool, SitePage } from '../../lib/types'
 import type { Data } from './+data'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
 import SectionRenderer from '../../components/public-site/SectionRenderer'
+import CanvasPageRenderer from '../../components/public-site/CanvasPageRenderer'
 import { getTemplatePage, TEMPLATE_SLUGS } from '../../components/public-site/templates'
 
 const FALLBACK_NAV_PAGES = [
@@ -30,6 +31,15 @@ export default function DynamicSitePage() {
   }
 
   const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES
+
+  // Canvas (Design Studio) pages — render raw HTML/CSS
+  if (sitePage?.editorMode === 'canvas' && sitePage.canvasData?.html) {
+    return (
+      <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
+        <CanvasPageRenderer canvasData={sitePage.canvasData} />
+      </PublicSiteLayout>
+    )
+  }
 
   // Template pages — render with DB sections (falls back to defaults in component)
   const isTemplatePage = TEMPLATE_SLUGS.includes(pageSlug)

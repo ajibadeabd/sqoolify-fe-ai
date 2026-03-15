@@ -8,6 +8,7 @@ import Topbar from '../../components/layout/Topbar'
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const { user, isAuthenticated, isLoading } = useAuth()
 
   // Redirect to login if not authenticated
@@ -57,14 +58,14 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div className="absolute top-1/3 -left-16 w-72 h-72 rounded-full blur-2xl" style={{ backgroundColor: 'rgba(var(--color-primary-rgb, 59,130,246), 0.1)' }} />
         <div className="absolute bottom-10 right-1/4 w-64 h-64 bg-purple-100/20 rounded-full blur-3xl" />
       </div>
-      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
+      <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
       <div
-        className={`relative z-1 transition-all duration-300 ${
-          collapsed ? 'ml-16' : 'ml-64'
+        className={`relative z-1 transition-all duration-300 ml-0 ${
+          collapsed ? 'md:ml-16' : 'md:ml-64'
         }`}
       >
-        <Topbar />
-        <main className="p-6">{children}</main>
+        <Topbar onMenuToggle={() => setMobileOpen(true)} />
+        <main className="p-4 sm:p-6">{children}</main>
       </div>
     </div>
   )

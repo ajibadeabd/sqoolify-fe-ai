@@ -80,6 +80,10 @@ export const useAuthStore = create<AuthStore>((set, get) => ({
         .then((response) => {
           const freshUser = response.data
           if (freshUser) {
+            if (freshUser.school && typeof freshUser.school === 'object') {
+              freshUser.schoolDetail = freshUser.school as any
+              freshUser.school = (freshUser.school as any)._id
+            }
             set({ user: freshUser })
             localStorage.setItem(USER_KEY, JSON.stringify(freshUser))
           }

@@ -45,7 +45,7 @@ export default function MyAttendancePage() {
     return (
       <div className="animate-pulse space-y-4">
         <div className="h-8 bg-gray-200 rounded w-48" />
-        <div className="grid sm:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-gray-200 rounded-xl" />)}
         </div>
         <div className="h-64 bg-gray-200 rounded-xl" />

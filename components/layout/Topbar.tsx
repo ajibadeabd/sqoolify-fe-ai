@@ -1,15 +1,26 @@
 import { useState } from 'react'
 import { useAuth } from '../../lib/auth-context'
 
-export default function Topbar() {
+export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const { user, logout } = useAuth()
 
   const userRole = user?.role || ''
 
   return (
-    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6">
-      <div>
+    <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-4 sm:px-6">
+      <div className="flex items-center gap-3">
+        {onMenuToggle && (
+          <button
+            onClick={onMenuToggle}
+            className="p-2 -ml-2 rounded-lg hover:bg-gray-100 text-gray-600 md:hidden"
+            aria-label="Open menu"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+            </svg>
+          </button>
+        )}
         <h2 className="text-lg font-semibold text-gray-900">
           Welcome back{user ? `, ${user.firstName}` : ''}
         </h2>

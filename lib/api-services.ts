@@ -14,6 +14,7 @@ import {
   PeriodConfig, TimetableEntry, CreateTimetableEntryData, BulkTimetableData, CreatePeriodConfigData,
   SitePage, SiteConfig, PageTemplate,
   AuthResponse, LoginCredentials, RegisterData,
+  SchoolConnection, InterSchoolExam, CreateInterExamData, InterSchoolMessage, CreateMessageData,
 } from './types';
 
 // Helper to get auth options
@@ -436,6 +437,9 @@ export const reportCardService = {
 
   downloadPdf: (id: string) =>
     api.get<Blob>(`/report-cards/${id}/pdf`, authOptions()),
+
+  generateRemarks: (id: string) =>
+    api.post<ApiResponse<{ teacherRemark: string; principalRemark: string }>>(`/report-cards/${id}/generate-remarks`, {}, authOptions()),
 };
 
 // ============ ATTENDANCE ============
@@ -749,4 +753,52 @@ export const sitePageService = {
 export const siteConfigService = {
   update: (id: string, data: SiteConfig) =>
     api.patch<ApiResponse<School>>(`/schools/${id}`, { siteConfig: data } as any, authOptions()),
+};
+
+// ============ INTER-SCHOOL NETWORK ============
+export const interSchoolService = {
+  discoverSchools: (params?: Record<string, any>) =>
+    api.get<ApiResponse<School[]>>(`/inter-school/discover${buildQuery(params || {})}`, authOptions()),
+
+  getConnections: () =>
+    api.get<ApiResponse<SchoolConnection[]>>('/inter-school/connections', authOptions()),
+
+  getRequests: () =>
+    api.get<ApiResponse<SchoolConnection[]>>('/inter-school/requests', authOptions()),
+
+  sendRequest: (schoolId: string) =>
+    api.post<ApiResponse<SchoolConnection>>('/inter-school/connect', { schoolId }, authOptions()),
+
+  acceptRequest: (connectionId: string) =>
+    api.patch<ApiResponse<SchoolConnection>>(`/inter-school/requests/${connectionId}/accept`, {}, authOptions()),
+
+  rejectRequest: (connectionId: string) =>
+    api.patch<ApiResponse<SchoolConnection>>(`/inter-school/requests/${connectionId}/reject`, {}, authOptions()),
+
+  disconnect: (connectionId: string) =>
+    api.delete<ApiResponse<any>>(`/inter-school/connections/${connectionId}`, authOptions()),
+
+  createExam: (data: CreateInterExamData) =>
+    api.post<ApiResponse<InterSchoolExam>>('/inter-school/exams', data, authOptions()),
+
+  getExams: (params?: Record<string, any>) =>
+    api.get<ApiResponse<InterSchoolExam[]>>(`/inter-school/exams${buildQuery(params || {})}`, authOptions()),
+
+  getExamById: (examId: string) =>
+    api.get<ApiResponse<InterSchoolExam>>(`/inter-school/exams/${examId}`, authOptions()),
+
+  approveExam: (examId: string) =>
+    api.patch<ApiResponse<InterSchoolExam>>(`/inter-school/exams/${examId}/approve`, {}, authOptions()),
+
+  updateExam: (examId: string, data: Partial<CreateInterExamData>) =>
+    api.patch<ApiResponse<InterSchoolExam>>(`/inter-school/exams/${examId}`, data, authOptions()),
+
+  sendMessage: (data: CreateMessageData) =>
+    api.post<ApiResponse<InterSchoolMessage>>('/inter-school/messages', data, authOptions()),
+
+  getMessages: (params?: Record<string, any>) =>
+    api.get<ApiResponse<InterSchoolMessage[]>>(`/inter-school/messages${buildQuery(params || {})}`, authOptions()),
+
+  getMessageById: (messageId: string) =>
+    api.get<ApiResponse<InterSchoolMessage>>(`/inter-school/messages/${messageId}`, authOptions()),
 };

@@ -131,6 +131,12 @@ export const PERMISSIONS = {
 
   // Chat
   ACCESS_CHAT: 'access_chat',
+
+  // Inter-School Network
+  READ_INTER_SCHOOL: 'read_inter_school',
+  WRITE_INTER_SCHOOL: 'write_inter_school',
+  DELETE_INTER_SCHOOL: 'delete_inter_school',
+  MANAGE_INTER_SCHOOL_EXAMS: 'manage_inter_school_exams',
 } as const;
 
 export type Permission = typeof PERMISSIONS[keyof typeof PERMISSIONS];

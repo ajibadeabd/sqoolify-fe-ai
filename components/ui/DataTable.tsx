@@ -27,7 +27,7 @@ export default function DataTable<T extends Record<string, any>>({
         <div className="animate-pulse">
           <div className="h-12 bg-gray-100 border-b" />
           {[...Array(5)].map((_, i) => (
-            <div key={i} className="h-14 border-b border-gray-100 flex items-center px-6 gap-4">
+            <div key={i} className="h-14 border-b border-gray-100 flex items-center px-3 sm:px-6 gap-4">
               {columns.map((_, j) => (
                 <div key={j} className="h-4 bg-gray-200 rounded flex-1" />
               ))}
@@ -54,7 +54,7 @@ export default function DataTable<T extends Record<string, any>>({
               {columns.map((col) => (
                 <th
                   key={col.key}
-                  className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-6 py-3"
+                  className="text-left text-xs font-medium text-gray-500 uppercase tracking-wider px-3 py-2 sm:px-6 sm:py-3"
                 >
                   {col.header}
                 </th>
@@ -69,7 +69,7 @@ export default function DataTable<T extends Record<string, any>>({
                 className={`hover:bg-gray-50 transition ${onRowClick ? 'cursor-pointer' : ''}`}
               >
                 {columns.map((col) => (
-                  <td key={col.key} className="px-6 py-4 text-sm text-gray-900">
+                  <td key={col.key} className="px-3 py-3 sm:px-6 sm:py-4 text-sm text-gray-900">
                     {col.render ? col.render(item) : item[col.key]}
                   </td>
                 ))}

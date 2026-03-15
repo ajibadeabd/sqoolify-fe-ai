@@ -268,7 +268,7 @@ export default function SettingsPage() {
       {activeTab === 'general' && (<>
       {/* School Info */}
       {school && (
-        <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+        <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">School Information</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -296,7 +296,7 @@ export default function SettingsPage() {
       )}
 
       {/* General Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">General Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -333,7 +333,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Academic Settings */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Academic Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -386,7 +386,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Class Levels */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold">Class Levels</h2>
@@ -467,7 +467,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Section Presets */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Section Presets</h2>
           <p className="text-sm text-gray-500">Quick-select options shown when creating or editing a class</p>
@@ -517,7 +517,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Exam Types */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Exam Types</h2>
           <p className="text-sm text-gray-500">Assessment types available when creating exams (e.g. CA1, CA2, Exam)</p>
@@ -543,7 +543,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Payment Categories */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Payment Categories</h2>
           <p className="text-sm text-gray-500">Fee categories for recording payments</p>
@@ -569,7 +569,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Payment Types */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Payment Types</h2>
           <p className="text-sm text-gray-500">How a student pays (e.g. full, partial, installment)</p>
@@ -595,7 +595,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Payment Methods */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Payment Methods</h2>
           <p className="text-sm text-gray-500">System-managed payment channels used in the payment form</p>
@@ -614,7 +614,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Student Statuses */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Student Statuses</h2>
           <p className="text-sm text-gray-500">Available statuses for student records</p>
@@ -640,7 +640,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Notice Visibility */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Notice Visibility Options</h2>
           <p className="text-sm text-gray-500">Audience groups for notice targeting</p>
@@ -666,7 +666,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Notice Types */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <div className="mb-4">
           <h2 className="text-lg font-semibold">Notice Types</h2>
           <p className="text-sm text-gray-500">Categories for notices and announcements</p>
@@ -692,7 +692,7 @@ export default function SettingsPage() {
       </div>
 
       {/* Feature Toggles */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 mb-6">
+      <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6 mb-6">
         <h2 className="text-lg font-semibold mb-4">Feature Settings</h2>
         <div className="space-y-4">
           <label className="flex items-center justify-between p-4 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
@@ -744,7 +744,7 @@ export default function SettingsPage() {
       {activeTab === 'domains' && (
         <div className="space-y-6">
           {/* Domain Overview */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <div className="flex items-start justify-between mb-1">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Custom Domains</h2>
@@ -756,7 +756,7 @@ export default function SettingsPage() {
           </div>
 
           {/* DNS Setup Guide */}
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-6">
+          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 sm:p-6">
             <h3 className="text-sm font-semibold text-blue-900 mb-3">How to set up your domain</h3>
             <ol className="text-sm text-blue-800 space-y-2 list-decimal list-inside">
               <li>Add your domain below (e.g. <code className="bg-blue-100 px-1 py-0.5 rounded text-xs font-mono">myschool.com</code>)</li>
@@ -767,7 +767,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Domain List */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6">
+          <div className="bg-white rounded-xl border border-gray-200 p-4 sm:p-6">
             <h3 className="text-sm font-semibold text-gray-900 mb-4">Your Domains</h3>
 
             {customDomains.length > 0 ? (

@@ -4,6 +4,7 @@ import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'
 import type { PublicSchool, SitePage } from '../../lib/types'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
+import CanvasPageRenderer from '../../components/public-site/CanvasPageRenderer'
 import { getTemplateHome } from '../../components/public-site/templates'
 
 const FALLBACK_NAV_PAGES = [
@@ -129,6 +130,16 @@ export default function HomePage() {
   // Subdomain → render school home page with DB content
   if (school) {
     const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES
+
+    // Canvas (Design Studio) home page
+    if (homePage?.editorMode === 'canvas' && homePage.canvasData?.html) {
+      return (
+        <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
+          <CanvasPageRenderer canvasData={homePage.canvasData} />
+        </PublicSiteLayout>
+      )
+    }
+
     const SchoolHomePage = getTemplateHome(school as PublicSchool)
     return (
       <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>

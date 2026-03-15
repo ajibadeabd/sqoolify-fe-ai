@@ -22,7 +22,7 @@ export default function Modal({ open, onClose, title, size = 'default', children
       <div className="fixed inset-0 bg-black/50" onClick={onClose} />
       <div className={`relative bg-white rounded-xl shadow-xl ${sizeClasses[size]} w-full mx-4 max-h-[90vh] overflow-y-auto`}>
         {title && (
-          <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex items-center justify-between px-4 py-3 sm:px-6 sm:py-4 border-b border-gray-200">
             <h3 className="text-lg font-semibold">{title}</h3>
             <button onClick={onClose} className="text-gray-400 hover:text-gray-600">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
@@ -31,7 +31,7 @@ export default function Modal({ open, onClose, title, size = 'default', children
             </button>
           </div>
         )}
-        <div className="p-6">{children}</div>
+        <div className="p-4 sm:p-6">{children}</div>
       </div>
     </div>
   )

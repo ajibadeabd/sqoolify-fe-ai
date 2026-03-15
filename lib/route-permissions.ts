@@ -79,6 +79,9 @@ export const ROUTE_PERMISSIONS: Record<string, string[]> = {
 
   // Chat
   '/chat-rooms': [PERMISSIONS.ACCESS_CHAT],
+
+  // Inter-School Network
+  '/inter-school': [PERMISSIONS.READ_INTER_SCHOOL],
 };
 
 /**

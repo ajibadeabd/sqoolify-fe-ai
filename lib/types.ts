@@ -63,6 +63,7 @@ export interface User {
   isVerify: boolean;
   schools: { schoolId: string; roles: string[] }[];
   school?: string;
+  schoolDetail?: School;
   role?: string;
   permissions: string[];
   currentSchool?: string;
@@ -256,6 +257,14 @@ export interface PageSection {
   isVisible?: boolean;
 }
 
+export interface CanvasData {
+  components: any;
+  styles: any;
+  html: string;
+  css: string;
+  assets: any[];
+}
+
 export interface SitePage {
   _id: string;
   title: string;
@@ -266,6 +275,8 @@ export interface SitePage {
   isHomePage: boolean;
   order: number;
   school: string;
+  editorMode?: 'sections' | 'canvas';
+  canvasData?: CanvasData;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -1200,4 +1211,73 @@ export interface CreatePeriodConfigData {
   sessionId?: string;
   periods: PeriodSlot[];
   days?: string[];
+}
+
+// Inter-School Network
+export type ConnectionStatus = 'pending' | 'accepted' | 'rejected';
+export type InterSchoolExamStatus = 'draft' | 'pending_approval' | 'approved' | 'live' | 'completed';
+export type InterSchoolExamType = 'common_entrance' | 'inter_school_competition' | 'mock_waec' | 'mock_jamb' | 'custom';
+
+export interface SchoolConnection {
+  _id: string;
+  requester: School | string;
+  receiver: School | string;
+  requestedBy: User | string;
+  acceptedBy?: User | string;
+  status: ConnectionStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ParticipatingSchool {
+  school: School | string;
+  approved: boolean;
+  approvedBy?: User | string;
+  approvedAt?: string;
+}
+
+export interface InterSchoolExam {
+  _id: string;
+  name: string;
+  description?: string;
+  type: InterSchoolExamType;
+  schools: ParticipatingSchool[];
+  createdBySchool: School | string;
+  createdBy: User | string;
+  maxScore?: number;
+  duration?: number;
+  startTime?: string;
+  endTime?: string;
+  status: InterSchoolExamStatus;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateInterExamData {
+  name: string;
+  description?: string;
+  type: InterSchoolExamType;
+  schoolIds: string[];
+  maxScore?: number;
+  duration?: number;
+  startTime?: string;
+  endTime?: string;
+}
+
+export interface InterSchoolMessage {
+  _id: string;
+  fromSchool: School | string;
+  toSchool: School | string;
+  sentBy: User | string;
+  subject: string;
+  content: string;
+  readAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateMessageData {
+  toSchoolId: string;
+  subject: string;
+  content: string;
 }

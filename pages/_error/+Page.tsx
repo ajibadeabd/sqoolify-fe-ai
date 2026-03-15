@@ -64,6 +64,7 @@ export default function ErrorPage() {
   const { is404 } = usePageContext()
   const { isAuthenticated, isLoading } = useAuth()
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   if (isLoading) {
     return (
@@ -77,10 +78,10 @@ export default function ErrorPage() {
   if (isAuthenticated) {
     return (
       <div className="min-h-screen bg-gray-50">
-        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} />
-        <div className={`transition-all duration-300 ${collapsed ? 'ml-16' : 'ml-64'}`}>
-          <Topbar />
-          <main className="p-6">
+        <Sidebar collapsed={collapsed} onToggle={() => setCollapsed(!collapsed)} mobileOpen={mobileOpen} onMobileClose={() => setMobileOpen(false)} />
+        <div className={`transition-all duration-300 ml-0 ${collapsed ? 'md:ml-16' : 'md:ml-64'}`}>
+          <Topbar onMenuToggle={() => setMobileOpen(true)} />
+          <main className="p-4 sm:p-6">
             <ErrorContent is404={!!is404} isAuthenticated={true} />
           </main>
         </div>

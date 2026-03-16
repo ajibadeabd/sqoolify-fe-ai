@@ -852,6 +852,7 @@ export interface Plan {
   features: PlanFeatures;
   isActive: boolean;
   trialDays: number;
+  yearlyDiscountPercent: number;
   description?: string;
   createdAt?: string;
   updatedAt?: string;

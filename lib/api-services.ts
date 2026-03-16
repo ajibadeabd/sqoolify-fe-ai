@@ -564,6 +564,12 @@ export const subscriptionService = {
 
   getHistory: () =>
     api.get<ApiResponse<SubscriptionHistory[]>>('/subscriptions/history', authOptions()),
+
+  initializePayment: (planId: string, billingCycle: 'monthly' | 'yearly') =>
+    api.post<ApiResponse<{ authorization_url: string; reference: string }>>('/subscriptions/initialize-payment', { planId, billingCycle }, authOptions()),
+
+  verifyPayment: (reference: string) =>
+    api.post<ApiResponse<Subscription>>('/subscriptions/verify-payment', { reference }, authOptions()),
 };
 
 // ============ FEES ============

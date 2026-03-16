@@ -823,11 +823,24 @@ export interface CreateNoticeData {
 export interface PlanFeatures {
   maxStudents: number;
   maxTeachers: number;
+  maxClasses: number;
   hasAttendance: boolean;
   hasExams: boolean;
   hasReportCards: boolean;
   hasNoticeBoard: boolean;
+  hasSubjects: boolean;
+  hasSessions: boolean;
+  hasTimetable: boolean;
   hasPayments: boolean;
+  hasFees: boolean;
+  hasBanks: boolean;
+  hasChat: boolean;
+  hasInterSchool: boolean;
+  hasSiteBuilder: boolean;
+  hasAI: boolean;
+  hasAuditLogs: boolean;
+  hasFileStorage: boolean;
+  maxStorageMB: number;
 }
 
 export interface Plan {

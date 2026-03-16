@@ -203,62 +203,43 @@ export default function SubscriptionsPage() {
                 {formatCurrency(plan.amount)}
                 <span className="text-sm font-normal text-gray-500">/{plan.billingCycle}</span>
               </p>
-              {plan.features && (
-                <ul className="mt-4 space-y-2">
-                  <li className="flex items-center gap-2 text-sm text-gray-600">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Up to {plan.features.maxStudents || 'unlimited'} students
-                  </li>
-                  <li className="flex items-center gap-2 text-sm text-gray-600">
-                    <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
-                    Up to {plan.features.maxTeachers || 'unlimited'} teachers
-                  </li>
-                  {plan.features.hasAttendance && (
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Attendance Tracking
-                    </li>
-                  )}
-                  {plan.features.hasExams && (
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Exam Management
-                    </li>
-                  )}
-                  {plan.features.hasReportCards && (
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Report Cards
-                    </li>
-                  )}
-                  {plan.features.hasNoticeBoard && (
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Notice Board
-                    </li>
-                  )}
-                  {plan.features.hasPayments && (
-                    <li className="flex items-center gap-2 text-sm text-gray-600">
-                      <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                      </svg>
-                      Payment Processing
-                    </li>
-                  )}
-                </ul>
-              )}
+              {plan.features && (() => {
+                const f = plan.features;
+                const featureList = [
+                  { label: `Up to ${f.maxStudents || '∞'} students`, on: true },
+                  { label: `Up to ${f.maxTeachers || '∞'} teachers`, on: true },
+                  { label: `Up to ${f.maxClasses || '∞'} classes`, on: true },
+                  { label: 'Attendance Tracking', on: f.hasAttendance },
+                  { label: 'Exam Management', on: f.hasExams },
+                  { label: 'Report Cards', on: f.hasReportCards },
+                  { label: 'Notice Board', on: f.hasNoticeBoard },
+                  { label: 'Timetable', on: f.hasTimetable },
+                  { label: 'Fees & Payments', on: f.hasPayments || f.hasFees },
+                  { label: 'Bank Accounts', on: f.hasBanks },
+                  { label: 'Chat / Messaging', on: f.hasChat },
+                  { label: 'Audit Logs', on: f.hasAuditLogs },
+                  { label: 'Inter-School Network', on: f.hasInterSchool },
+                  { label: 'Site Builder', on: f.hasSiteBuilder },
+                  { label: 'AI Features', on: f.hasAI },
+                  { label: `${f.maxStorageMB ? (f.maxStorageMB >= 1000 ? `${f.maxStorageMB / 1000}GB` : `${f.maxStorageMB}MB`) : '—'} Storage`, on: f.hasFileStorage },
+                ];
+                return (
+                  <ul className="mt-4 space-y-1.5">
+                    {featureList.map((item) => (
+                      <li key={item.label} className={`flex items-center gap-2 text-sm ${item.on ? 'text-gray-600' : 'text-gray-300 line-through'}`}>
+                        <svg className={`w-4 h-4 shrink-0 ${item.on ? 'text-green-500' : 'text-gray-300'}`} fill="currentColor" viewBox="0 0 20 20">
+                          {item.on ? (
+                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                          ) : (
+                            <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                          )}
+                        </svg>
+                        {item.label}
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
               <Button
                 className="w-full mt-4"
                 onClick={() => handleSubscribe(plan._id)}

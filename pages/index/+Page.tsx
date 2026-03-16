@@ -126,20 +126,9 @@ export default function HomePage() {
   const { school } = useSchool()
   const { homePage, navPages } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
-
   // Subdomain → render school home page with DB content
   if (school) {
     const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES
-
-    // Canvas (Design Studio) home page
-    if (homePage?.editorMode === 'canvas' && homePage.canvasData?.html) {
-      return (
-        <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
-          <CanvasPageRenderer canvasData={homePage.canvasData} />
-        </PublicSiteLayout>
-      )
-    }
-
     const SchoolHomePage = getTemplateHome(school as PublicSchool)
     return (
       <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>

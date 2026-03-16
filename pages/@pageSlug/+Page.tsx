@@ -22,6 +22,11 @@ export default function DynamicSitePage() {
   const pageContext = usePageContext()
   const pageSlug = (pageContext.routeParams as any)?.pageSlug || ''
 
+  if (pageSlug === 'home' && typeof window !== 'undefined') {
+    window.location.replace('/')
+    return null
+  }
+
   if (!school) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -31,15 +36,14 @@ export default function DynamicSitePage() {
   }
 
   const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES
-
   // Canvas (Design Studio) pages — render raw HTML/CSS
-  if (sitePage?.editorMode === 'canvas' && sitePage.canvasData?.html) {
-    return (
-      <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
-        <CanvasPageRenderer canvasData={sitePage.canvasData} />
-      </PublicSiteLayout>
-    )
-  }
+  // if (sitePage?.editorMode === 'canvas' && sitePage.canvasData?.html) {
+  //   return (
+  //     <PublicSiteLayout school={school as PublicSchool} navPages={effectiveNavPages}>
+  //       <CanvasPageRenderer canvasData={sitePage.canvasData} />
+  //     </PublicSiteLayout>
+  //   )
+  // }
 
   // Template pages — render with DB sections (falls back to defaults in component)
   const isTemplatePage = TEMPLATE_SLUGS.includes(pageSlug)

@@ -841,6 +841,7 @@ export interface PlanFeatures {
   hasAuditLogs: boolean;
   hasFileStorage: boolean;
   maxStorageMB: number;
+  maxSchools: number;
 }
 
 export interface Plan {
@@ -865,7 +866,7 @@ export interface Subscription {
   school: string;
   startDate: string;
   endDate: string;
-  status: 'active' | 'expired' | 'cancelled' | 'trial';
+  status: 'active' | 'expired' | 'cancelled' | 'trial' | 'grace_period';
   autoRenew: boolean;
   lastPaymentDate?: string;
   createdAt?: string;

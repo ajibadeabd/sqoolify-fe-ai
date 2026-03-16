@@ -253,7 +253,7 @@ export default function SubscriptionsPage() {
             { label: 'Site Builder', on: f.hasSiteBuilder },
             { label: 'AI Features', on: f.hasAI },
             { label: f.maxStorageMB >= 1000 ? `${f.maxStorageMB / 1000}GB Storage` : `${f.maxStorageMB || 0}MB Storage`, on: f.hasFileStorage },
-            { label: `${f.maxSchools || 1} School${(f.maxSchools || 1) > 1 ? 's' : ''}`, on: (f.maxSchools || 1) > 1 },
+            { label: `${f.maxSchools || 1} School${(f.maxSchools || 1) > 1 ? 's' : ''}`, on: true },
           ];
 
           return (

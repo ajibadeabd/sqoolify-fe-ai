@@ -53,7 +53,7 @@ export default function SubscriptionsPage() {
   useEffect(() => { fetchData(); }, [fetchData]);
 
   const getPrice = (plan: Plan) => {
-    if (billingCycle === 'yearly') return plan.amount * 12 * 0.8; // 20% discount for yearly
+    if (billingCycle === 'yearly') return plan.amount * 12 * 0.9; // 10% discount for yearly
     return plan.amount;
   };
 
@@ -217,7 +217,7 @@ export default function SubscriptionsPage() {
             }`}
           >
             Yearly
-            <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">Save 20%</span>
+            <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full">Save 10%</span>
           </button>
         </div>
       </div>

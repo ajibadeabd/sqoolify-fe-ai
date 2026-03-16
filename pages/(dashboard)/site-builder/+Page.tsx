@@ -29,7 +29,6 @@ export default function SiteBuilderPage() {
       ])
       if (pagesRes.status === 'fulfilled') setPages(pagesRes.value.data || [])
       if (schoolRes.status === 'fulfilled') {
-        console.log('schoolRes', schoolRes.value, 'currentSchool:', user?.school)
         setSchool(schoolRes.value.data)
       }
     } catch (err: any) {

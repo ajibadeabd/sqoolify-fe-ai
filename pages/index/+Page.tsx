@@ -4,7 +4,6 @@ import { useSchool } from '../../lib/school-context'
 import type { Data } from '../+data'
 import type { PublicSchool, SitePage } from '../../lib/types'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
-import CanvasPageRenderer from '../../components/public-site/CanvasPageRenderer'
 import { getTemplateHome } from '../../components/public-site/templates'
 
 const FALLBACK_NAV_PAGES = [
@@ -126,6 +125,7 @@ export default function HomePage() {
   const { school } = useSchool()
   const { homePage, navPages } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
+
   // Subdomain → render school home page with DB content
   if (school) {
     const effectiveNavPages = navPages?.length ? navPages : FALLBACK_NAV_PAGES

@@ -134,13 +134,11 @@ export default function SiteBuilderPage() {
       ) : (
         <div className="grid gap-3">
           {pages.map((page) => {
-            const isCanvas = school?.siteConfig?.template === 'canvas'
-            const blockCount = page.canvasBlocks?.length ?? 0
             return (
             <div
               key={page._id}
               className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow cursor-pointer group"
-              onClick={() => navigate(isCanvas ? `/canvas-editor/${page._id}` : `/site-builder/${page._id}`)}
+              onClick={() => navigate(`/site-builder/${page._id}`)}
             >
               <div className="p-5">
                 <div className="flex items-start justify-between">
@@ -157,36 +155,20 @@ export default function SiteBuilderPage() {
                       )}
                     </div>
                     <p className="text-sm text-gray-400 font-mono">/{page.slug}</p>
-                    {isCanvas ? (
-                      blockCount > 0 && (
-                        <p className="text-xs text-gray-400 mt-2">{blockCount} canvas block{blockCount !== 1 ? 's' : ''}</p>
-                      )
-                    ) : (
-                      page.sections.length > 0 && (
-                        <div className="flex items-center gap-1.5 mt-2">
-                          {page.sections.slice(0, 6).map((s, i) => (
-                            <span key={i} className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center text-xs" title={s.type}>
-                              {SECTION_ICONS[s.type] || '?'}
-                            </span>
-                          ))}
-                          {page.sections.length > 6 && (
-                            <span className="text-xs text-gray-400 ml-1">+{page.sections.length - 6}</span>
-                          )}
-                        </div>
-                      )
+                    {page.sections.length > 0 && (
+                      <div className="flex items-center gap-1.5 mt-2">
+                        {page.sections.slice(0, 6).map((s, i) => (
+                          <span key={i} className="w-7 h-7 bg-gray-50 border border-gray-200 rounded-md flex items-center justify-center text-xs" title={s.type}>
+                            {SECTION_ICONS[s.type] || '?'}
+                          </span>
+                        ))}
+                        {page.sections.length > 6 && (
+                          <span className="text-xs text-gray-400 ml-1">+{page.sections.length - 6}</span>
+                        )}
+                      </div>
                     )}
                   </div>
                   <div className="flex items-center gap-1 ml-4 opacity-0 group-hover:opacity-100 transition" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      onClick={() => navigate(`/design-studio/${page._id}`)}
-                      className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg transition flex items-center gap-1"
-                      title="Open in Design Studio"
-                    >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z" />
-                      </svg>
-                      Design Studio
-                    </button>
                     <button
                       onClick={() => handleTogglePublish(page)}
                       className="px-3 py-1.5 text-sm font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition"

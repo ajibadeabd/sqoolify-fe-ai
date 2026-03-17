@@ -343,6 +343,8 @@ export interface PublicSchool {
 export interface School {
   _id: string;
   name: string;
+  slug?: string;
+  owner?: string;
   plan?: string;
   country?: string;
   type?: 'small' | 'medium' | 'large';

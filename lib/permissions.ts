@@ -78,6 +78,8 @@ export const PERMISSIONS = {
   VIEW_ANALYTICS: 'view_analytics',
 
   // Schools
+  READ_SCHOOL: 'read_school',
+  WRITE_SCHOOL: 'write_school',
   READ_SCHOOL_SETTINGS: 'read_school_settings',
   WRITE_SCHOOL_SETTINGS: 'write_school_settings',
 

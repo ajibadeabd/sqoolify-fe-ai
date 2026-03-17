@@ -1,8 +1,13 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePageContext } from 'vike-react/usePageContext';
+import { toast } from 'sonner';
 import { useAuth } from '../../lib/auth-context';
 import { usePermission } from '../../lib/use-permission';
 import { useSchool } from '../../lib/school-context';
+import { useSchoolStore } from '../../lib/stores/school-store';
+import { schoolService } from '../../lib/api-services';
+import Modal from '../ui/Modal';
+import countries from '../../lib/countries.json';
 
 interface NavItem {
   label: string;
@@ -147,6 +152,74 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
   const userRole = auth?.user?.role || '';
   const schoolName = currentSchool?.name || 'Sqoolify';
 
+  // School switcher state
+  const isSchoolOwner = auth?.user?.schools?.some(
+    (s) => s.schoolId === (auth.user?.currentSchool || auth.user?.school) && s.roles.includes('school_owner'),
+  );
+  const [schoolDropdownOpen, setSchoolDropdownOpen] = useState(false);
+  const { ownedSchools, ownedSchoolsLoading, fetchOwnedSchools } = useSchoolStore();
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setSchoolDropdownOpen(false);
+      }
+    };
+    if (schoolDropdownOpen) document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [schoolDropdownOpen]);
+
+  // Fetch owned schools when dropdown opens (store handles dedup)
+  useEffect(() => {
+    if (schoolDropdownOpen && isSchoolOwner) {
+      fetchOwnedSchools();
+    }
+  }, [schoolDropdownOpen]);
+
+  // Add school modal state
+  const [showAddSchool, setShowAddSchool] = useState(false);
+  const [newSchoolForm, setNewSchoolForm] = useState({ name: '', country: '', slug: '' });
+  const [slugTouched, setSlugTouched] = useState(false);
+  const [slugStatus, setSlugStatus] = useState<'idle' | 'checking' | 'available' | 'taken'>('idle');
+  const [creatingSchool, setCreatingSchool] = useState(false);
+  const slugTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:4120/api/v1';
+
+  // Auto-generate slug from school name
+  useEffect(() => {
+    if (!slugTouched && newSchoolForm.name) {
+      const autoSlug = newSchoolForm.name
+        .toLowerCase().trim()
+        .replace(/[^a-z0-9\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+      setNewSchoolForm((prev) => ({ ...prev, slug: autoSlug }));
+    }
+  }, [newSchoolForm.name, slugTouched]);
+
+  // Debounced slug availability check
+  useEffect(() => {
+    if (!showAddSchool || !newSchoolForm.slug || newSchoolForm.slug.length < 2) {
+      setSlugStatus('idle');
+      return;
+    }
+    setSlugStatus('checking');
+    if (slugTimerRef.current) clearTimeout(slugTimerRef.current);
+    slugTimerRef.current = setTimeout(async () => {
+      try {
+        const res = await fetch(`${API_URL}/auth/check-slug/${newSchoolForm.slug}`);
+        const json = await res.json();
+        setSlugStatus(json.data?.available ? 'available' : 'taken');
+      } catch {
+        setSlugStatus('idle');
+      }
+    }, 500);
+    return () => { if (slugTimerRef.current) clearTimeout(slugTimerRef.current); };
+  }, [newSchoolForm.slug, showAddSchool]);
+
   // Track which sections are collapsed
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
@@ -198,7 +271,7 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
       />
     )}
     <aside
-      className={`fixed top-0 left-0 h-full transition-all duration-300 overflow-hidden w-64 ${
+      className={`fixed top-0 left-0 h-full transition-all duration-300 w-64 ${
         mobileOpen ? 'translate-x-0' : '-translate-x-full'
       } md:translate-x-0 z-50 md:z-30 ${collapsed ? 'md:w-16' : 'md:w-64'}`}
       style={{ background: 'linear-gradient(to bottom right, var(--color-primary, #3B82F6), var(--color-secondary, #2563EB))' }}
@@ -210,9 +283,12 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         <div className="absolute top-1/2 left-1/4 w-24 h-24 rounded-full" style={{ backgroundColor: 'rgba(255,255,255,0.08)' }} />
       </div>
 
-      {/* Logo */}
-      <div className="h-16 flex items-center justify-between px-4 relative z-10" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)' }}>
-        <div className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'md:hidden' : ''}`}>
+      {/* Logo / School Switcher */}
+      <div className="h-16 flex items-center justify-between px-4 relative z-20" style={{ borderBottom: '1px solid rgba(255,255,255,0.2)', overflow: 'visible' }} ref={dropdownRef}>
+        <div
+          className={`flex items-center gap-2.5 min-w-0 ${collapsed ? 'md:hidden' : ''} ${isSchoolOwner ? 'cursor-pointer hover:opacity-80' : ''}`}
+          onClick={() => isSchoolOwner && setSchoolDropdownOpen(!schoolDropdownOpen)}
+        >
           {currentSchool?.logo ? (
             <img src={currentSchool.logo} alt={schoolName} className="w-8 h-8 rounded-lg object-cover shrink-0" />
           ) : (
@@ -221,6 +297,11 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             </div>
           )}
           <span className="text-lg font-bold text-white truncate">{schoolName}</span>
+          {isSchoolOwner && !collapsed && (
+            <svg className={`w-4 h-4 text-white/60 shrink-0 transition-transform ${schoolDropdownOpen ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          )}
         </div>
         <button
           onClick={onToggle}
@@ -230,6 +311,64 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
+        {/* School Switcher Dropdown */}
+        {schoolDropdownOpen && isSchoolOwner && (
+          <div className="absolute top-16 left-2 right-2 bg-white rounded-lg shadow-xl z-50 py-1 max-h-64 overflow-y-auto">
+            {ownedSchoolsLoading ? (
+              <div className="px-4 py-3 text-sm text-gray-500 text-center">Loading...</div>
+            ) : (
+              <>
+                {ownedSchools.map((s) => {
+                  const isCurrent = s._id === (currentSchool?._id || auth.user?.currentSchool || auth.user?.school);
+                  return (
+                    <button
+                      key={s._id}
+                      onClick={() => {
+                        if (!isCurrent) {
+                          auth.selectSchool(s._id).then(() => {
+                            window.location.href = '/dashboard';
+                          });
+                        }
+                        setSchoolDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                        isCurrent ? 'bg-blue-50 text-blue-700 font-medium' : 'text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-600 shrink-0">
+                        {s.name.charAt(0)}
+                      </div>
+                      <span className="truncate">{s.name}</span>
+                      {isCurrent && (
+                        <svg className="w-4 h-4 ml-auto text-blue-600 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  );
+                })}
+                <div className="border-t border-gray-100 mt-1 pt-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSchoolDropdownOpen(false);
+                      setShowAddSchool(true);
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-left text-sm text-gray-600 hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-7 h-7 rounded-md border-2 border-dashed border-gray-300 flex items-center justify-center shrink-0">
+                      <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 5v14M5 12h14" />
+                      </svg>
+                    </div>
+                    <span>Add School</span>
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Nav */}
@@ -323,6 +462,148 @@ export default function Sidebar({ collapsed, onToggle, mobileOpen, onMobileClose
         })}
       </nav>
     </aside>
+
+    {/* Add School Modal */}
+    <Modal open={showAddSchool} onClose={() => { setShowAddSchool(false); setNewSchoolForm({ name: '', country: '', slug: '' }); setSlugTouched(false); setSlugStatus('idle'); }} title="Add New School">
+      <form
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!newSchoolForm.name.trim()) return;
+          if (slugStatus === 'taken') {
+            toast.error('This school URL is already taken. Please choose a different one.');
+            return;
+          }
+          setCreatingSchool(true);
+          try {
+            const res = await schoolService.create({
+              name: newSchoolForm.name.trim(),
+              country: newSchoolForm.country || undefined,
+            });
+            const created = res.data;
+            if (created) {
+              useSchoolStore.getState().addOwnedSchool(created);
+              toast.success('School created successfully');
+              setShowAddSchool(false);
+              setNewSchoolForm({ name: '', country: '', slug: '' });
+              setSlugTouched(false);
+              setSlugStatus('idle');
+            }
+          } catch (err: any) {
+            const msg = err?.response?.data?.message || err?.message || 'Failed to create school';
+            toast.error(msg);
+          } finally {
+            setCreatingSchool(false);
+          }
+        }}
+      >
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">School Name</label>
+            <input
+              type="text"
+              value={newSchoolForm.name}
+              onChange={(e) => setNewSchoolForm((prev) => ({ ...prev, name: e.target.value }))}
+              placeholder="Bright Future Academy"
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+              required
+              autoFocus
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Country</label>
+            <select
+              value={newSchoolForm.country}
+              onChange={(e) => setNewSchoolForm((prev) => ({ ...prev, country: e.target.value }))}
+              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+            >
+              <option value="">Select your country</option>
+              {countries.map((c) => (
+                <option key={c.code} value={c.name}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Your School URL</label>
+            <div className="flex items-center gap-0">
+              <input
+                type="text"
+                value={newSchoolForm.slug}
+                onChange={(e) => {
+                  setSlugTouched(true);
+                  const value = e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '').replace(/-+/g, '-');
+                  setNewSchoolForm((prev) => ({ ...prev, slug: value }));
+                }}
+                placeholder="bright-future-academy"
+                className="flex-1 px-4 py-3 border border-r-0 border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm transition"
+              />
+              <span className="px-3 py-3 bg-gray-100 border border-l-0 border-gray-300 rounded-r-lg text-sm text-gray-500 whitespace-nowrap">
+                .sqoolify.com
+              </span>
+            </div>
+            {newSchoolForm.slug && (
+              <div className="flex items-center gap-2 mt-1.5">
+                <p className="text-xs text-gray-400">
+                  Your school will be at <span className="font-medium" style={{ color: 'var(--color-primary, #3B82F6)' }}>{newSchoolForm.slug}.sqoolify.com</span>
+                </p>
+                {slugStatus === 'checking' && (
+                  <span className="text-xs text-gray-400 flex items-center gap-1">
+                    <svg className="animate-spin h-3 w-3" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                    </svg>
+                    Checking...
+                  </span>
+                )}
+                {slugStatus === 'available' && (
+                  <span className="text-xs text-green-600 font-medium flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
+                    Available
+                  </span>
+                )}
+                {slugStatus === 'taken' && (
+                  <span className="text-xs text-red-600 font-medium flex items-center gap-1">
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                    Taken
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={() => { setShowAddSchool(false); setNewSchoolForm({ name: '', country: '', slug: '' }); setSlugTouched(false); setSlugStatus('idle'); }}
+              className="px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={creatingSchool || !newSchoolForm.name.trim() || slugStatus === 'taken'}
+              className="px-4 py-2.5 text-sm text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ backgroundColor: 'var(--color-primary, #3B82F6)' }}
+            >
+              {creatingSchool ? (
+                <span className="flex items-center gap-2">
+                  <svg className="animate-spin h-4 w-4" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.4 0 0 5.4 0 12h4z" />
+                  </svg>
+                  Creating...
+                </span>
+              ) : 'Create School'}
+            </button>
+          </div>
+        </div>
+      </form>
+    </Modal>
     </>
   );
 }

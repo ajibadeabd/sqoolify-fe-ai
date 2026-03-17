@@ -5,7 +5,29 @@ import { Subscription, SubscriptionHistory, Plan } from '../../../lib/types';
 import { useAppConfig } from '../../../lib/use-app-config';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
+import Modal from '../../../components/ui/Modal';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
+
+type PlanAction = 'upgrade' | 'downgrade' | 'renewal' | 'subscribe';
+
+interface PlanConfirmation {
+  plan: Plan;
+  action: PlanAction;
+  amount: number;
+  fullAmount: number;
+  creditAmount: number;
+  message: string;
+}
+
+function getDaysInBillingPeriod(startDate: Date, billingCycle: string): number {
+  if (billingCycle === 'yearly') {
+    const year = startDate.getFullYear();
+    return (year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0)) ? 366 : 365;
+  }
+  const year = startDate.getFullYear();
+  const month = startDate.getMonth();
+  return new Date(year, month + 1, 0).getDate();
+}
 
 export default function SubscriptionsPage() {
   const { formatCurrency } = useAppConfig();
@@ -15,6 +37,7 @@ export default function SubscriptionsPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+  const [confirmation, setConfirmation] = useState<PlanConfirmation | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -36,7 +59,6 @@ export default function SubscriptionsPage() {
           await subscriptionService.verifyPayment(reference);
           toast.success('Payment verified! Your plan is now active.');
           window.history.replaceState({}, '', '/subscriptions');
-          // Re-fetch to show updated subscription
           const freshSub = await subscriptionService.getCurrent().catch(() => ({ data: null }));
           setSubscription(freshSub.data);
         } catch {
@@ -60,35 +82,133 @@ export default function SubscriptionsPage() {
     return plan.amount;
   };
 
-  // Get max discount across all plans for the toggle badge
   const maxDiscount = Math.max(...plans.map(p => p.yearlyDiscountPercent || 0));
 
-  const handleSelectPlan = async (plan: Plan) => {
-    const currentPlanId = (subscription?.plan as any)?._id;
-    if (currentPlanId === plan._id) return;
+  const calculateConfirmation = (plan: Plan): PlanConfirmation => {
+    const currentPlan = (subscription?.plan as any);
+    const currentAmount = currentPlan?.amount ?? 0;
+    const newPrice = getPrice(plan);
 
-    // Free plan — just switch directly
-    if (plan.amount === 0) {
-      setActionLoading(plan._id);
-      try {
-        await subscriptionService.subscribe(plan._id);
-        toast.success(`Switched to ${plan.name} plan`);
-        fetchData();
-      } catch (err: any) {
-        toast.error(err.message || 'Failed to switch plan');
-      } finally {
-        setActionLoading(null);
-      }
-      return;
+    // No existing subscription or on free plan — fresh subscribe
+    if (!subscription || currentAmount === 0 || subscription.status === 'trial' || subscription.status === 'grace_period') {
+      return {
+        plan,
+        action: 'subscribe',
+        amount: newPrice,
+        fullAmount: newPrice,
+        creditAmount: 0,
+        message: `Subscribe to ${plan.name} for ${formatCurrency(newPrice)}/${billingCycle === 'yearly' ? 'year' : 'month'}.`,
+      };
     }
 
-    // Paid plan — go through Paystack
+    // Downgrade
+    if (plan.amount < currentAmount) {
+      const endDate = subscription.endDate ? new Date(subscription.endDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) : 'end of billing period';
+      return {
+        plan,
+        action: 'downgrade',
+        amount: 0,
+        fullAmount: newPrice,
+        creditAmount: 0,
+        message: `Your plan will switch to ${plan.name} after your current billing period ends on ${endDate}. You'll keep ${currentPlan.name} features until then.`,
+      };
+    }
+
+    // Upgrade — calculate proration
+    if (plan.amount > currentAmount) {
+      const now = new Date();
+      const existingBillingCycle = (subscription as any).billingCycle || 'monthly';
+
+      const startDate = new Date(subscription.startDate);
+      const endDate = new Date(subscription.endDate);
+
+      const oldTotalDays = getDaysInBillingPeriod(startDate, existingBillingCycle);
+      const newTotalDays = getDaysInBillingPeriod(now, billingCycle);
+
+      const remainingMs = endDate.getTime() - now.getTime();
+      const remainingDays = Math.max(0, Math.floor(remainingMs / (1000 * 60 * 60 * 24)));
+
+      const currentFullAmount = existingBillingCycle === 'yearly'
+        ? Math.round(currentPlan.amount * 12 * (1 - (currentPlan.yearlyDiscountPercent || 0) / 100))
+        : currentPlan.amount;
+
+      const oldDailyRate = currentFullAmount / oldTotalDays;
+      const newDailyRate = newPrice / newTotalDays;
+
+      const creditAmount = Math.round(oldDailyRate * remainingDays);
+      const newPlanRemainingCost = Math.round(newDailyRate * remainingDays);
+      const amount = Math.max(0, newPlanRemainingCost - creditAmount);
+
+      if (amount <= 0) {
+        return {
+          plan,
+          action: 'upgrade',
+          amount: 0,
+          fullAmount: newPrice,
+          creditAmount,
+          message: `Your remaining credit of ${formatCurrency(creditAmount)} fully covers the upgrade to ${plan.name}. Your plan will be switched immediately at no extra cost.`,
+        };
+      }
+
+      return {
+        plan,
+        action: 'upgrade',
+        amount,
+        fullAmount: newPrice,
+        creditAmount,
+        message: `Upgrade to ${plan.name}. You have ${formatCurrency(creditAmount)} credit from your current plan (${remainingDays} days remaining). You'll be charged ${formatCurrency(amount)} today.`,
+      };
+    }
+
+    // Same plan — renewal
+    return {
+      plan,
+      action: 'renewal',
+      amount: newPrice,
+      fullAmount: newPrice,
+      creditAmount: 0,
+      message: `Renew your ${plan.name} plan for ${formatCurrency(newPrice)}/${billingCycle === 'yearly' ? 'year' : 'month'}.`,
+    };
+  };
+
+  const handleSelectPlan = (plan: Plan) => {
+    const currentPlanId = (subscription?.plan as any)?._id;
+    if (currentPlanId === plan._id || plan.amount === 0) return;
+
+    const conf = calculateConfirmation(plan);
+    setConfirmation(conf);
+  };
+
+  const handleConfirm = async () => {
+    if (!confirmation) return;
+    const { plan, action } = confirmation;
+
     setActionLoading(plan._id);
+    setConfirmation(null);
+
     try {
-      const res = await subscriptionService.initializePayment(plan._id, billingCycle);
-      window.location.href = res.data.authorization_url;
+      if (action === 'downgrade') {
+        // Downgrade — call initializePayment which will schedule it and return a message
+        await subscriptionService.initializePayment(plan._id, billingCycle);
+      } else {
+        // Upgrade, renewal, subscribe — go through Paystack
+        const res = await subscriptionService.initializePayment(plan._id, billingCycle);
+        if (res.data.upgraded) {
+          // Credit covered the upgrade, no payment needed
+          toast.success(res.data.message || 'Plan upgraded successfully!');
+          fetchData();
+          setActionLoading(null);
+          return;
+        }
+        if (res.data.authorization_url) {
+          window.location.href = res.data.authorization_url;
+          return;
+        }
+      }
+      fetchData();
     } catch (err: any) {
-      toast.error(err.message || 'Failed to initialize payment');
+      toast.error(err.message || 'Failed to process plan change');
+    } finally {
       setActionLoading(null);
     }
   };
@@ -129,7 +249,9 @@ export default function SubscriptionsPage() {
     if (currentPlanId === plan._id) return 'Current Plan';
     if (plan.amount === 0) return 'Downgrade';
     const currentAmount = (subscription?.plan as any)?.amount || 0;
-    return plan.amount > currentAmount ? 'Upgrade' : 'Switch Plan';
+    if (plan.amount > currentAmount) return 'Upgrade';
+    if (plan.amount < currentAmount) return 'Downgrade';
+    return 'Renew';
   };
 
   const daysLeft = subscription?.endDate
@@ -144,7 +266,6 @@ export default function SubscriptionsPage() {
     );
   }
 
-  // Sort plans: Starter, Standard, Premium
   const sortedPlans = [...plans].sort((a, b) => a.amount - b.amount);
   const currentPlanId = (subscription?.plan as any)?._id;
 
@@ -310,19 +431,95 @@ export default function SubscriptionsPage() {
                 ))}
               </ul>
 
-              <Button
-                className="w-full"
-                variant={isCurrent ? 'outline' : isPopular ? 'primary' : 'secondary'}
-                onClick={() => handleSelectPlan(plan)}
-                disabled={isCurrent || actionLoading !== null}
-                loading={actionLoading === plan._id}
-              >
-                {getButtonLabel(plan)}
-              </Button>
+              {plan.amount === 0 ? (
+                isCurrent ? (
+                  <Button className="w-full" variant="outline" disabled>
+                    Current Plan
+                  </Button>
+                ) : null
+              ) : (
+                <Button
+                  className="w-full"
+                  variant={isCurrent ? 'outline' : isPopular ? 'primary' : 'secondary'}
+                  onClick={() => handleSelectPlan(plan)}
+                  disabled={isCurrent || actionLoading !== null}
+                  loading={actionLoading === plan._id}
+                >
+                  {getButtonLabel(plan)}
+                </Button>
+              )}
             </div>
           );
         })}
       </div>
+
+      {/* Confirmation Modal */}
+      <Modal open={!!confirmation} onClose={() => setConfirmation(null)} title={
+        confirmation?.action === 'upgrade' ? 'Confirm Upgrade' :
+        confirmation?.action === 'downgrade' ? 'Schedule Downgrade' :
+        confirmation?.action === 'renewal' ? 'Confirm Renewal' :
+        'Confirm Subscription'
+      }>
+        {confirmation && (
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${
+                confirmation.action === 'upgrade' ? 'bg-purple-100 text-purple-600' :
+                confirmation.action === 'downgrade' ? 'bg-amber-100 text-amber-600' :
+                'bg-blue-100 text-blue-600'
+              }`}>
+                {confirmation.action === 'upgrade' ? '↑' :
+                 confirmation.action === 'downgrade' ? '↓' : '→'}
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{confirmation.plan.name} Plan</p>
+                <p className="text-sm text-gray-500">
+                  {formatCurrency(confirmation.fullAmount)}/{billingCycle === 'yearly' ? 'year' : 'month'}
+                </p>
+              </div>
+            </div>
+
+            <p className="text-sm text-gray-700 mb-4">{confirmation.message}</p>
+
+            {confirmation.action === 'upgrade' && confirmation.creditAmount > 0 && (
+              <div className="bg-gray-50 rounded-lg p-3 mb-4 space-y-1">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Plan price</span>
+                  <span className="text-gray-700">{formatCurrency(confirmation.fullAmount)}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Credit from current plan</span>
+                  <span className="text-green-600">-{formatCurrency(confirmation.creditAmount)}</span>
+                </div>
+                <div className="border-t border-gray-200 pt-1 flex justify-between text-sm font-semibold">
+                  <span className="text-gray-900">Amount due today</span>
+                  <span className="text-gray-900">{formatCurrency(confirmation.amount)}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="flex gap-3 mt-6">
+              <Button
+                variant="outline"
+                className="flex-1"
+                onClick={() => setConfirmation(null)}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant={confirmation.action === 'downgrade' ? 'secondary' : 'primary'}
+                className="flex-1"
+                onClick={handleConfirm}
+                loading={actionLoading === confirmation.plan._id}
+              >
+                {confirmation.action === 'downgrade' ? 'Schedule Downgrade' :
+                 confirmation.amount === 0 ? 'Confirm' :
+                 `Pay ${formatCurrency(confirmation.amount)}`}
+              </Button>
+            </div>
+          </div>
+        )}
+      </Modal>
 
       {/* Subscription History */}
       {history.length > 0 && (
@@ -336,10 +533,11 @@ export default function SubscriptionsPage() {
                     item.action === 'created' ? 'bg-green-100 text-green-700' :
                     item.action === 'renewed' ? 'bg-blue-100 text-blue-700' :
                     item.action === 'upgraded' ? 'bg-purple-100 text-purple-700' :
+                    item.action === 'downgraded' ? 'bg-amber-100 text-amber-700' :
                     item.action === 'cancelled' ? 'bg-red-100 text-red-700' :
                     'bg-gray-100 text-gray-700'
                   }`}>
-                    {item.action === 'created' ? '+' : item.action === 'renewed' ? '↻' : item.action === 'upgraded' ? '↑' : item.action === 'cancelled' ? '×' : '•'}
+                    {item.action === 'created' ? '+' : item.action === 'renewed' ? '↻' : item.action === 'upgraded' ? '↑' : item.action === 'downgraded' ? '↓' : item.action === 'cancelled' ? '×' : '•'}
                   </div>
                   <div>
                     <p className="font-medium text-gray-900 capitalize text-sm">{item.action}</p>

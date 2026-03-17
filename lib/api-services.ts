@@ -103,6 +103,9 @@ export const schoolService = {
   getById: (id: string) =>
     api.get<ApiResponse<School>>(`/schools/${id}`, authOptions()),
 
+  getMySchools: () =>
+    api.get<ApiResponse<School[]>>('/schools/my-schools', authOptions()),
+
   create: (data: Partial<School>) =>
     api.post<ApiResponse<School>>('/schools', data, authOptions()),
 
@@ -552,9 +555,6 @@ export const planService = {
 export const subscriptionService = {
   getCurrent: () =>
     api.get<ApiResponse<Subscription>>('/subscriptions/current', authOptions()),
-
-  subscribe: (planId: string, autoRenew?: boolean) =>
-    api.post<ApiResponse<Subscription>>('/subscriptions', { planId, autoRenew }, authOptions()),
 
   cancel: () =>
     api.post<ApiResponse<Subscription>>('/subscriptions/cancel', {}, authOptions()),

@@ -38,6 +38,7 @@ export default function SubscriptionsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [confirmation, setConfirmation] = useState<PlanConfirmation | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -214,11 +215,11 @@ export default function SubscriptionsPage() {
   };
 
   const handleCancel = async () => {
-    if (!confirm('Are you sure you want to cancel your subscription? You\'ll be downgraded to the Starter plan.')) return;
+    setShowCancelModal(false);
     setActionLoading('cancel');
     try {
       await subscriptionService.cancel();
-      toast.success('Subscription cancelled');
+      toast.success('Cancellation scheduled');
       fetchData();
     } catch (err: any) {
       toast.error(err.message || 'Failed to cancel');
@@ -303,7 +304,7 @@ export default function SubscriptionsPage() {
             </div>
             <div className="flex gap-2">
               {(subscription.status === 'active' && (subscription.plan as any)?.name !== 'Starter' && !(subscription as any).scheduledCancellation) && (
-                <Button variant="outline" size="sm" onClick={handleCancel} loading={actionLoading === 'cancel'}>
+                <Button variant="outline" size="sm" onClick={() => setShowCancelModal(true)} loading={actionLoading === 'cancel'}>
                   Cancel
                 </Button>
               )}
@@ -577,6 +578,34 @@ export default function SubscriptionsPage() {
             </div>
           </div>
         )}
+      </Modal>
+
+      {/* Cancel Subscription Modal */}
+      <Modal open={showCancelModal} onClose={() => setShowCancelModal(false)} title="Cancel Subscription">
+        <div>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-xl bg-red-100 flex items-center justify-center text-red-600 text-sm font-bold">
+              ×
+            </div>
+            <div>
+              <p className="font-semibold text-gray-900">{(subscription?.plan as any)?.name} Plan</p>
+              <p className="text-sm text-gray-500">Active until {formatDate(subscription?.endDate)}</p>
+            </div>
+          </div>
+
+          <p className="text-sm text-gray-700 mb-4">
+            Are you sure you want to cancel? You'll keep your current features until <span className="font-semibold">{formatDate(subscription?.endDate)}</span>, after which you'll be moved to the free Starter plan.
+          </p>
+
+          <div className="flex gap-3 mt-6">
+            <Button variant="outline" className="flex-1" onClick={() => setShowCancelModal(false)}>
+              Keep Plan
+            </Button>
+            <Button variant="danger" className="flex-1" onClick={handleCancel} loading={actionLoading === 'cancel'}>
+              Cancel Subscription
+            </Button>
+          </div>
+        </div>
       </Modal>
 
       {/* Subscription History */}

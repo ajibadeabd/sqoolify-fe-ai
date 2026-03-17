@@ -570,6 +570,9 @@ export const subscriptionService = {
 
   verifyPayment: (reference: string) =>
     api.post<ApiResponse<Subscription>>('/subscriptions/verify-payment', { reference }, authOptions()),
+
+  cancelDowngrade: () =>
+    api.post<ApiResponse<Subscription>>('/subscriptions/cancel-downgrade', {}, authOptions()),
 };
 
 // ============ FEES ============

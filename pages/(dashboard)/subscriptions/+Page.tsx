@@ -326,6 +326,35 @@ export default function SubscriptionsPage() {
         </div>
       )}
 
+      {/* Scheduled Downgrade Banner */}
+      {subscription && (subscription as any).scheduledDowngradePlan && (
+        <div className="rounded-2xl p-4 mb-8 border bg-amber-50 border-amber-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 text-sm font-bold shrink-0">
+              ↓
+            </div>
+            <p className="text-sm text-amber-800">
+              Downgrade to <span className="font-semibold">{((subscription as any).scheduledDowngradePlan as any)?.name}</span> scheduled for {formatDate(subscription.endDate)}
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                await subscriptionService.cancelDowngrade();
+                toast.success('Scheduled downgrade cancelled');
+                fetchData();
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to cancel downgrade');
+              }
+            }}
+          >
+            Cancel Downgrade
+          </Button>
+        </div>
+      )}
+
       {/* Billing Toggle */}
       <div className="flex items-center justify-center mb-8">
         <div className="bg-gray-100 rounded-xl p-1 flex">

@@ -302,7 +302,7 @@ export default function SubscriptionsPage() {
               </p>
             </div>
             <div className="flex gap-2">
-              {(subscription.status === 'active' && (subscription.plan as any)?.name !== 'Starter') && (
+              {(subscription.status === 'active' && (subscription.plan as any)?.name !== 'Starter' && !(subscription as any).scheduledCancellation) && (
                 <Button variant="outline" size="sm" onClick={handleCancel} loading={actionLoading === 'cancel'}>
                   Cancel
                 </Button>
@@ -351,6 +351,35 @@ export default function SubscriptionsPage() {
             }}
           >
             Cancel Downgrade
+          </Button>
+        </div>
+      )}
+
+      {/* Scheduled Cancellation Banner */}
+      {subscription && (subscription as any).scheduledCancellation && (
+        <div className="rounded-2xl p-4 mb-8 border bg-red-50 border-red-200 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center text-red-600 text-sm font-bold shrink-0">
+              ×
+            </div>
+            <p className="text-sm text-red-800">
+              Your subscription will be cancelled on <span className="font-semibold">{formatDate(subscription.endDate)}</span>. You'll be moved to the Starter plan.
+            </p>
+          </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={async () => {
+              try {
+                await subscriptionService.cancelCancellation();
+                toast.success('Cancellation undone');
+                fetchData();
+              } catch (err: any) {
+                toast.error(err.message || 'Failed to undo cancellation');
+              }
+            }}
+          >
+            Undo Cancellation
           </Button>
         </div>
       )}

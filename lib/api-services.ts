@@ -559,9 +559,6 @@ export const subscriptionService = {
   cancel: () =>
     api.post<ApiResponse<Subscription>>('/subscriptions/cancel', {}, authOptions()),
 
-  renew: (planId?: string) =>
-    api.post<ApiResponse<Subscription>>('/subscriptions/renew', { planId }, authOptions()),
-
   getHistory: () =>
     api.get<ApiResponse<SubscriptionHistory[]>>('/subscriptions/history', authOptions()),
 
@@ -573,6 +570,9 @@ export const subscriptionService = {
 
   cancelDowngrade: () =>
     api.post<ApiResponse<Subscription>>('/subscriptions/cancel-downgrade', {}, authOptions()),
+
+  cancelCancellation: () =>
+    api.post<ApiResponse<Subscription>>('/subscriptions/cancel-cancellation', {}, authOptions()),
 };
 
 // ============ FEES ============

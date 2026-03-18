@@ -16,7 +16,7 @@ const FALLBACK_NAV_PAGES = [
 
 export default function DynamicSitePage() {
   const { school } = useSchool()
-  const { sitePage, navPages } = useData<Data>() || {}
+  const { sitePage, navPages, siteDisabled } = useData<Data>() || {}
   const pageContext = usePageContext()
   const pageSlug = (pageContext.routeParams as any)?.pageSlug || ''
 
@@ -25,7 +25,7 @@ export default function DynamicSitePage() {
     return null
   }
 
-  if (!school) {
+  if (!school || siteDisabled) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <p className="text-gray-500">Page not found</p>

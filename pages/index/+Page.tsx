@@ -123,8 +123,70 @@ export default function HomePage() {
   const [openFaq, setOpenFaq] = useState<number | null>(null)
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const { school } = useSchool()
-  const { homePage, navPages } = useData<Data>() || {}
+  const { homePage, navPages, siteDisabled } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
+
+  // Subdomain with site disabled → show minimal school profile
+  if (school && siteDisabled) {
+    const s = school as any
+    const initials = (school.name || 'S').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase()
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="max-w-2xl mx-auto px-4 py-16">
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+            <div className="bg-green-700 h-32" />
+            <div className="px-8 pb-8 -mt-12">
+              {s.logo ? (
+                <img src={s.logo} alt={school.name} className="w-24 h-24 rounded-2xl border-4 border-white object-cover shadow-sm" />
+              ) : (
+                <div className="w-24 h-24 rounded-2xl border-4 border-white bg-green-800 text-white flex items-center justify-center text-2xl font-bold shadow-sm">
+                  {initials}
+                </div>
+              )}
+              <h1 className="text-2xl font-bold text-gray-900 mt-4">{school.name}</h1>
+              {s.motto && <p className="text-gray-500 mt-1 italic">"{s.motto}"</p>}
+              {s.description && <p className="text-gray-600 mt-3 text-sm">{s.description}</p>}
+
+              {(s.address || s.phone || s.email) && (
+                <div className="mt-6 space-y-2">
+                  {s.address && (
+                    <div className="flex items-start gap-2 text-sm text-gray-600">
+                      <span className="text-gray-400 mt-0.5">&#x1F4CD;</span>
+                      <span>{s.address}</span>
+                    </div>
+                  )}
+                  {s.phone && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-gray-400">&#x1F4DE;</span>
+                      <a href={`tel:${s.phone}`} className="hover:text-green-700">{s.phone}</a>
+                    </div>
+                  )}
+                  {s.email && (
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <span className="text-gray-400">&#x2709;</span>
+                      <a href={`mailto:${s.email}`} className="hover:text-green-700">{s.email}</a>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              <div className="mt-8 pt-6 border-t border-gray-100 flex items-center justify-between">
+                <a
+                  href="/login"
+                  className="px-5 py-2.5 bg-green-700 text-white rounded-lg text-sm font-medium hover:bg-green-800 transition-colors"
+                >
+                  Staff & Student Login
+                </a>
+                <span className="text-xs text-gray-400">
+                  Powered by <a href="https://sqoolify.com" className="text-green-600 hover:underline">Sqoolify</a>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // Subdomain → render school home page with DB content
   if (school) {

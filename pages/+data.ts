@@ -7,6 +7,7 @@ export type Data = {
   slug: string | null
   homePage: SitePage | null
   navPages: SitePage[]
+  siteDisabled?: boolean
 }
 
 export async function data(pageContext: PageContextServer): Promise<Data> {
@@ -28,13 +29,14 @@ export async function data(pageContext: PageContextServer): Promise<Data> {
       headers: { 'x-forwarded-host': headers.host },
     })
     const json = await res.json()
-    const { school, homePage, navPages } = json.data || {}
+    const { school, homePage, navPages, siteDisabled } = json.data || {}
 
     return {
       school: school || null,
       slug: slug || school?.slug || null,
       homePage: homePage || null,
       navPages: navPages || [],
+      siteDisabled: siteDisabled || false,
     }
   } catch (e) {
     console.error('[+data.ts] Failed to fetch school:', e)

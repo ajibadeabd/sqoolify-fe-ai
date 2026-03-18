@@ -278,6 +278,30 @@ export default function AuditLogsPage() {
     }
   }
 
+  const parseUserAgent = (ua: string): string => {
+    if (!ua) return 'Unknown'
+
+    let browser = 'Unknown Browser'
+    if (ua.includes('Edg/')) browser = 'Edge'
+    else if (ua.includes('OPR/') || ua.includes('Opera')) browser = 'Opera'
+    else if (ua.includes('Chrome/') && !ua.includes('Edg/')) browser = 'Chrome'
+    else if (ua.includes('Safari/') && !ua.includes('Chrome')) browser = 'Safari'
+    else if (ua.includes('Firefox/')) browser = 'Firefox'
+
+    let os = 'Unknown OS'
+    if (ua.includes('Windows')) os = 'Windows'
+    else if (ua.includes('Mac OS X') || ua.includes('Macintosh')) os = 'Mac'
+    else if (ua.includes('Android')) os = 'Android'
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS'
+    else if (ua.includes('Linux')) os = 'Linux'
+
+    let device = ''
+    if (ua.includes('Mobile') || ua.includes('Android')) device = ' (Mobile)'
+    else if (ua.includes('iPad') || ua.includes('Tablet')) device = ' (Tablet)'
+
+    return `${browser} on ${os}${device}`
+  }
+
   const formatCurrency = (amount: number) => {
     if (!amount && amount !== 0) return ''
     return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount)
@@ -423,8 +447,9 @@ export default function AuditLogsPage() {
                             )}
                             {log.userAgent && (
                               <div>
-                                <span className="font-medium text-gray-600">User Agent:</span>
-                                <p className="text-gray-700 mt-1 break-all">{log.userAgent}</p>
+                                <span className="font-medium text-gray-600">Device:</span>
+                                <p className="text-gray-700 mt-1">{parseUserAgent(log.userAgent)}</p>
+                                <p className="text-gray-400 mt-1 break-all text-[10px]">{log.userAgent}</p>
                               </div>
                             )}
                             <div>

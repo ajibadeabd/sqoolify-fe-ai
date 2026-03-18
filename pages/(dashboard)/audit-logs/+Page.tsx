@@ -212,16 +212,75 @@ export default function AuditLogsPage() {
     return null
   }
 
-  const renderMetadata = (log: AuditLog) => {
-    if (!log.metadata) return null
-    if (log.metadata.role) {
-      return (
-        <span className="text-sm text-gray-500 ml-2">
-          (role: <span className="capitalize">{log.metadata.role}</span>)
-        </span>
-      )
+  const getActionDescription = (log: AuditLog): string | null => {
+    const m = log.metadata || {}
+
+    switch (log.action) {
+      case 'LOGIN':
+        return `Logged in${log.ipAddress ? ` from ${log.ipAddress}` : ''}`
+      case 'LOGIN_FAILED':
+        return `Failed login attempt${log.ipAddress ? ` from ${log.ipAddress}` : ''}`
+      case 'LOGOUT':
+        return 'Logged out'
+      case 'PASSWORD_CHANGED':
+        return 'Changed their password'
+      case 'PASSWORD_RESET_REQUESTED':
+        return 'Requested a password reset'
+      case 'CREATE_USER':
+        return `Created ${m.role || 'user'}: ${m.firstName} ${m.lastName} (${m.email})${m.admissionNo ? ` - ${m.admissionNo}` : ''}${m.employeeId ? ` - ${m.employeeId}` : ''}`
+      case 'DELETE_USER':
+        return m.email ? `Deleted user: ${m.email}` : null
+      case 'CREATE_FEE':
+        return `Created fee${m.totalAmount ? ` - Total: ${formatCurrency(m.totalAmount)}` : ''}${m.termsCount ? ` (${m.termsCount} terms)` : ''}`
+      case 'UPDATE_FEE':
+        return `Updated fee${m.updatedFields ? `: ${m.updatedFields.join(', ')}` : ''}`
+      case 'DELETE_FEE':
+        return `Deleted fee${m.termsCount ? ` (${m.termsCount} terms)` : ''}`
+      case 'PAYMENT_COMPLETED':
+        return `Payment of ${formatCurrency(m.amount)} completed${m.source === 'webhook' ? ' (via webhook)' : ''} - Ref: ${m.reference}`
+      case 'PAYMENT_FAILED':
+        return `Payment of ${formatCurrency(m.amount)} failed - Ref: ${m.reference}`
+      case 'GRADE_EDITED':
+        return `Graded answer: ${m.score} points${m.feedback ? ` - "${m.feedback}"` : ''}`
+      case 'RESULTS_UPLOADED':
+        return `Finalized grades for exam${m.scoresCount ? ` (${m.scoresCount} scores)` : ''}`
+      case 'RESULT_PUBLISHED':
+        return `Published exam: ${m.examName || m.examId}`
+      case 'RESULT_UNPUBLISHED':
+        return `Unpublished exam: ${m.examName || m.examId}`
+      case 'DELETE_EXAM':
+        return `Deleted exam: ${m.name || m.examId}`
+      case 'BANK_ADDED':
+        return `Added bank: ${m.accountName || ''} - ${m.bankCode || ''}`
+      case 'BANK_DELETED':
+        return `Deleted bank account`
+      case 'NOTICE_CREATED':
+        return `Created notice: "${m.title}"${m.visibility ? ` (${m.visibility})` : ''}`
+      case 'NOTICE_DELETED':
+        return `Deleted notice: "${m.title || m.noticeId}"`
+      case 'SETTINGS_CHANGED':
+        return `Updated settings: ${m.updatedFields?.join(', ') || 'school configuration'}`
+      case 'SUBSCRIPTION_CANCELLED':
+        return `Scheduled subscription cancellation`
+      case 'SUBSCRIPTION_UPGRADED':
+        return `Upgraded subscription`
+      case 'SUBSCRIPTION_DOWNGRADED':
+        return `Scheduled subscription downgrade`
+      case 'SCHOOL_CREATED':
+        return `Created school: ${m.schoolName || ''}`
+      case 'DATA_EXPORTED':
+        return `Exported ${m.exportType || 'data'}`
+      case 'BULK_DELETE':
+        return `Bulk deleted ${m.count || ''} ${m.type || 'records'}`
+      default:
+        if (m.role) return `Role: ${m.role}`
+        return null
     }
-    return null
+  }
+
+  const formatCurrency = (amount: number) => {
+    if (!amount && amount !== 0) return ''
+    return new Intl.NumberFormat('en-NG', { style: 'currency', currency: 'NGN', minimumFractionDigits: 0 }).format(amount)
   }
 
   if (loading && logs.length === 0) {
@@ -345,8 +404,11 @@ export default function AuditLogsPage() {
                             <span className="text-gray-500 ml-1">({log.targetUser.email})</span>
                           </>
                         )}
-                        {renderMetadata(log)}
                       </p>
+
+                      {getActionDescription(log) && (
+                        <p className="text-sm text-gray-600 mt-1">{getActionDescription(log)}</p>
+                      )}
 
                       {renderChanges(log.changes)}
 

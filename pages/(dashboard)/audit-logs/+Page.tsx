@@ -5,14 +5,69 @@ import Badge from '../../../components/ui/Badge'
 import Breadcrumbs from '../../../components/layout/Breadcrumbs'
 import { formatDistanceToNow } from 'date-fns'
 
-const ACTION_OPTIONS = [
-  { value: '', label: 'All Actions' },
-  { value: 'LOGIN', label: 'Login' },
-  { value: 'LOGOUT', label: 'Logout' },
-  { value: 'CREATE_USER', label: 'Create User' },
-  { value: 'DELETE_USER', label: 'Delete User' },
-  { value: 'UPDATE_PERMISSIONS', label: 'Update Permissions' },
-  { value: 'UPDATE_ROLE', label: 'Update Role' },
+const ACTION_GROUPS = [
+  {
+    label: 'Authentication',
+    options: [
+      { value: 'LOGIN', label: 'Login' },
+      { value: 'LOGIN_FAILED', label: 'Login Failed' },
+      { value: 'LOGOUT', label: 'Logout' },
+      { value: 'PASSWORD_CHANGED', label: 'Password Changed' },
+      { value: 'PASSWORD_RESET_REQUESTED', label: 'Password Reset' },
+    ],
+  },
+  {
+    label: 'User Management',
+    options: [
+      { value: 'CREATE_USER', label: 'Create User' },
+      { value: 'UPDATE_USER', label: 'Update User' },
+      { value: 'DELETE_USER', label: 'Delete User' },
+      { value: 'UPDATE_PERMISSIONS', label: 'Update Permissions' },
+      { value: 'UPDATE_ROLE', label: 'Update Role' },
+    ],
+  },
+  {
+    label: 'Exams & Results',
+    options: [
+      { value: 'CREATE_EXAM', label: 'Create Exam' },
+      { value: 'DELETE_EXAM', label: 'Delete Exam' },
+      { value: 'GRADE_EDITED', label: 'Grade Edited' },
+      { value: 'RESULTS_UPLOADED', label: 'Results Uploaded' },
+      { value: 'RESULT_PUBLISHED', label: 'Result Published' },
+      { value: 'RESULT_UNPUBLISHED', label: 'Result Unpublished' },
+      { value: 'REPORT_CARD_GENERATED', label: 'Report Card Generated' },
+    ],
+  },
+  {
+    label: 'Finance',
+    options: [
+      { value: 'CREATE_FEE', label: 'Create Fee' },
+      { value: 'DELETE_FEE', label: 'Delete Fee' },
+      { value: 'PAYMENT_COMPLETED', label: 'Payment Completed' },
+      { value: 'PAYMENT_FAILED', label: 'Payment Failed' },
+      { value: 'BANK_ADDED', label: 'Bank Added' },
+      { value: 'BANK_DELETED', label: 'Bank Deleted' },
+      { value: 'SUBSCRIPTION_UPGRADED', label: 'Subscription Upgraded' },
+      { value: 'SUBSCRIPTION_DOWNGRADED', label: 'Subscription Downgraded' },
+      { value: 'SUBSCRIPTION_CANCELLED', label: 'Subscription Cancelled' },
+    ],
+  },
+  {
+    label: 'Data & Security',
+    options: [
+      { value: 'DATA_EXPORTED', label: 'Data Exported' },
+      { value: 'BULK_DELETE', label: 'Bulk Delete' },
+      { value: 'SETTINGS_CHANGED', label: 'Settings Changed' },
+      { value: 'SCHOOL_CREATED', label: 'School Created' },
+    ],
+  },
+  {
+    label: 'Communication',
+    options: [
+      { value: 'NOTICE_CREATED', label: 'Notice Created' },
+      { value: 'NOTICE_DELETED', label: 'Notice Deleted' },
+    ],
+  },
 ]
 
 interface AuditLog {
@@ -84,10 +139,11 @@ export default function AuditLogsPage() {
   }
 
   const getActionBadgeVariant = (action: string) => {
-    if (action.includes('CREATE')) return 'success'
-    if (action.includes('DELETE')) return 'danger'
-    if (action.includes('UPDATE')) return 'warning'
-    if (action.includes('LOGIN')) return 'info'
+    if (action.includes('FAILED') || action.includes('DELETE') || action.includes('CANCELLED') || action === 'BULK_DELETE') return 'danger'
+    if (action.includes('CREATE') || action.includes('ADDED') || action === 'PAYMENT_COMPLETED') return 'success'
+    if (action.includes('UPDATE') || action.includes('CHANGED') || action.includes('EDITED')) return 'warning'
+    if (action.includes('LOGIN') || action.includes('PUBLISHED') || action.includes('UPGRADED')) return 'info'
+    if (action.includes('DOWNGRADED') || action.includes('EXPORTED')) return 'warning'
     if (action.includes('LOGOUT')) return 'default'
     return 'default'
   }
@@ -197,8 +253,13 @@ export default function AuditLogsPage() {
               onChange={(e) => { setActionFilter(e.target.value); setPage(1) }}
               className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
             >
-              {ACTION_OPTIONS.map(opt => (
-                <option key={opt.value} value={opt.value}>{opt.label}</option>
+              <option value="">All Actions</option>
+              {ACTION_GROUPS.map(group => (
+                <optgroup key={group.label} label={group.label}>
+                  {group.options.map(opt => (
+                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                  ))}
+                </optgroup>
               ))}
             </select>
           </div>

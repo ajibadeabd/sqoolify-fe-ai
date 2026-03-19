@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
+import { toast } from 'sonner';
 import { sessionService } from '../../../lib/api-services';
 import { Session } from '../../../lib/types';
+import { useSessionStore } from '../../../lib/stores/session-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -12,44 +14,26 @@ import ActionMenu from '../../../components/ui/ActionMenu';
 import { usePermission } from '../../../lib/use-permission';
 
 export default function SessionsPage() {
-  const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [settingCurrent, setSettingCurrent] = useState<string | null>(null);
   const { can } = usePermission();
+  const {
+    sessions, loading, error, total, totalPages, filters,
+    fetchSessions, setFilter, deleteSession, invalidate,
+  } = useSessionStore();
 
-  const fetchSessions = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await sessionService.getAll({ page, limit: 10 });
-      setSessions(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch sessions');
-      setSessions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page]);
+  const [settingCurrent, setSettingCurrent] = useState<string | null>(null);
 
   useEffect(() => {
     fetchSessions();
-  }, [fetchSessions]);
+  }, []);
 
   const handleSetCurrent = async (sessionId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     setSettingCurrent(sessionId);
     try {
       await sessionService.setCurrent(sessionId);
-      await fetchSessions();
+      invalidate();
     } catch (err: any) {
-      alert(err.message || 'Failed to set current session');
+      toast.error(err.message || 'Failed to set current session');
     } finally {
       setSettingCurrent(null);
     }
@@ -59,10 +43,10 @@ export default function SessionsPage() {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this session?')) return;
     try {
-      await sessionService.delete(id);
-      fetchSessions();
+      await deleteSession(id);
+      toast.success('Session deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete session');
+      toast.error(err.message || 'Failed to delete session');
     }
   };
 
@@ -165,7 +149,7 @@ export default function SessionsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchSessions} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -173,11 +157,8 @@ export default function SessionsPage() {
 
       <div className="mb-4 max-w-sm">
         <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(val) => setFilter('search', val)}
           placeholder="Search sessions..."
         />
       </div>
@@ -185,14 +166,14 @@ export default function SessionsPage() {
       <DataTable
         columns={columns}
         data={sessions.filter((s) =>
-          search ? s.name.toLowerCase().includes(search.toLowerCase()) : true
+          filters.search ? s.name.toLowerCase().includes(filters.search.toLowerCase()) : true
         )}
         loading={loading}
         emptyMessage="No sessions found"
         onRowClick={(item) => navigate(`/sessions/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

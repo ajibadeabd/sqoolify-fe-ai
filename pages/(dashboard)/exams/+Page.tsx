@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
-import { examService, classService, subjectService, sessionService } from '../../../lib/api-services';
+import { toast } from 'sonner';
+import { classService, subjectService, sessionService } from '../../../lib/api-services';
 import { Exam, SchoolClass, Subject, Session } from '../../../lib/types';
+import { useExamStore } from '../../../lib/stores/exam-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -14,75 +16,36 @@ import { useAppConfig } from '../../../lib/use-app-config';
 export default function ExamsPage() {
   const { can } = usePermission();
   const { termsPerSession } = useAppConfig();
-  const [exams, setExams] = useState<Exam[]>([]);
+  const {
+    exams, loading, error, total, totalPages, filters,
+    fetchExams, setFilter, deleteExam, invalidate,
+  } = useExamStore();
+
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-
-  // Filters
-  const [filterClass, setFilterClass] = useState('');
-  const [filterSubject, setFilterSubject] = useState('');
-  const [filterTerm, setFilterTerm] = useState('');
-
-  const fetchExams = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await examService.getAll({
-        page,
-        limit: 10,
-        classId: filterClass || undefined,
-        subjectId: filterSubject || undefined,
-        term: filterTerm || undefined,
-      });
-      setExams(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch exams');
-      setExams([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterClass, filterSubject, filterTerm]);
-
-  const fetchFilters = useCallback(async () => {
-    try {
-      const [classRes, subjectRes, sessionRes] = await Promise.all([
-        classService.getAll({ limit: 100 }),
-        subjectService.getAll({ limit: 100 }),
-        sessionService.getAll({ limit: 10 }),
-      ]);
-      setClasses(classRes.data || []);
-      setSubjects(subjectRes.data || []);
-      setSessions(sessionRes.data || []);
-    } catch {
-      // Silently fail filter loading
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFilters();
-  }, [fetchFilters]);
 
   useEffect(() => {
     fetchExams();
-  }, [fetchExams]);
+    Promise.all([
+      classService.getAll({ limit: 100 }),
+      subjectService.getAll({ limit: 100 }),
+      sessionService.getAll({ limit: 10 }),
+    ]).then(([classRes, subjectRes, sessionRes]) => {
+      setClasses(classRes.data || []);
+      setSubjects(subjectRes.data || []);
+      setSessions(sessionRes.data || []);
+    }).catch(() => {});
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this exam?')) return;
     try {
-      await examService.delete(id);
-      fetchExams();
+      await deleteExam(id);
+      toast.success('Exam deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete exam');
+      toast.error(err.message || 'Failed to delete exam');
     }
   };
 
@@ -187,7 +150,7 @@ export default function ExamsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchExams} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -197,17 +160,14 @@ export default function ExamsPage() {
       <div className="flex flex-wrap gap-4 mb-4">
         <div className="max-w-xs">
           <SearchBar
-            value={search}
-            onChange={(val) => {
-              setSearch(val);
-              setPage(1);
-            }}
+            value={filters.search}
+            onChange={(val) => setFilter('search', val)}
             placeholder="Search exams..."
           />
         </div>
         <select
-          value={filterClass}
-          onChange={(e) => { setFilterClass(e.target.value); setPage(1); }}
+          value={filters.classId}
+          onChange={(e) => setFilter('classId', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Classes</option>
@@ -216,8 +176,8 @@ export default function ExamsPage() {
           ))}
         </select>
         <select
-          value={filterSubject}
-          onChange={(e) => { setFilterSubject(e.target.value); setPage(1); }}
+          value={filters.subjectId}
+          onChange={(e) => setFilter('subjectId', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Subjects</option>
@@ -226,8 +186,8 @@ export default function ExamsPage() {
           ))}
         </select>
         <select
-          value={filterTerm}
-          onChange={(e) => { setFilterTerm(e.target.value); setPage(1); }}
+          value={filters.term}
+          onChange={(e) => setFilter('term', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Terms</option>
@@ -240,14 +200,14 @@ export default function ExamsPage() {
       <DataTable
         columns={columns}
         data={exams.filter((e) =>
-          search ? e.name.toLowerCase().includes(search.toLowerCase()) : true
+          filters.search ? e.name.toLowerCase().includes(filters.search.toLowerCase()) : true
         )}
         loading={loading}
         emptyMessage="No exams found"
         onRowClick={(item) => navigate(`/exams/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { navigate } from 'vike/client/router';
+import { toast } from 'sonner';
 import { noticeService } from '../../../lib/api-services';
 import { Notice } from '../../../lib/types';
+import { useNoticeStore } from '../../../lib/stores/notice-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -12,42 +14,23 @@ import { usePermission } from '../../../lib/use-permission';
 
 export default function NoticesPage() {
   const { can } = usePermission();
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-
-  const fetchNotices = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await noticeService.getAll({ page, limit: 10, search: search || undefined });
-      setNotices(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch notices');
-      setNotices([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  const {
+    notices, loading, error, total, totalPages, filters,
+    fetchNotices, setFilter, deleteNotice, invalidate,
+  } = useNoticeStore();
 
   useEffect(() => {
     fetchNotices();
-  }, [fetchNotices]);
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this notice?')) return;
     try {
-      await noticeService.delete(id);
-      fetchNotices();
+      await deleteNotice(id);
+      toast.success('Notice deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete notice');
+      toast.error(err.message || 'Failed to delete notice');
     }
   };
 
@@ -55,9 +38,9 @@ export default function NoticesPage() {
     e.stopPropagation();
     try {
       await noticeService.togglePin(id);
-      fetchNotices();
+      invalidate();
     } catch (err: any) {
-      alert(err.message || 'Failed to toggle pin');
+      toast.error(err.message || 'Failed to toggle pin');
     }
   };
 
@@ -171,7 +154,7 @@ export default function NoticesPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchNotices} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -179,11 +162,8 @@ export default function NoticesPage() {
 
       <div className="mb-4 max-w-sm">
         <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(val) => setFilter('search', val)}
           placeholder="Search notices..."
         />
       </div>
@@ -196,7 +176,7 @@ export default function NoticesPage() {
         onRowClick={(item) => navigate(`/notices/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

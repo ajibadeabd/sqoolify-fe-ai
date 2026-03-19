@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
 import { toast } from 'sonner';
-import { parentService, authService } from '../../../lib/api-services';
+import { authService } from '../../../lib/api-services';
 import { Parent } from '../../../lib/types';
+import { useParentStore } from '../../../lib/stores/parent-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -29,43 +30,25 @@ const PARENT_TEMPLATE_ROWS = [
 
 export default function ParentsPage() {
   const { can, canWrite } = usePermission();
-  const [parents, setParents] = useState<Parent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [showImport, setShowImport] = useState(false);
+  const {
+    parents, loading, error, total, totalPages, filters,
+    fetchParents, setFilter, deleteParent, invalidate,
+  } = useParentStore();
 
-  const fetchParents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await parentService.getAll({ page, limit: 10, search: search || undefined });
-      setParents(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch parents');
-      setParents([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchParents();
-  }, [fetchParents]);
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this parent?')) return;
     try {
-      await parentService.delete(id);
-      fetchParents();
+      await deleteParent(id);
+      toast.success('Parent deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete parent');
+      toast.error(err.message || 'Failed to delete parent');
     }
   };
 
@@ -151,7 +134,7 @@ export default function ParentsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchParents} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -159,11 +142,8 @@ export default function ParentsPage() {
 
       <div className="mb-4 max-w-sm">
         <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(val) => setFilter('search', val)}
           placeholder="Search parents..."
         />
       </div>
@@ -176,7 +156,7 @@ export default function ParentsPage() {
         onRowClick={(item) => navigate(`/parents/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
 
       <CsvImportModal
         open={showImport}
@@ -189,7 +169,7 @@ export default function ParentsPage() {
           const result = await authService.bulkRegisterParents(rows);
           if (result.data.failureCount === 0) {
             toast.success(`${result.data.successCount} parents imported`);
-            fetchParents();
+            invalidate();
           }
           return result.data;
         }}

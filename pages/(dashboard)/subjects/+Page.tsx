@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
 import { toast } from 'sonner';
 import { subjectService } from '../../../lib/api-services';
 import { Subject } from '../../../lib/types';
+import { useSubjectStore } from '../../../lib/stores/subject-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -14,43 +15,25 @@ import { usePermission } from '../../../lib/use-permission';
 
 export default function SubjectsPage() {
   const { can } = usePermission();
-  const [subjects, setSubjects] = useState<Subject[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [showImport, setShowImport] = useState(false);
+  const {
+    subjects, loading, error, total, totalPages, filters,
+    fetchSubjects, setFilter, deleteSubject, invalidate,
+  } = useSubjectStore();
 
-  const fetchSubjects = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await subjectService.getAll({ page, limit: 10, search: search || undefined });
-      setSubjects(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch subjects');
-      setSubjects([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchSubjects();
-  }, [fetchSubjects]);
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this subject?')) return;
     try {
-      await subjectService.delete(id);
-      fetchSubjects();
+      await deleteSubject(id);
+      toast.success('Subject deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete subject');
+      toast.error(err.message || 'Failed to delete subject');
     }
   };
 
@@ -123,7 +106,7 @@ export default function SubjectsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchSubjects} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -131,11 +114,8 @@ export default function SubjectsPage() {
 
       <div className="mb-4 max-w-sm">
         <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(val) => setFilter('search', val)}
           placeholder="Search subjects..."
         />
       </div>
@@ -148,7 +128,7 @@ export default function SubjectsPage() {
         onRowClick={(item) => navigate(`/subjects/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
 
       <CsvImportModal
         open={showImport}
@@ -175,7 +155,7 @@ export default function SubjectsPage() {
           const result = await subjectService.bulkImport(parsed);
           if (result.data.failureCount === 0) {
             toast.success(`${result.data.successCount} subjects imported`);
-            fetchSubjects();
+            invalidate();
           }
           return result.data;
         }}

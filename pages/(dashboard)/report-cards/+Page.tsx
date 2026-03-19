@@ -1,7 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
-import { reportCardService, sessionService, classService } from '../../../lib/api-services';
+import { sessionService, classService } from '../../../lib/api-services';
 import { ReportCard, Session, SchoolClass } from '../../../lib/types';
+import { useReportCardStore } from '../../../lib/stores/report-card-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -12,65 +13,27 @@ import { useAppConfig } from '../../../lib/use-app-config';
 
 export default function ReportCardsPage() {
   const { termsPerSession } = useAppConfig();
-  const [reportCards, setReportCards] = useState<ReportCard[]>([]);
+  const {
+    reportCards, loading, error, total, totalPages, filters,
+    fetchReportCards, setFilter, invalidate,
+  } = useReportCardStore();
+
   const [sessions, setSessions] = useState<Session[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
   const [generating, setGenerating] = useState(false);
-
-  // Filters
-  const [filterSession, setFilterSession] = useState('');
-  const [filterTerm, setFilterTerm] = useState('');
-
-  const fetchReportCards = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await reportCardService.getAll({
-        page,
-        limit: 10,
-        sessionId: filterSession || undefined,
-        term: filterTerm || undefined,
-      });
-      setReportCards(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch report cards');
-      setReportCards([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterSession, filterTerm]);
-
-  const fetchFilters = useCallback(async () => {
-    try {
-      const [sessionRes, classRes] = await Promise.all([
-        sessionService.getAll({ limit: 10 }),
-        classService.getAll({ limit: 100 }),
-      ]);
-      setSessions(sessionRes.data || []);
-      setClasses(classRes.data || []);
-    } catch {
-      // Silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFilters();
-  }, [fetchFilters]);
 
   useEffect(() => {
     fetchReportCards();
-  }, [fetchReportCards]);
+    Promise.all([
+      sessionService.getAll({ limit: 10 }),
+      classService.getAll({ limit: 100 }),
+    ]).then(([sessionRes, classRes]) => {
+      setSessions(sessionRes.data || []);
+      setClasses(classRes.data || []);
+    }).catch(() => {});
+  }, []);
 
   const handleGenerate = async () => {
-    // For now, just show an alert - need student, session, term selection
     alert('Please select a student to generate report card');
   };
 
@@ -150,7 +113,7 @@ export default function ReportCardsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchReportCards} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -160,17 +123,14 @@ export default function ReportCardsPage() {
       <div className="flex flex-wrap gap-4 mb-4">
         <div className="max-w-xs">
           <SearchBar
-            value={search}
-            onChange={(val) => {
-              setSearch(val);
-              setPage(1);
-            }}
+            value={filters.search}
+            onChange={(val) => setFilter('search', val)}
             placeholder="Search by student..."
           />
         </div>
         <select
-          value={filterSession}
-          onChange={(e) => { setFilterSession(e.target.value); setPage(1); }}
+          value={filters.sessionId}
+          onChange={(e) => setFilter('sessionId', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Sessions</option>
@@ -179,8 +139,8 @@ export default function ReportCardsPage() {
           ))}
         </select>
         <select
-          value={filterTerm}
-          onChange={(e) => { setFilterTerm(e.target.value); setPage(1); }}
+          value={filters.term}
+          onChange={(e) => setFilter('term', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Terms</option>
@@ -198,7 +158,7 @@ export default function ReportCardsPage() {
         onRowClick={(item) => navigate(`/report-cards/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

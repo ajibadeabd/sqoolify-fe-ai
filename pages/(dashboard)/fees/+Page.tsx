@@ -1,7 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
-import { feeService, classService, sessionService } from '../../../lib/api-services';
+import { toast } from 'sonner';
+import { classService, sessionService } from '../../../lib/api-services';
 import { Fee, SchoolClass, Session } from '../../../lib/types';
+import { useFeeStore } from '../../../lib/stores/fee-store';
 import { useAppConfig } from '../../../lib/use-app-config';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
@@ -13,74 +15,33 @@ import { usePermission } from '../../../lib/use-permission';
 export default function FeesPage() {
   const { can } = usePermission();
   const { formatCurrency } = useAppConfig();
-  const [fees, setFees] = useState<Fee[]>([]);
+  const {
+    fees, loading, error, total, totalPages, filters, summary,
+    fetchFees, setFilter, deleteFee, invalidate,
+  } = useFeeStore();
+
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<{ totalFees?: number; totalCollected: number; totalOutstanding: number } | null>(null);
-
-  // Filters
-  const [filterClass, setFilterClass] = useState('');
-  const [filterSession, setFilterSession] = useState('');
-
-  const fetchFees = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [feesRes, summaryRes] = await Promise.all([
-        feeService.getAll({
-          page,
-          limit: 10,
-          classId: filterClass || undefined,
-          sessionId: filterSession || undefined,
-        }),
-        feeService.getSummary(),
-      ]);
-      setFees(feesRes.data || []);
-      setTotalPages(feesRes.pagination?.totalPages || 1);
-      setTotal(feesRes.pagination?.total || 0);
-      setSummary(summaryRes.data || null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch fees');
-      setFees([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterClass, filterSession]);
-
-  const fetchFilters = useCallback(async () => {
-    try {
-      const [classRes, sessionRes] = await Promise.all([
-        classService.getAll({ limit: 100 }),
-        sessionService.getAll({ limit: 10 }),
-      ]);
-      setClasses(classRes.data || []);
-      setSessions(sessionRes.data || []);
-    } catch {
-      // Silently fail
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchFilters();
-  }, [fetchFilters]);
 
   useEffect(() => {
     fetchFees();
-  }, [fetchFees]);
+    Promise.all([
+      classService.getAll({ limit: 100 }),
+      sessionService.getAll({ limit: 10 }),
+    ]).then(([classRes, sessionRes]) => {
+      setClasses(classRes.data || []);
+      setSessions(sessionRes.data || []);
+    }).catch(() => {});
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this fee structure?')) return;
     try {
-      await feeService.delete(id);
-      fetchFees();
+      await deleteFee(id);
+      toast.success('Fee structure deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete fee');
+      toast.error(err.message || 'Failed to delete fee');
     }
   };
 
@@ -154,7 +115,7 @@ export default function FeesPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchFees} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -163,8 +124,8 @@ export default function FeesPage() {
       {/* Filters */}
       <div className="flex flex-wrap gap-4 mb-4">
         <select
-          value={filterClass}
-          onChange={(e) => { setFilterClass(e.target.value); setPage(1); }}
+          value={filters.classId}
+          onChange={(e) => setFilter('classId', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Classes</option>
@@ -173,8 +134,8 @@ export default function FeesPage() {
           ))}
         </select>
         <select
-          value={filterSession}
-          onChange={(e) => { setFilterSession(e.target.value); setPage(1); }}
+          value={filters.sessionId}
+          onChange={(e) => setFilter('sessionId', e.target.value)}
           className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
         >
           <option value="">All Sessions</option>
@@ -192,7 +153,7 @@ export default function FeesPage() {
         onRowClick={(item) => navigate(`/fees/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

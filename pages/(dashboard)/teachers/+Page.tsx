@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
 import { toast } from 'sonner';
-import { teacherService, authService } from '../../../lib/api-services';
+import { authService } from '../../../lib/api-services';
 import { Teacher } from '../../../lib/types';
+import { useTeacherStore } from '../../../lib/stores/teacher-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -33,43 +34,25 @@ const TEACHER_TEMPLATE_ROWS = [
 
 export default function TeachersPage() {
   const { can } = usePermission();
-  const [teachers, setTeachers] = useState<Teacher[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [showImport, setShowImport] = useState(false);
+  const {
+    teachers, loading, error, total, totalPages, filters,
+    fetchTeachers, setFilter, deleteTeacher, invalidate,
+  } = useTeacherStore();
 
-  const fetchTeachers = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await teacherService.getAll({ page, limit: 10, search: search || undefined });
-      setTeachers(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch teachers');
-      setTeachers([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search]);
+  const [showImport, setShowImport] = useState(false);
 
   useEffect(() => {
     fetchTeachers();
-  }, [fetchTeachers]);
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this teacher?')) return;
     try {
-      await teacherService.delete(id);
-      fetchTeachers();
+      await deleteTeacher(id);
+      toast.success('Teacher deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete teacher');
+      toast.error(err.message || 'Failed to delete teacher');
     }
   };
 
@@ -152,7 +135,7 @@ export default function TeachersPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchTeachers} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -160,11 +143,8 @@ export default function TeachersPage() {
 
       <div className="mb-4 max-w-sm">
         <SearchBar
-          value={search}
-          onChange={(val) => {
-            setSearch(val);
-            setPage(1);
-          }}
+          value={filters.search}
+          onChange={(val) => setFilter('search', val)}
           placeholder="Search teachers..."
         />
       </div>
@@ -177,7 +157,7 @@ export default function TeachersPage() {
         onRowClick={(item) => navigate(`/teachers/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
 
       <CsvImportModal
         open={showImport}
@@ -190,7 +170,7 @@ export default function TeachersPage() {
           const result = await authService.bulkRegisterTeachers(rows);
           if (result.data.failureCount === 0) {
             toast.success(`${result.data.successCount} teachers imported`);
-            fetchTeachers();
+            invalidate();
           }
           return result.data;
         }}

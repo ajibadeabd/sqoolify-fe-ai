@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
 import { toast } from 'sonner';
 import { classService, sessionService } from '../../../lib/api-services';
 import { SchoolClass } from '../../../lib/types';
+import { useClassStore } from '../../../lib/stores/class-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -16,49 +17,27 @@ import { useAppConfig } from '../../../lib/use-app-config';
 export default function ClassesPage() {
   const { can } = usePermission();
   const { classLevels } = useAppConfig();
-  const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const {
+    classes, loading, error, total, totalPages, filters,
+    fetchClasses, setFilter, deleteClass, invalidate,
+  } = useClassStore();
+
   const [showImport, setShowImport] = useState(false);
   const [sessions, setSessions] = useState<any[]>([]);
-  const [selectedSession, setSelectedSession] = useState('');
-
-  useEffect(() => {
-    sessionService.getAll({ limit: 100 }).then((res) => setSessions(res.data || []));
-  }, []);
-
-  const fetchClasses = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await classService.getAll({ page, limit: 10, search: search || undefined, sessionId: selectedSession || undefined });
-      setClasses(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch classes');
-      setClasses([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, selectedSession]);
 
   useEffect(() => {
     fetchClasses();
-  }, [fetchClasses]);
+    sessionService.getAll({ limit: 100 }).then((res) => setSessions(res.data || []));
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this class?')) return;
     try {
-      await classService.delete(id);
-      fetchClasses();
+      await deleteClass(id);
+      toast.success('Class deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete class');
+      toast.error(err.message || 'Failed to delete class');
     }
   };
 
@@ -144,7 +123,7 @@ export default function ClassesPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchClasses} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -153,20 +132,14 @@ export default function ClassesPage() {
       <div className="mb-4 flex items-center gap-4">
         <div className="max-w-sm flex-1">
           <SearchBar
-            value={search}
-            onChange={(val) => {
-              setSearch(val);
-              setPage(1);
-            }}
+            value={filters.search}
+            onChange={(val) => setFilter('search', val)}
             placeholder="Search classes..."
           />
         </div>
         <select
-          value={selectedSession}
-          onChange={(e) => {
-            setSelectedSession(e.target.value);
-            setPage(1);
-          }}
+          value={filters.sessionId}
+          onChange={(e) => setFilter('sessionId', e.target.value)}
           className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
         >
           <option value="">All Sessions</option>
@@ -184,7 +157,7 @@ export default function ClassesPage() {
         onRowClick={(item) => navigate(`/classes/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
 
       <CsvImportModal
         open={showImport}
@@ -215,7 +188,7 @@ export default function ClassesPage() {
           const result = await classService.bulkImport(parsed);
           if (result.data.failureCount === 0) {
             toast.success(`${result.data.successCount} classes imported`);
-            fetchClasses();
+            invalidate();
           }
           return result.data;
         }}

@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useEffect } from 'react';
 import { navigate } from 'vike/client/router';
-import { paymentService } from '../../../lib/api-services';
 import { Payment } from '../../../lib/types';
+import { usePaymentStore } from '../../../lib/stores/payment-store';
 import { useAppConfig } from '../../../lib/use-app-config';
 import { usePermission } from '../../../lib/use-permission';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
@@ -15,57 +15,14 @@ import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 export default function PaymentsPage() {
   const { formatCurrency, paymentCategories } = useAppConfig();
   const { can } = usePermission();
-  const [payments, setPayments] = useState<Payment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
-  const [summary, setSummary] = useState<{
-    totalPayments: number;
-    byCategory: Record<string, number>;
-    byStatus: Record<string, number>;
-  } | null>(null);
-
-  // Filters
-  const [filterStatus, setFilterStatus] = useState('');
-  const [filterCategory, setFilterCategory] = useState('');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-
-  const fetchPayments = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [paymentsRes, summaryRes] = await Promise.all([
-        paymentService.getAll({
-          page,
-          limit: 10,
-          paymentStatus: filterStatus || undefined,
-          paymentCategory: filterCategory || undefined,
-          startDate: startDate || undefined,
-          endDate: endDate || undefined,
-          sortBy: 'createdAt',
-          sortOrder: 'desc',
-        }),
-        paymentService.getSummary(),
-      ]);
-      setPayments(paymentsRes.data || []);
-      setTotalPages(paymentsRes.pagination?.totalPages || 1);
-      setTotal(paymentsRes.pagination?.total || 0);
-      setSummary(summaryRes.data || null);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch payments');
-      setPayments([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, filterStatus, filterCategory, startDate, endDate]);
+  const {
+    payments, loading, error, total, totalPages, filters, summary,
+    fetchPayments, setFilter, resetFilters, invalidate,
+  } = usePaymentStore();
 
   useEffect(() => {
     fetchPayments();
-  }, [fetchPayments]);
+  }, []);
 
   const formatDate = (date: string | Date | undefined) => {
     if (!date) return '-';
@@ -117,16 +74,7 @@ export default function PaymentsPage() {
     URL.revokeObjectURL(url);
   };
 
-  const clearFilters = () => {
-    setFilterStatus('');
-    setFilterCategory('');
-    setStartDate('');
-    setEndDate('');
-    setSearch('');
-    setPage(1);
-  };
-
-  const hasActiveFilters = filterStatus || filterCategory || startDate || endDate || search;
+  const hasActiveFilters = filters.status || filters.category || filters.startDate || filters.endDate || filters.search;
 
   const completedAmount = summary?.byStatus?.completed || 0;
   const pendingAmount = summary?.byStatus?.pending || 0;
@@ -247,7 +195,7 @@ export default function PaymentsPage() {
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchPayments} className="ml-2 underline">Retry</button>
+          <button onClick={invalidate} className="ml-2 underline">Retry</button>
         </div>
       )}
 
@@ -257,16 +205,16 @@ export default function PaymentsPage() {
           <div className="flex-1 min-w-[200px] max-w-xs">
             <label className="block text-xs text-gray-500 mb-1">Search</label>
             <SearchBar
-              value={search}
-              onChange={(val) => { setSearch(val); setPage(1); }}
+              value={filters.search}
+              onChange={(val) => setFilter('search', val)}
               placeholder="Search by reference..."
             />
           </div>
           <div>
             <label className="block text-xs text-gray-500 mb-1">Status</label>
             <select
-              value={filterStatus}
-              onChange={(e) => { setFilterStatus(e.target.value); setPage(1); }}
+              value={filters.status}
+              onChange={(e) => setFilter('status', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Statuses</option>
@@ -279,8 +227,8 @@ export default function PaymentsPage() {
           <div>
             <label className="block text-xs text-gray-500 mb-1">Category</label>
             <select
-              value={filterCategory}
-              onChange={(e) => { setFilterCategory(e.target.value); setPage(1); }}
+              value={filters.category}
+              onChange={(e) => setFilter('category', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="">All Categories</option>
@@ -293,8 +241,8 @@ export default function PaymentsPage() {
             <label className="block text-xs text-gray-500 mb-1">From</label>
             <input
               type="date"
-              value={startDate}
-              onChange={(e) => { setStartDate(e.target.value); setPage(1); }}
+              value={filters.startDate}
+              onChange={(e) => setFilter('startDate', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
@@ -302,14 +250,14 @@ export default function PaymentsPage() {
             <label className="block text-xs text-gray-500 mb-1">To</label>
             <input
               type="date"
-              value={endDate}
-              onChange={(e) => { setEndDate(e.target.value); setPage(1); }}
+              value={filters.endDate}
+              onChange={(e) => setFilter('endDate', e.target.value)}
               className="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
           </div>
           {hasActiveFilters && (
             <button
-              onClick={clearFilters}
+              onClick={resetFilters}
               className="px-3 py-2 text-sm text-gray-500 hover:text-gray-700 underline"
             >
               Clear filters
@@ -321,14 +269,14 @@ export default function PaymentsPage() {
       <DataTable
         columns={columns}
         data={payments.filter(p =>
-          search ? p.reference?.toLowerCase().includes(search.toLowerCase()) : true
+          filters.search ? p.reference?.toLowerCase().includes(filters.search.toLowerCase()) : true
         )}
         loading={loading}
         emptyMessage="No payments found"
         onRowClick={(item) => navigate(`/payments/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
     </div>
   );
 }

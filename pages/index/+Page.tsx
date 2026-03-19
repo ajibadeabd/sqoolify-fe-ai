@@ -1,7 +1,7 @@
 import { JSX, useState } from 'react'
 import { useData } from 'vike-react/useData'
 import { useSchool } from '../../lib/school-context'
-import type { Data } from '../+data'
+import type { Data } from './+data'
 import type { PublicSchool, SitePage } from '../../lib/types'
 import PublicSiteLayout from '../../components/public-site/PublicSiteLayout'
 import { getTemplateHome } from '../../components/public-site/templates'
@@ -125,7 +125,7 @@ export default function HomePage() {
   const { school } = useSchool()
   const { homePage, navPages, siteDisabled } = useData<Data>() || {}
   const brandName = school?.name || 'Sqoolify'
-
+console.log({school})
   // Subdomain with site disabled → show minimal school profile
   if (school && siteDisabled) {
     const s = school as any

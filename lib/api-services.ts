@@ -694,7 +694,10 @@ export const chatService = {
   getRooms: () =>
     api.get<ApiResponse<any[]>>('/chat/rooms', authOptions()),
 
-  getMessages: (roomId: string, params?: { page?: number; limit?: number }) =>
+  getChannels: (roomId: string) =>
+    api.get<ApiResponse<{ _id: string; name: string }[]>>(`/chat/rooms/${roomId}/channels`, authOptions()),
+
+  getMessages: (roomId: string, params?: { page?: number; limit?: number; channel?: string }) =>
     api.get<ApiResponse<any[]>>(`/chat/rooms/${roomId}/messages${buildQuery(params || {})}`, authOptions()),
 };
 

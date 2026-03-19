@@ -1,8 +1,9 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
 import { toast } from 'sonner';
-import { studentService, authService, classService } from '../../../lib/api-services';
+import { authService, classService } from '../../../lib/api-services';
 import { Student, SchoolClass } from '../../../lib/types';
+import { useStudentStore } from '../../../lib/stores/student-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
 import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
@@ -33,54 +34,27 @@ const STUDENT_TEMPLATE_ROWS = [
 
 export default function StudentsPage() {
   const { can, canWrite } = usePermission();
-  const [students, setStudents] = useState<Student[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [total, setTotal] = useState(0);
+  const {
+    students, loading, error, total, totalPages, filters,
+    fetchStudents, setFilter, deleteStudent, invalidate,
+  } = useStudentStore();
+
   const [showImport, setShowImport] = useState(false);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
-  const [selectedClass, setSelectedClass] = useState('');
-
-  useEffect(() => {
-    classService.getAll({ limit: 100 }).then((res) => setClasses(res.data || []));
-  }, []);
-
-  const fetchStudents = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const res = await studentService.getAll({
-        page,
-        limit: 10,
-        search: search || undefined,
-        classId: selectedClass || undefined,
-      });
-      setStudents(res.data || []);
-      setTotalPages(res.pagination?.totalPages || 1);
-      setTotal(res.pagination?.total || 0);
-    } catch (err: any) {
-      setError(err.message || 'Failed to fetch students');
-      setStudents([]);
-    } finally {
-      setLoading(false);
-    }
-  }, [page, search, selectedClass]);
 
   useEffect(() => {
     fetchStudents();
-  }, [fetchStudents]);
+    classService.getAll({ limit: 100 }).then((res) => setClasses(res.data || []));
+  }, []);
 
   const handleDelete = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (!confirm('Are you sure you want to delete this student?')) return;
     try {
-      await studentService.delete(id);
-      fetchStudents();
+      await deleteStudent(id);
+      toast.success('Student deleted');
     } catch (err: any) {
-      alert(err.message || 'Failed to delete student');
+      toast.error(err.message || 'Failed to delete student');
     }
   };
 
@@ -173,7 +147,7 @@ export default function StudentsPage() {
       {error && (
         <div className="mb-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
           {error}
-          <button onClick={fetchStudents} className="ml-2 underline">
+          <button onClick={invalidate} className="ml-2 underline">
             Retry
           </button>
         </div>
@@ -182,20 +156,14 @@ export default function StudentsPage() {
       <div className="mb-4 flex items-center gap-4">
         <div className="max-w-sm flex-1">
           <SearchBar
-            value={search}
-            onChange={(val) => {
-              setSearch(val);
-              setPage(1);
-            }}
+            value={filters.search}
+            onChange={(val) => setFilter('search', val)}
             placeholder="Search by name or admission no..."
           />
         </div>
         <select
-          value={selectedClass}
-          onChange={(e) => {
-            setSelectedClass(e.target.value);
-            setPage(1);
-          }}
+          value={filters.classId}
+          onChange={(e) => setFilter('classId', e.target.value)}
           className="px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
         >
           <option value="">All Classes</option>
@@ -215,7 +183,12 @@ export default function StudentsPage() {
         onRowClick={(item) => navigate(`/students/${item._id}`)}
       />
 
-      <Pagination page={page} totalPages={totalPages} total={total} onPageChange={setPage} />
+      <Pagination
+        page={filters.page}
+        totalPages={totalPages}
+        total={total}
+        onPageChange={(p) => setFilter('page', p)}
+      />
 
       <CsvImportModal
         open={showImport}
@@ -228,7 +201,7 @@ export default function StudentsPage() {
           const result = await authService.bulkRegisterStudents(rows);
           if (result.data.failureCount === 0) {
             toast.success(`${result.data.successCount} students imported`);
-            fetchStudents();
+            invalidate();
           }
           return result.data;
         }}

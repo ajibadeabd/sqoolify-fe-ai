@@ -40,20 +40,20 @@ export function useSocket() {
     };
   }, []);
 
-  const joinRoom = useCallback((roomId: string) => {
-    socketRef.current?.emit('joinRoom', { roomId });
+  const joinRoom = useCallback((roomId: string, channelId?: string) => {
+    socketRef.current?.emit('joinRoom', { roomId, channelId });
   }, []);
 
-  const leaveRoom = useCallback((roomId: string) => {
-    socketRef.current?.emit('leaveRoom', { roomId });
+  const leaveRoom = useCallback((roomId: string, channelId?: string) => {
+    socketRef.current?.emit('leaveRoom', { roomId, channelId });
   }, []);
 
-  const sendMessage = useCallback((roomId: string, content: string) => {
-    socketRef.current?.emit('sendMessage', { roomId, content });
+  const sendMessage = useCallback((roomId: string, content: string, channelId?: string) => {
+    socketRef.current?.emit('sendMessage', { roomId, content, channelId });
   }, []);
 
-  const emitTyping = useCallback((roomId: string) => {
-    socketRef.current?.emit('typing', { roomId });
+  const emitTyping = useCallback((roomId: string, channelId?: string) => {
+    socketRef.current?.emit('typing', { roomId, channelId });
   }, []);
 
   const onNewMessage = useCallback((callback: (message: any) => void) => {

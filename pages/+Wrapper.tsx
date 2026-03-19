@@ -10,7 +10,6 @@ import type { Data } from './+data';
 
 export default function Wrapper({ children }: { children: ReactNode }) {
   const { school, slug } = useData<Data>() || {};
-
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
     const encryptedAuth = params.get('_auth')
@@ -39,6 +38,7 @@ export default function Wrapper({ children }: { children: ReactNode }) {
   }, [])
 
   if ((slug || (typeof window !== 'undefined' && isSchoolHost(window.location.hostname))) && !school) {
+
     return (
       <div className="min-h-screen bg-linear-to-br from-gray-50 to-blue-50 flex flex-col">
         {/* Header */}

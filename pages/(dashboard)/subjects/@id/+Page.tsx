@@ -25,7 +25,7 @@ export default function SubjectDetailPage() {
   const [teachers, setTeachers] = useState<any[]>([])
   const [assignSearch, setAssignSearch] = useState('')
   const [assignLoading, setAssignLoading] = useState(false)
-  const [selectedTeacher, setSelectedTeacher] = useState<string | null>(null)
+  const [selectedTeachers, setSelectedTeachers] = useState<string[]>([])
   const [assigning, setAssigning] = useState(false)
 
   // Remove teacher state
@@ -73,18 +73,20 @@ export default function SubjectDetailPage() {
   const openAssignModal = () => {
     setAssignOpen(true)
     setAssignSearch('')
-    setSelectedTeacher(null)
+    setSelectedTeachers([])
     fetchTeachers()
   }
 
   const handleAssignTeacher = async () => {
-    if (!selectedTeacher) return
+    if (selectedTeachers.length === 0) return
     setAssigning(true)
     try {
-      await subjectService.assignTeacher(id, selectedTeacher)
-      toast.success('Teacher assigned to subject')
+      for (const teacherId of selectedTeachers) {
+        await subjectService.assignTeacher(id, teacherId)
+      }
+      toast.success(`${selectedTeachers.length} teacher${selectedTeachers.length > 1 ? 's' : ''} assigned`)
       setAssignOpen(false)
-      setSelectedTeacher(null)
+      setSelectedTeachers([])
       await fetchSubject()
     } catch {
       toast.error('Failed to assign teacher')
@@ -225,7 +227,6 @@ export default function SubjectDetailPage() {
                   value={assignSearch}
                   onChange={(val) => {
                     setAssignSearch(val)
-                    setSelectedTeacher(null)
                     fetchTeachers(val)
                   }}
                   placeholder="Search teachers..."
@@ -252,16 +253,17 @@ export default function SubjectDetailPage() {
                       <label
                         key={t._id}
                         className={`flex items-center gap-3 p-3 border rounded-lg cursor-pointer transition ${
-                          selectedTeacher === t._id ? 'border-blue-300 bg-blue-50' : isAlreadyAssigned ? 'border-gray-200 bg-gray-50 opacity-50' : 'border-gray-200 hover:bg-gray-50'
+                          selectedTeachers.includes(t._id) ? 'border-blue-300 bg-blue-50' : isAlreadyAssigned ? 'border-gray-200 bg-gray-50 opacity-50' : 'border-gray-200 hover:bg-gray-50'
                         }`}
                       >
                         <input
-                          type="radio"
-                          name="assignTeacher"
-                          checked={selectedTeacher === t._id}
-                          onChange={() => setSelectedTeacher(t._id)}
+                          type="checkbox"
+                          checked={selectedTeachers.includes(t._id)}
+                          onChange={() => setSelectedTeachers(prev =>
+                            prev.includes(t._id) ? prev.filter(id => id !== t._id) : [...prev, t._id]
+                          )}
                           disabled={isAlreadyAssigned}
-                          className="text-blue-600 focus:ring-blue-500 shrink-0"
+                          className="rounded text-blue-600 focus:ring-blue-500 shrink-0"
                         />
                         <div className="min-w-0">
                           <p className="font-medium text-sm truncate">
@@ -282,10 +284,10 @@ export default function SubjectDetailPage() {
                 variant="primary"
                 onClick={handleAssignTeacher}
                 loading={assigning}
-                disabled={!selectedTeacher || assigning}
+                disabled={selectedTeachers.length === 0 || assigning}
                 className="flex-1"
               >
-                Assign Teacher
+                Assign{selectedTeachers.length > 0 ? ` (${selectedTeachers.length})` : ''}
               </Button>
               <Button variant="outline" onClick={() => setAssignOpen(false)} className="flex-1">Cancel</Button>
             </div>

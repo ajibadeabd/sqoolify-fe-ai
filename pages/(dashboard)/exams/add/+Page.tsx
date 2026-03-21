@@ -45,13 +45,11 @@ export default function AddExamPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [classesRes, subjectsRes, sessionsRes] = await Promise.all([
+        const [classesRes, sessionsRes] = await Promise.all([
           classService.getAll({ limit: 100 }),
-          subjectService.getAll({ limit: 100 }),
           sessionService.getAll({ limit: 10 }),
         ])
         setClasses(classesRes.data || [])
-        setSubjects(subjectsRes.data || [])
         setSessions(sessionsRes.data || [])
 
         // Auto-select current session
@@ -68,6 +66,17 @@ export default function AddExamPage() {
     }
     fetchData()
   }, [])
+
+  // Fetch subjects when class changes
+  useEffect(() => {
+    if (!form.classId) {
+      setSubjects([])
+      return
+    }
+    subjectService.getByClass(form.classId)
+      .then((res) => setSubjects(res.data || []))
+      .catch(() => setSubjects([]))
+  }, [form.classId])
 
   const update = (key: string, value: string | number) => setForm({ ...form, [key]: value })
 
@@ -249,7 +258,7 @@ export default function AddExamPage() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Class *</label>
                         <select
                           value={form.classId}
-                          onChange={(e) => update('classId', e.target.value)}
+                          onChange={(e) => setForm(prev => ({ ...prev, classId: e.target.value, subjectId: '', name: '' }))}
                           className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
                           required
                         >

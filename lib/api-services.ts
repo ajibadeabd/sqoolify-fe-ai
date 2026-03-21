@@ -269,6 +269,9 @@ export const subjectService = {
   getById: (id: string) =>
     api.get<ApiResponse<Subject>>(`/subjects/${id}`, authOptions()),
 
+  getByClass: (classId: string) =>
+    api.get<ApiResponse<Subject[]>>(`/subjects/by-class/${classId}`, authOptions()),
+
   create: (data: CreateSubjectData) =>
     api.post<ApiResponse<Subject>>('/subjects', data, authOptions()),
 

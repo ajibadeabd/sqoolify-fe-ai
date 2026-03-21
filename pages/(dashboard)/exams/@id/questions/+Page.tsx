@@ -4,6 +4,8 @@ import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import Papa from 'papaparse'
 import { examService } from '../../../../../lib/api-services'
+import { usePermission } from '../../../../../lib/use-permission'
+import { PERMISSIONS } from '../../../../../lib/permissions'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
 import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
@@ -106,6 +108,7 @@ function parseCsvToQuestions(file: File): Promise<CreateQuestionData[]> {
 export default function QuestionsPage() {
   const { routeParams } = usePageContext()
   const id = routeParams?.id as string
+  const { can } = usePermission()
 
   const [exam, setExam] = useState<Exam | null>(null)
   const [questions, setQuestions] = useState<Question[]>([])
@@ -384,15 +387,11 @@ export default function QuestionsPage() {
         </div>
         <div className="flex gap-2">
           {!exam.published ? (
-            <Button
-              onClick={handlePublish}
-              loading={publishing}
-              disabled={questions.length === 0}
-            >
-              Publish Exam
-            </Button>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700">
+              Not Published
+            </span>
           ) : (
-            <span className="px-3 py-2 bg-green-100 text-green-700 rounded-lg text-sm font-medium">
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
               Published
             </span>
           )}

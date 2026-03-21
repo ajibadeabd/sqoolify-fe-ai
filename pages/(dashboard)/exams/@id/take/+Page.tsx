@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { examService } from '../../../../../lib/api-services'
+import { examService, studentService } from '../../../../../lib/api-services'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
 import ConfirmDialog from '../../../../../components/ui/ConfirmDialog'
@@ -18,6 +18,7 @@ export default function TakeExamPage() {
   const [answers, setAnswers] = useState<Record<string, string>>({})
   const [timeLeft, setTimeLeft] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
+  const [alreadySubmitted, setAlreadySubmitted] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [submitOpen, setSubmitOpen] = useState(false)
   const [tabViolations, setTabViolations] = useState(0)
@@ -29,10 +30,14 @@ export default function TakeExamPage() {
   useEffect(() => {
     const fetchExam = async () => {
       try {
-        const res = await examService.getById(id)
+        const res = await studentService.getMyExamById(id)
         setExam(res.data)
-      } catch {
-        toast.error('Failed to load exam')
+      } catch (err: any) {
+        if (err?.message?.includes('already been submitted') || err?.statusCode === 400) {
+          setAlreadySubmitted(true)
+        } else {
+          toast.error('Failed to load exam')
+        }
       } finally {
         setLoading(false)
       }
@@ -218,6 +223,28 @@ export default function TakeExamPage() {
       <div className="animate-pulse space-y-4">
         <div className="h-8 bg-gray-200 rounded w-48" />
         <div className="h-64 bg-gray-200 rounded" />
+      </div>
+    )
+  }
+
+  if (alreadySubmitted) {
+    return (
+      <div className="max-w-lg mx-auto mt-12">
+        <Card>
+          <div className="text-center space-y-4 py-6">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h1 className="text-xl font-bold text-gray-900">Exam Already Submitted</h1>
+            <p className="text-sm text-gray-500">You have already taken this exam. You cannot retake it.</p>
+            <div className="flex gap-3 justify-center pt-2">
+              <Button variant="outline" onClick={() => navigate('/my-exams')}>Back to My Exams</Button>
+              <Button onClick={() => navigate(`/exams/${id}/review`)}>View Results</Button>
+            </div>
+          </div>
+        </Card>
       </div>
     )
   }

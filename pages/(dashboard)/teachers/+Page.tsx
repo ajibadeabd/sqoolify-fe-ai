@@ -11,6 +11,7 @@ import Button from '../../../components/ui/Button';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import ActionMenu from '../../../components/ui/ActionMenu';
 import CsvImportModal from '../../../components/ui/CsvImportModal';
+import ConfirmDialog from '../../../components/ui/ConfirmDialog';
 import { usePermission } from '../../../lib/use-permission';
 
 const TEACHER_CSV_COLUMNS = [
@@ -40,19 +41,29 @@ export default function TeachersPage() {
   } = useTeacherStore();
 
   const [showImport, setShowImport] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     fetchTeachers();
   }, []);
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleDelete = (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!confirm('Are you sure you want to delete this teacher?')) return;
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    setDeleting(true);
     try {
-      await deleteTeacher(id);
+      await deleteTeacher(deleteTarget);
       toast.success('Teacher deleted');
     } catch (err: any) {
       toast.error(err.message || 'Failed to delete teacher');
+    } finally {
+      setDeleting(false);
+      setDeleteTarget(null);
     }
   };
 
@@ -174,6 +185,15 @@ export default function TeachersPage() {
           }
           return result.data;
         }}
+      />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={confirmDelete}
+        title="Delete Teacher"
+        message="Are you sure you want to delete this teacher? This action cannot be undone."
+        loading={deleting}
       />
     </div>
   );

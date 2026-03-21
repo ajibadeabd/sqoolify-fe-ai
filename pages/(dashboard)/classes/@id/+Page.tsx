@@ -296,9 +296,9 @@ export default function ClassDetailPage() {
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
-        {/* Class Info - First */}
+        {/* Class Info */}
         <div className="lg:col-span-2">
-          <Card className="sticky top-6">
+          <Card>
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Class Information</h3>
 
             <div className="space-y-4">
@@ -399,103 +399,29 @@ export default function ClassDetailPage() {
           </Card>
         </div>
 
-        {/* Students & Subjects - Second */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Students Section */}
+        {/* Subjects - Sidebar */}
+        <div className="lg:col-span-1">
           <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-              <h3 className="text-lg font-semibold text-gray-900">Students ({students.length})</h3>
-              <div className="flex flex-wrap gap-2">
-                {can('write_students') && selectedToRemove.size > 0 && (
-                  <Button variant="danger" size="sm" onClick={() => setRemoveOpen(true)}>
-                    Remove {selectedToRemove.size}
-                  </Button>
-                )}
-                {can('write_students') && (
-                  <Button variant="outline" size="sm" onClick={openAssignModal}>+ Assign Students</Button>
-                )}
-              </div>
-            </div>
-
-            {students.length > 0 ? (
-              <div>
-                {can('write_students') && students.length > 1 && (
-                  <label className="flex items-center gap-2 mb-3 text-sm text-gray-600 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={selectedToRemove.size === students.length}
-                      onChange={toggleRemoveAll}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    Select all
-                  </label>
-                )}
-                <div className="grid sm:grid-cols-2 gap-3">
-                  {students.map((student: any) => (
-                    <div
-                      key={student._id}
-                      className={`border rounded-lg p-4 hover:bg-gray-50 transition ${
-                        selectedToRemove.has(student._id) ? 'border-red-300 bg-red-50' : 'border-gray-200'
-                      }`}
-                    >
-                      <div className="flex items-center gap-3">
-                        {can('write_students') && (
-                          <input
-                            type="checkbox"
-                            checked={selectedToRemove.has(student._id)}
-                            onChange={() => toggleRemoveSelect(student._id)}
-                            className="rounded border-gray-300 text-red-600 focus:ring-red-500 shrink-0"
-                          />
-                        )}
-                        <div
-                          className="flex-1 cursor-pointer min-w-0"
-                          onClick={() => navigate(`/students/${student._id}`)}
-                        >
-                          <p className="font-medium truncate">{student.user?.firstName} {student.user?.lastName}</p>
-                          <p className="text-sm text-gray-500">Admission: {student.admissionNo}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-                <svg className="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
-                </svg>
-                <p className="text-gray-500 text-sm">No students assigned to this class</p>
-                {can('write_students') && (
-                  <Button variant="outline" className="mt-3" onClick={openAssignModal}>
-                    + Assign Students
-                  </Button>
-                )}
-              </div>
-            )}
-          </Card>
-
-          {/* Subjects Section */}
-          <Card>
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Subjects ({subjects.length})</h3>
               {can('write_subjects') && (
                 <Button variant="outline" size="sm" onClick={openSubjectModal}>+ Assign Subject</Button>
               )}
             </div>
             {subjects.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-3 max-h-85 overflow-y-auto pr-1">
                 {subjects.map((entry: any) => {
                   const subjectId = typeof entry.subject === 'object' ? entry.subject?._id : entry.subject
                   return (
-                    <div key={subjectId} className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg">
-                      <div>
+                    <div key={subjectId} className="flex items-center justify-between gap-2 p-3 bg-gray-50 rounded-lg">
+                      <div className="min-w-0">
                         <div className="flex items-center gap-2 mb-1">
                           <Badge variant="default">
                             {entry.subject?.code ? `${entry.subject.name} (${entry.subject.code})` : entry.subject?.name || 'Unknown'}
                           </Badge>
                         </div>
                         {entry.teachers?.length > 0 && (
-                          <p className="text-xs text-gray-500 mt-1">
+                          <p className="text-xs text-gray-500 mt-1 truncate">
                             {entry.teachers.map((t: any) => `${t.user?.firstName || ''} ${t.user?.lastName || ''}`.trim()).join(', ')}
                           </p>
                         )}
@@ -517,6 +443,92 @@ export default function ClassDetailPage() {
             )}
           </Card>
         </div>
+      </div>
+
+      {/* Students Table - Full Width Below */}
+      <div className="mt-6">
+        <Card>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Students ({students.length})</h3>
+            <div className="flex flex-wrap gap-2">
+              {can('write_students') && selectedToRemove.size > 0 && (
+                <Button variant="danger" size="sm" onClick={() => setRemoveOpen(true)}>
+                  Remove {selectedToRemove.size}
+                </Button>
+              )}
+              {can('write_students') && (
+                <Button variant="outline" size="sm" onClick={openAssignModal}>+ Assign Students</Button>
+              )}
+            </div>
+          </div>
+
+          {students.length > 0 ? (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-200">
+                    {can('write_students') && (
+                      <th className="py-3 px-3 text-left w-10">
+                        <input
+                          type="checkbox"
+                          checked={selectedToRemove.size === students.length && students.length > 0}
+                          onChange={toggleRemoveAll}
+                          className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        />
+                      </th>
+                    )}
+                    <th className="py-3 px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">S/N</th>
+                    <th className="py-3 px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="py-3 px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Admission No</th>
+                    <th className="py-3 px-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gender</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {students.map((student: any, index: number) => (
+                    <tr
+                      key={student._id}
+                      className={`hover:bg-gray-50 cursor-pointer transition ${
+                        selectedToRemove.has(student._id) ? 'bg-red-50' : ''
+                      }`}
+                      onClick={() => navigate(`/students/${student._id}`)}
+                    >
+                      {can('write_students') && (
+                        <td className="py-3 px-3" onClick={(e) => e.stopPropagation()}>
+                          <input
+                            type="checkbox"
+                            checked={selectedToRemove.has(student._id)}
+                            onChange={() => toggleRemoveSelect(student._id)}
+                            className="rounded border-gray-300 text-red-600 focus:ring-red-500"
+                          />
+                        </td>
+                      )}
+                      <td className="py-3 px-3 text-gray-400 text-xs">{index + 1}</td>
+                      <td className="py-3 px-3 font-medium text-gray-900">
+                        {student.user?.firstName} {student.user?.lastName}
+                      </td>
+                      <td className="py-3 px-3">
+                        <span className="font-mono text-xs px-2 py-0.5 bg-gray-100 rounded">{student.admissionNo || '-'}</span>
+                      </td>
+                      <td className="py-3 px-3 text-gray-500 capitalize">{student.gender || '-'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="text-center py-8 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+              <svg className="w-10 h-10 text-gray-300 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+              </svg>
+              <p className="text-gray-500 text-sm">No students assigned to this class</p>
+              {can('write_students') && (
+                <Button variant="outline" className="mt-3" onClick={openAssignModal}>
+                  + Assign Students
+                </Button>
+              )}
+            </div>
+          )}
+        </Card>
       </div>
 
       {/* Assign Teacher Modal */}

@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
-import { examService } from '../../../../../lib/api-services'
+import { examService, studentService } from '../../../../../lib/api-services'
+import { useAuth } from '../../../../../lib/auth-context'
 import Card from '../../../../../components/ui/Card'
 import Button from '../../../../../components/ui/Button'
 import Badge from '../../../../../components/ui/Badge'
@@ -11,6 +12,8 @@ import Breadcrumbs from '../../../../../components/layout/Breadcrumbs'
 export default function ExamReviewPage() {
   const pageContext = usePageContext()
   const id = (pageContext.routeParams as any)?.id
+  const { user } = useAuth()
+  const isStudent = user?.role === 'student'
   const [exam, setExam] = useState<any>(null)
   const [attempt, setAttempt] = useState<any>(null)
   const [answers, setAnswers] = useState<any[]>([])
@@ -19,18 +22,18 @@ export default function ExamReviewPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const examRes = await examService.getById(id)
-        setExam(examRes.data)
-
-        // Start exam returns attempt + answers for already-submitted exams too
-        const startRes = await examService.startExam(id)
-        const data = startRes.data as any
-        setAttempt(data.attempt)
-        setAnswers(data.answers || [])
+        if (isStudent) {
+          const res = await studentService.getMyExamReview(id)
+          const data = res.data
+          setExam(data.exam)
+          setAttempt(data.attempt)
+          setAnswers(data.answers || [])
+        } else {
+          const examRes = await examService.getById(id)
+          setExam(examRes.data)
+        }
       } catch (err: any) {
-        // If exam already submitted, try to get submission data via the start endpoint
-        // The backend should return the attempt/answers even if submitted
-        toast.error(err?.response?.data?.message || 'Failed to load review data')
+        toast.error(err?.message || 'Failed to load review data')
       } finally {
         setLoading(false)
       }

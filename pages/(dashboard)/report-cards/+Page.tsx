@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { navigate } from 'vike/client/router';
-import { sessionService, classService } from '../../../lib/api-services';
+import { toast } from 'sonner';
+import { sessionService, classService, reportCardService } from '../../../lib/api-services';
 import { ReportCard, Session, SchoolClass } from '../../../lib/types';
 import { useReportCardStore } from '../../../lib/stores/report-card-store';
 import DataTable, { type Column } from '../../../components/ui/DataTable';
@@ -8,8 +9,10 @@ import Pagination from '../../../components/ui/Pagination';
 import SearchBar from '../../../components/ui/SearchBar';
 import Button from '../../../components/ui/Button';
 import Badge from '../../../components/ui/Badge';
+import Modal from '../../../components/ui/Modal';
 import Breadcrumbs from '../../../components/layout/Breadcrumbs';
 import { useAppConfig } from '../../../lib/use-app-config';
+import { getTermOptions } from '../../../lib/term-utils';
 
 export default function ReportCardsPage() {
   const { termsPerSession } = useAppConfig();
@@ -18,9 +21,14 @@ export default function ReportCardsPage() {
     fetchReportCards, setFilter, invalidate,
   } = useReportCardStore();
 
+  const termOptions = getTermOptions(termsPerSession);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [classes, setClasses] = useState<SchoolClass[]>([]);
   const [generating, setGenerating] = useState(false);
+  const [generateOpen, setGenerateOpen] = useState(false);
+  const [genSessionId, setGenSessionId] = useState('');
+  const [genTerm, setGenTerm] = useState('');
+  const [genClassId, setGenClassId] = useState('');
 
   useEffect(() => {
     fetchReportCards();
@@ -30,11 +38,28 @@ export default function ReportCardsPage() {
     ]).then(([sessionRes, classRes]) => {
       setSessions(sessionRes.data || []);
       setClasses(classRes.data || []);
+      const current = sessionRes.data?.find((s: Session) => s.isCurrent);
+      if (current) setGenSessionId(current._id);
     }).catch(() => {});
   }, []);
 
   const handleGenerate = async () => {
-    alert('Please select a student to generate report card');
+    if (!genSessionId || !genTerm) {
+      toast.error('Please select session and term');
+      return;
+    }
+    setGenerating(true);
+    try {
+      const res = await reportCardService.generate(genSessionId, genTerm, genClassId || undefined);
+      const count = (res.data as any)?.count || 0;
+      toast.success(`${count} report card${count !== 1 ? 's' : ''} generated`);
+      setGenerateOpen(false);
+      invalidate();
+    } catch (err: any) {
+      toast.error(err.message || 'Failed to generate report cards');
+    } finally {
+      setGenerating(false);
+    }
   };
 
   const columns: Column<ReportCard>[] = [
@@ -105,7 +130,7 @@ export default function ReportCardsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Report Cards</h1>
           <p className="text-sm text-gray-500 mt-1">{total} total report cards</p>
         </div>
-        <Button onClick={handleGenerate} loading={generating}>
+        <Button onClick={() => setGenerateOpen(true)}>
           Generate Report Cards
         </Button>
       </div>
@@ -159,6 +184,70 @@ export default function ReportCardsPage() {
       />
 
       <Pagination page={filters.page} totalPages={totalPages} total={total} onPageChange={(p) => setFilter('page', p)} />
+
+      <Modal open={generateOpen} onClose={() => setGenerateOpen(false)} title="Generate Report Cards">
+        <p className="text-sm text-gray-500 mb-5">
+          Generate report cards for all students in a class based on their exam scores.
+        </p>
+
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Session *</label>
+            <select
+              value={genSessionId}
+              onChange={(e) => setGenSessionId(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            >
+              <option value="">Select session</option>
+              {sessions.map((s) => (
+                <option key={s._id} value={s._id}>{s.name} {s.isCurrent ? '(Current)' : ''}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Term *</label>
+            <div className="flex gap-2 flex-wrap">
+              {termOptions.map((t) => (
+                <button
+                  key={t.value}
+                  type="button"
+                  onClick={() => setGenTerm(t.value)}
+                  className={`px-4 py-2 rounded-lg border-2 text-sm font-medium transition-all ${
+                    genTerm === t.value
+                      ? `${t.color.bg} ${t.color.text} ${t.color.border} border-current`
+                      : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {t.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Class (optional)</label>
+            <select
+              value={genClassId}
+              onChange={(e) => setGenClassId(e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none text-sm"
+            >
+              <option value="">All Classes</option>
+              {classes.map((c) => (
+                <option key={c._id} value={c._id}>{c.name}{c.section ? ` - ${c.section}` : ''}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-500 mt-1">Leave empty to generate for all classes</p>
+          </div>
+        </div>
+
+        <div className="flex justify-end gap-3 mt-6">
+          <Button variant="outline" onClick={() => setGenerateOpen(false)}>Cancel</Button>
+          <Button onClick={handleGenerate} loading={generating} disabled={!genSessionId || !genTerm}>
+            Generate
+          </Button>
+        </div>
+      </Modal>
     </div>
   );
 }

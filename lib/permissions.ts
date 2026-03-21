@@ -42,6 +42,7 @@ export const PERMISSIONS = {
   WRITE_EXAMS: 'write_exams',
   DELETE_EXAMS: 'delete_exams',
   GRADE_EXAMS: 'grade_exams',
+  APPROVE_EXAMS: 'approve_exams',
 
   // Exam Results
   READ_EXAM_RESULTS: 'read_exam_results',

@@ -154,6 +154,12 @@ export const studentService = {
   getMyExams: (params?: { page?: number; limit?: number; search?: string }) =>
     api.get<ApiResponse<any[]>>(`/students/my-exams${buildQuery(params || {})}`, authOptions()),
 
+  getMyExamById: (examId: string) =>
+    api.get<ApiResponse<any>>(`/students/my-exams/${examId}`, authOptions()),
+
+  getMyExamReview: (examId: string) =>
+    api.get<ApiResponse<any>>(`/students/my-exams/${examId}/review`, authOptions()),
+
   getMyFees: () =>
     api.get<ApiResponse<any[]>>('/students/my-fees', authOptions()),
 };
@@ -432,8 +438,8 @@ export const reportCardService = {
   getById: (id: string) =>
     api.get<ApiResponse<ReportCard>>(`/report-cards/${id}`, authOptions()),
 
-  generate: (studentId: string, sessionId: string, term: string) =>
-    api.post<ApiResponse<ReportCard>>('/report-cards/generate', { studentId, sessionId, term }, authOptions()),
+  generate: (sessionId: string, term: string, classId?: string) =>
+    api.post<ApiResponse<{ count: number }>>('/report-cards/generate', { sessionId, term, classId: classId || undefined }, authOptions()),
 
   update: (id: string, data: { teacherRemark?: string; principalRemark?: string }) =>
     api.patch<ApiResponse<ReportCard>>(`/report-cards/${id}`, data, authOptions()),

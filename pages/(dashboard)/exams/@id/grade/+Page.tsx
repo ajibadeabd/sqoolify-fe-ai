@@ -328,6 +328,8 @@ export default function GradingPage() {
         onConfirm={handleFinalizeGrades}
         title="Finalize Grades"
         message="This will aggregate all student scores and create official score records. Make sure all essays and short answers have been graded before finalizing."
+        confirmLabel="Finalize"
+        confirmVariant="primary"
         loading={finalizing}
       />
     </div>

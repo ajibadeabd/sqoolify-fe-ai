@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { classService } from '../../../../lib/api-services'
+import { useClassStore } from '../../../../lib/stores/class-store'
 import { useAppConfig } from '../../../../lib/use-app-config'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
@@ -38,6 +39,7 @@ export default function AddClassPage() {
       })
 
       toast.success('Class created successfully')
+      useClassStore.getState().invalidate()
       await navigate('/classes')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create class')

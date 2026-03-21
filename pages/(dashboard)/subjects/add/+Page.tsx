@@ -62,6 +62,7 @@ export default function AddSubjectPage() {
       })
 
       toast.success('Subject created successfully')
+      useSubjectStore.getState().invalidate()
       await navigate('/subjects')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create subject')

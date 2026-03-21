@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { parentService } from '../../../../../lib/api-services'
+import { useParentStore } from '../../../../../lib/stores/parent-store'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -66,6 +67,7 @@ export default function EditParentPage() {
       } as any)
 
       toast.success('Parent updated successfully')
+      useParentStore.getState().invalidate()
       await navigate(`/parents/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update parent')

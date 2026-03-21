@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { subjectService, teacherService } from '../../../../../lib/api-services'
+import { useSubjectStore } from '../../../../../lib/stores/subject-store'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -78,6 +79,7 @@ export default function EditSubjectPage() {
         isActive: form.isActive,
       })
       toast.success('Subject updated successfully')
+      useSubjectStore.getState().invalidate()
       await navigate('/subjects')
     } catch (err: any) {
       toast.error(err.message || 'Failed to update subject')

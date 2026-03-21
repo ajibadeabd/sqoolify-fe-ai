@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { authService } from '../../../../lib/api-services'
+import { useTeacherStore } from '../../../../lib/stores/teacher-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -47,6 +48,7 @@ export default function AddTeacherPage() {
       })
 
       toast.success('Teacher created successfully')
+      useTeacherStore.getState().invalidate()
       await navigate('/teachers')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create teacher')

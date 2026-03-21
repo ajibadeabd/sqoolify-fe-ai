@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { authService, studentService } from '../../../../lib/api-services'
+import { useParentStore } from '../../../../lib/stores/parent-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -80,6 +81,7 @@ export default function AddParentPage() {
       })
 
       toast.success('Parent created successfully')
+      useParentStore.getState().invalidate()
       await navigate('/parents')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create parent')

@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { authService, classService, parentService } from '../../../../lib/api-services'
+import { useStudentStore } from '../../../../lib/stores/student-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -180,6 +181,7 @@ export default function AddStudentPage() {
 
       toast.success('Student created successfully')
       setIsDirty(false)
+      useStudentStore.getState().invalidate()
       await navigate('/students')
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Failed to create student'

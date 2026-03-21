@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { examService, classService, subjectService, sessionService } from '../../../../lib/api-services'
+import { useExamStore } from '../../../../lib/stores/exam-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -120,6 +121,7 @@ export default function AddExamPage() {
       })
 
       toast.success('Exam created successfully')
+      useExamStore.getState().invalidate()
 
       // Navigate to questions page for CBT/hybrid, otherwise to exam list
       if (isCbtMode && res.data?._id) {

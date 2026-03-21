@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { studentService, classService, parentService } from '../../../../../lib/api-services'
+import { useStudentStore } from '../../../../../lib/stores/student-store'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -121,6 +122,7 @@ export default function EditStudentPage() {
       } as any)
 
       toast.success('Student updated successfully')
+      useStudentStore.getState().invalidate()
       await navigate(`/students/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update student')

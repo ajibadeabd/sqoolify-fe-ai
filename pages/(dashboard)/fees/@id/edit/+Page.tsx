@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { feeService, classService, sessionService } from '../../../../../lib/api-services'
+import { useFeeStore } from '../../../../../lib/stores/fee-store'
 import type { Fee, SchoolClass, Session } from '../../../../../lib/types'
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import Card from '../../../../../components/ui/Card'
@@ -145,6 +146,7 @@ export default function EditFeePage() {
         })),
       })
       toast.success('Fee structure updated successfully')
+      useFeeStore.getState().invalidate()
       await navigate(`/fees/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update fee structure')

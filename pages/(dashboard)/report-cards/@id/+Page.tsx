@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { reportCardService } from '../../../../lib/api-services'
+import { useReportCardStore } from '../../../../lib/stores/report-card-store'
 import Card from '../../../../components/ui/Card'
 import Button from '../../../../components/ui/Button'
 import Badge from '../../../../components/ui/Badge'
@@ -56,6 +57,7 @@ export default function ReportCardDetailPage() {
     setSavingRemarks(true)
     try {
       await reportCardService.update(id, { teacherRemark, principalRemark })
+      useReportCardStore.getState().invalidate()
       toast.success('Remarks saved')
     } catch (err: any) {
       toast.error(err.message || 'Failed to save remarks')

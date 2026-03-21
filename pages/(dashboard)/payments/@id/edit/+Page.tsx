@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { paymentService } from '../../../../../lib/api-services'
+import { usePaymentStore } from '../../../../../lib/stores/payment-store'
 import type { Payment } from '../../../../../lib/types'
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import Card from '../../../../../components/ui/Card'
@@ -64,6 +65,7 @@ export default function EditPaymentPage() {
 
       await paymentService.update(id, data)
       toast.success('Payment updated successfully')
+      usePaymentStore.getState().invalidate()
       await navigate(`/payments/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update payment')

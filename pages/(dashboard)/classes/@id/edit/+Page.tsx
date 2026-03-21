@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { classService, teacherService } from '../../../../../lib/api-services'
+import { useClassStore } from '../../../../../lib/stores/class-store'
 import { useAppConfig } from '../../../../../lib/use-app-config'
 import type { Teacher } from '../../../../../lib/types'
 import Input from '../../../../../components/ui/Input'
@@ -79,6 +80,7 @@ export default function EditClassPage() {
         classTeacherId: form.classTeacher || undefined,
       })
       toast.success('Class updated successfully')
+      useClassStore.getState().invalidate()
       await navigate(`/classes/${id}`)
     } catch (err: any) {
       setError(err.message || 'Failed to update class')

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { sessionService } from '../../../../lib/api-services'
+import { useSessionStore } from '../../../../lib/stores/session-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -99,6 +100,7 @@ export default function AddSessionPage() {
       })
 
       toast.success('Academic session created successfully')
+      useSessionStore.getState().invalidate()
       await navigate('/sessions')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create session')

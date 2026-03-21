@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { paymentService, studentService, sessionService } from '../../../../lib/api-services'
+import { usePaymentStore } from '../../../../lib/stores/payment-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -90,6 +91,7 @@ export default function AddPaymentPage() {
       })
 
       toast.success('Payment recorded successfully')
+      usePaymentStore.getState().invalidate()
       await navigate('/payments')
     } catch (err: any) {
       toast.error(err.message || 'Failed to record payment')

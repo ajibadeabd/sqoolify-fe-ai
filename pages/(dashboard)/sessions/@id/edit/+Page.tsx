@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { sessionService } from '../../../../../lib/api-services'
+import { useSessionStore } from '../../../../../lib/stores/session-store'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -129,6 +130,7 @@ export default function EditSessionPage() {
       })
 
       toast.success('Session updated successfully')
+      useSessionStore.getState().invalidate()
       await navigate(`/sessions/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update session')

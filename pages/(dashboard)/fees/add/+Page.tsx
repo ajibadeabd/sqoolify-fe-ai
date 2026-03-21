@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { feeService, classService, sessionService } from '../../../../lib/api-services'
+import { useFeeStore } from '../../../../lib/stores/fee-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -136,6 +137,7 @@ export default function AddFeePage() {
       })
 
       toast.success('Fee structure created successfully')
+      useFeeStore.getState().invalidate()
       await navigate('/fees')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create fee structure')

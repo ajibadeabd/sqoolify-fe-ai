@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { noticeService } from '../../../../lib/api-services'
+import { useNoticeStore } from '../../../../lib/stores/notice-store'
 import Input from '../../../../components/ui/Input'
 import Button from '../../../../components/ui/Button'
 import Card from '../../../../components/ui/Card'
@@ -56,6 +57,7 @@ export default function AddNoticePage() {
       })
 
       toast.success('Notice created successfully')
+      useNoticeStore.getState().invalidate()
       await navigate('/notices')
     } catch (err: any) {
       toast.error(err.message || 'Failed to create notice')

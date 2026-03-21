@@ -3,6 +3,7 @@ import { usePageContext } from 'vike-react/usePageContext'
 import { navigate } from 'vike/client/router'
 import { toast } from 'sonner'
 import { examService, classService, subjectService, sessionService } from '../../../../../lib/api-services'
+import { useExamStore } from '../../../../../lib/stores/exam-store'
 import Input from '../../../../../components/ui/Input'
 import Button from '../../../../../components/ui/Button'
 import Card from '../../../../../components/ui/Card'
@@ -125,6 +126,7 @@ export default function EditExamPage() {
       })
 
       toast.success('Exam updated successfully')
+      useExamStore.getState().invalidate()
       await navigate(`/exams/${id}`)
     } catch (err: any) {
       toast.error(err.message || 'Failed to update exam')
